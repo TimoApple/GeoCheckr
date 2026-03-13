@@ -44,5 +44,4 @@ yarn-error.*
 *.md
 !README.md
 docs/
-src/data/locations*.csv
 src/data/locations*.json
