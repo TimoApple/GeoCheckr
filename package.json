@@ -1,31 +1,28 @@
 {
-  "name": "geocheckr_app",
+  "name": "geocheckr",
   "version": "1.0.0",
-  "main": "index.ts",
+  "description": "A geography exploration game",
+  "main": "App.tsx",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
+    "start": "npx expo start",
+    "android": "npx expo start --android",
+    "ios": "npx expo start --ios",
+    "web": "npx expo start --web"
   },
   "dependencies": {
-    "@react-navigation/native": "^7.1.33",
-    "@react-navigation/native-stack": "^7.14.5",
-    "expo": "~55.0.6",
-    "expo-barcode-scanner": "^13.0.1",
-    "expo-location": "^55.1.2",
-    "expo-speech-recognition": "^3.1.1",
-    "expo-status-bar": "~55.0.4",
-    "react": "19.2.0",
-    "react-native": "0.83.2",
-    "react-native-maps": "^1.27.2",
-    "react-native-qrcode-scanner": "^1.5.5",
-    "react-native-safe-area-context": "^5.7.0",
-    "react-native-screens": "^4.24.0"
+    "expo": "~52.0.0",
+    "expo-camera": "~16.0.0",
+    "expo-speech-recognition": "~1.0.0",
+    "react": "18.2.0",
+    "react-native": "0.76.0",
+    "@react-navigation/native": "^6.1.0",
+    "@react-navigation/native-stack": "^6.9.0",
+    "react-native-screens": "~3.31.0",
+    "react-native-safe-area-context": "4.12.0"
   },
   "devDependencies": {
-    "@types/react": "~19.2.2",
-    "typescript": "~5.9.2"
+    "@types/react": "~18.2.0",
+    "typescript": "~5.3.0"
   },
   "private": true
 }
