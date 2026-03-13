@@ -41,7 +41,4 @@ yarn-error.*
 /android
 
 # Project docs
-*.md
-!README.md
-docs/
 src/data/locations*.json
