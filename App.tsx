@@ -1,15 +1,47 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import HomeScreen from './src/screens/HomeScreen';
 import SetupScreen from './src/screens/SetupScreen';
 import GameScreen from './src/screens/GameScreen';
 import ResultScreen from './src/screens/ResultScreen';
+import TutorialScreen from './src/screens/TutorialScreen';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
+  const [showTutorial, setShowTutorial] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    checkFirstLaunch();
+  }, []);
+
+  const checkFirstLaunch = async () => {
+    try {
+      const hasSeenTutorial = await AsyncStorage.getItem('geocheckr_tutorial_done');
+      setShowTutorial(hasSeenTutorial !== 'true');
+    } catch {
+      setShowTutorial(false);
+    }
+  };
+
+  const handleTutorialComplete = async () => {
+    try {
+      await AsyncStorage.setItem('geocheckr_tutorial_done', 'true');
+    } catch {}
+    setShowTutorial(false);
+  };
+
+  if (showTutorial === null) {
+    return null; // Loading
+  }
+
+  if (showTutorial) {
+    return <TutorialScreen onComplete={handleTutorialComplete} />;
+  }
+
   return (
     <NavigationContainer>
       <Stack.Navigator 
@@ -40,6 +72,11 @@ export default function App() {
           name="Result" 
           component={ResultScreen}
           options={{ title: 'Spielende', headerBackVisible: false }}
+        />
+        <Stack.Screen 
+          name="Tutorial" 
+          component={TutorialScreen}
+          options={{ headerShown: false }}
         />
       </Stack.Navigator>
     </NavigationContainer>
