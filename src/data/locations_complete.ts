@@ -169,9 +169,7 @@ export const locations: Location[] = [
   { id: 153, city: "Wellington", country: "Neuseeland", region: "Ozeanien", continent: "Ozeanien", lat: -41.2865, lng: 174.7762, difficulty: "mittel", qrCode: "QR153" },
   { id: 154, city: "Suva", country: "Fidschi", region: "Ozeanien", continent: "Ozeanien", lat: -18.1248, lng: 178.4501, difficulty: "schwer", qrCode: "QR154" },
   { id: 155, city: "Port Moresby", country: "PNG", region: "Ozeanien", continent: "Ozeanien", lat: -9.4438, lng: 147.1803, difficulty: "schwer", qrCode: "QR155" },
-];
-
-export default locations;
+  
   // Additional locations to reach 200
   { id: 156, city: "Helsinki", country: "Finnland", region: "EU", continent: "EU", lat: 60.1699, lng: 24.9384, difficulty: "mittel", qrCode: "QR156" },
   { id: 157, city: "Warschau", country: "Polen", region: "EU", continent: "EU", lat: 52.2297, lng: 21.0122, difficulty: "mittel", qrCode: "QR157" },
@@ -219,3 +217,5 @@ export default locations;
   { id: 199, city: "Izmir", country: "Tuerkei", region: "EU", continent: "EU", lat: 38.4237, lng: 27.1428, difficulty: "mittel", qrCode: "QR199" },
   { id: 200, city: "Ankara", country: "Tuerkei", region: "EU", continent: "EU", lat: 39.9334, lng: 32.8597, difficulty: "mittel", qrCode: "QR200" },
 ];
+
+export default locations;
