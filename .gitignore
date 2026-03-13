@@ -39,3 +39,10 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Project docs
+*.md
+!README.md
+docs/
+src/data/locations*.csv
+src/data/locations*.json
