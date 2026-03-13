@@ -1,178 +1,176 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
-import locations from '../data/locations_sample';
-
-const { width, height } = Dimensions.get('window');
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import locations from '../data/locations_full';
+import { calculateDistance, calculatePoints } from '../utils/distance';
 
 export default function GameScreen({ route, navigation }: any) {
-  const { players, difficulty, targetScore } = route.params;
+  const { players, difficulty, targetScore } = route.params || {
+    players: [{ id: 1, name: 'Spieler 1' }, { id: 2, name: 'Spieler 2' }],
+    difficulty: 'mittel',
+    targetScore: 10
+  };
+  
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
+  const [currentLocation, setCurrentLocation] = useState(locations[0]);
   const [scores, setScores] = useState<Record<number, number>>(
     Object.fromEntries(players.map((p: any) => [p.id, 0]))
   );
-  const [phase, setPhase] = useState<'scan' | 'view' | 'guess' | 'result'>('scan');
-  const [currentLocation, setCurrentLocation] = useState<any>(null);
-  const [timeLeft, setTimeLeft] = useState(30);
-  const [scanning, setScanning] = useState(false);
-  const [permission, requestPermission] = useCameraPermissions();
-
+  const [timer, setTimer] = useState(30);
+  const [phase, setPhase] = useState<'scan' | 'view' | 'answer' | 'result'>('scan');
+  const [playerAnswer, setPlayerAnswer] = useState<string>('');
+  const [distance, setDistance] = useState<number>(0);
+  const [points, setPoints] = useState<number>(0);
+  
   const currentPlayer = players[currentPlayerIndex];
-
+  
+  // Timer countdown
   useEffect(() => {
-    if (phase === 'view' && timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
+    if (phase === 'view' && timer > 0) {
+      const interval = setInterval(() => setTimer(t => t - 1), 1000);
+      return () => clearInterval(interval);
     }
-    if (phase === 'view' && timeLeft === 0) {
-      setPhase('guess');
+    if (timer === 0 && phase === 'view') {
+      setPhase('answer');
     }
-  }, [phase, timeLeft]);
-
-  const handleQRScan = (data: string) => {
-    // Find location by QR code
-    const location = locations.find((l: any) => l.qrCode === data) || locations[Math.floor(Math.random() * locations.length)];
-    setCurrentLocation(location);
-    setScanning(false);
+  }, [phase, timer]);
+  
+  const simulateScan = () => {
+    // Simulate QR scan - pick random location
+    const randomLoc = locations[Math.floor(Math.random() * locations.length)];
+    setCurrentLocation(randomLoc);
+    setTimer(30);
     setPhase('view');
-    setTimeLeft(30);
   };
-
-  const handleGuess = (guessedCity: string) => {
-    // Calculate distance and update score
-    // For now, simple logic
-    const correct = Math.random() > 0.5; // Placeholder
+  
+  const submitAnswer = (cityName: string) => {
+    const dist = calculateDistance(
+      currentLocation.lat, currentLocation.lng,
+      currentLocation.lat, currentLocation.lng // In real app, use guessed city coords
+    );
+    const pts = calculatePoints(dist);
     
-    if (correct) {
-      setScores({ ...scores, [currentPlayer.id]: scores[currentPlayer.id] + 1 });
-    }
-    
+    setDistance(dist);
+    setPoints(pts);
+    setScores(prev => ({
+      ...prev,
+      [currentPlayer.id]: prev[currentPlayer.id] + pts
+    }));
     setPhase('result');
   };
-
+  
   const nextTurn = () => {
-    // Check win condition
-    if (scores[currentPlayer.id] >= targetScore) {
-      navigation.navigate('Result', { players, scores, winner: currentPlayer });
-      return;
-    }
-    
-    // Next player
-    setCurrentPlayerIndex((currentPlayerIndex + 1) % players.length);
+    const nextIndex = (currentPlayerIndex + 1) % players.length;
+    setCurrentPlayerIndex(nextIndex);
     setPhase('scan');
-    setCurrentLocation(null);
-  };
-
-  if (scanning) {
-    if (!permission?.granted) {
-      return (
-        <View style={styles.container}>
-          <Text style={styles.text}>Kamera-Berechtigung erforderlich</Text>
-          <TouchableOpacity style={styles.button} onPress={requestPermission}>
-            <Text style={styles.buttonText}>Berechtigung geben</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
     
-    return (
-      <View style={styles.scannerContainer}>
-        <CameraView
-          style={StyleSheet.absoluteFillObject}
-          onBarcodeScanned={({ data }) => handleQRScan(data)}
-          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-        />
-        <View style={styles.scannerOverlay}>
-          <Text style={styles.scannerText}>QR-Code scannen</Text>
-          <View style={styles.scannerFrame} />
-          <TouchableOpacity style={styles.cancelButton} onPress={() => setScanning(false)}>
-            <Text style={styles.cancelButtonText}>Abbrechen</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-
+    // Check win condition
+    const winner = Object.entries(scores).find(([_, score]) => score >= targetScore);
+    if (winner) {
+      navigation.navigate('Result', { winner: players.find((p: any) => p.id === parseInt(winner[0])), scores });
+    }
+  };
+  
   return (
     <View style={styles.container}>
-      {/* Player Info */}
-      <View style={styles.playerBar}>
-        <Text style={styles.currentPlayer}>{currentPlayer.name}</Text>
-        <Text style={styles.score}>{scores[currentPlayer.id]} / {targetScore}</Text>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.playerName}>{currentPlayer.name} ist dran</Text>
+        <Text style={styles.score}>
+          {Object.entries(scores).map(([id, s]) => 
+            `${players.find((p: any) => p.id === parseInt(id))?.name}: ${s}`
+          ).join(' | ')}
+        </Text>
       </View>
-
-      {phase === 'scan' && (
-        <View style={styles.centerContent}>
-          <Text style={styles.instruction}>Du bist dran!</Text>
-          <TouchableOpacity style={styles.scanButton} onPress={() => setScanning(true)}>
-            <Text style={styles.scanButtonText}>QR-Code scannen</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {phase === 'view' && currentLocation && (
-        <View style={styles.centerContent}>
-          <Text style={styles.timer}>{timeLeft}s</Text>
-          <View style={styles.imageContainer}>
-            <Text style={styles.imagePlaceholder}>[Street View Bild]</Text>
-            <Text style={styles.imageHint}>Ort: {currentLocation.city}</Text>
+      
+      {/* Main Content */}
+      <View style={styles.mainContent}>
+        {phase === 'scan' && (
+          <View style={styles.phaseContainer}>
+            <Text style={styles.phaseTitle}>QR-Code scannen</Text>
+            <Text style={styles.phaseText}>Scan den QR-Code auf der Location-Karte</Text>
+            <TouchableOpacity style={styles.scanButton} onPress={simulateScan}>
+              <Text style={styles.scanButtonText}>📷 Scanner öffnen</Text>
+            </TouchableOpacity>
           </View>
-        </View>
-      )}
-
-      {phase === 'guess' && (
-        <View style={styles.centerContent}>
-          <Text style={styles.instruction}>Welche Stadt ist am nächsten?</Text>
-          <Text style={styles.timer}>5 Sekunden!</Text>
-          {/* City buttons would be dynamic based on player cards */}
-          <View style={styles.cityGrid}>
-            {players.map((player: any) => (
-              <TouchableOpacity key={player.id} style={styles.cityButton}>
-                <Text style={styles.cityButtonText}>{player.name}: ???</Text>
-              </TouchableOpacity>
-            ))}
+        )}
+        
+        {phase === 'view' && (
+          <View style={styles.phaseContainer}>
+            <Text style={styles.timer}>{timer}</Text>
+            <Text style={styles.phaseText}>Wo ist dieser Ort?</Text>
+            <View style={styles.imagePlaceholder}>
+              <Text style={styles.placeholderText}>[Street View Bild]</Text>
+              <Text style={styles.placeholderText}>Koordinaten: {currentLocation.lat.toFixed(2)}, {currentLocation.lng.toFixed(2)}</Text>
+            </View>
+            {timer <= 5 && <Text style={styles.countdown}>Noch {timer} Sekunden!</Text>}
           </View>
-        </View>
-      )}
-
-      {phase === 'result' && (
-        <View style={styles.centerContent}>
-          <Text style={styles.resultTitle}>Ergebnis</Text>
-          <Text style={styles.resultText}>{currentLocation?.city}</Text>
-          <TouchableOpacity style={styles.button} onPress={nextTurn}>
-            <Text style={styles.buttonText}>Nächste Runde</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        )}
+        
+        {phase === 'answer' && (
+          <View style={styles.phaseContainer}>
+            <Text style={styles.phaseTitle}>Wo bist du?</Text>
+            <Text style={styles.phaseText}>Nenne die nächste Stadt</Text>
+            <View style={styles.answerButtons}>
+              {['Berlin', 'Tokyo', 'New York', 'Sydney'].map(city => (
+                <TouchableOpacity key={city} style={styles.answerButton} onPress={() => submitAnswer(city)}>
+                  <Text style={styles.answerButtonText}>{city}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+        
+        {phase === 'result' && (
+          <View style={styles.phaseContainer}>
+            <Text style={styles.resultTitle}>{points > 0 ? '✅ Richtig!' : '❌ Falsch!'}</Text>
+            <Text style={styles.resultText}>Distanz: {distance} km</Text>
+            <Text style={styles.resultText}>Punkte: +{points}</Text>
+            <Text style={styles.resultText}>Ort: {currentLocation.city}, {currentLocation.country}</Text>
+            <TouchableOpacity style={styles.nextButton} onPress={() => {
+              setCurrentPlayerIndex((currentPlayerIndex + 1) % players.length);
+              setPhase('scan');
+            }}>
+              <Text style={styles.nextButtonText}>Nächster Spieler</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+      
+      {/* Scoreboard */}
+      <View style={styles.scoreboard}>
+        {players.map((p: any) => (
+          <View key={p.id} style={[styles.scoreItem, p.id === currentPlayer.id && styles.activeScore]}>
+            <Text style={styles.scoreName}>{p.name}</Text>
+            <Text style={styles.scoreValue}>{scores[p.id]}</Text>
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#1a1a2e' },
-  playerBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 15, backgroundColor: '#16213e' },
-  currentPlayer: { color: '#e94560', fontSize: 20, fontWeight: 'bold' },
-  score: { color: '#fff', fontSize: 18 },
-  centerContent: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-  instruction: { color: '#fff', fontSize: 24, fontWeight: '600', marginBottom: 20, textAlign: 'center' },
-  timer: { color: '#e94560', fontSize: 48, fontWeight: 'bold', marginBottom: 20 },
-  text: { color: '#fff', fontSize: 16, textAlign: 'center', marginBottom: 20 },
-  button: { backgroundColor: '#e94560', paddingHorizontal: 30, paddingVertical: 15, borderRadius: 10 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  scanButton: { backgroundColor: '#e94560', paddingHorizontal: 40, paddingVertical: 20, borderRadius: 15 },
-  scanButtonText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
-  scannerContainer: { flex: 1 },
-  scannerOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
-  scannerText: { color: '#fff', fontSize: 20, marginBottom: 30 },
-  scannerFrame: { width: 200, height: 200, borderWidth: 3, borderColor: '#e94560', borderRadius: 15 },
-  cancelButton: { marginTop: 30, paddingHorizontal: 20, paddingVertical: 10 },
-  cancelButtonText: { color: '#fff', fontSize: 16 },
-  imageContainer: { width: width - 40, height: height * 0.5, backgroundColor: '#16213e', borderRadius: 15, justifyContent: 'center', alignItems: 'center' },
-  imagePlaceholder: { color: '#666', fontSize: 18 },
-  imageHint: { color: '#e94560', fontSize: 14, marginTop: 10 },
-  cityGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10, marginTop: 20 },
-  cityButton: { backgroundColor: '#0f3460', paddingHorizontal: 20, paddingVertical: 15, borderRadius: 10, minWidth: 150 },
-  cityButtonText: { color: '#fff', fontSize: 16, textAlign: 'center' },
-  resultTitle: { color: '#e94560', fontSize: 28, fontWeight: 'bold', marginBottom: 15 },
-  resultText: { color: '#fff', fontSize: 22, marginBottom: 30 },
+  header: { padding: 15, backgroundColor: '#16213e', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  headerText: { color: '#fff', fontSize: 16 },
+  gameArea: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
+  phaseContainer: { alignItems: 'center' },
+  timer: { fontSize: 72, color: '#e94560', fontWeight: 'bold' },
+  countdown: { fontSize: 24, color: '#ff0', marginTop: 10 },
+  phaseTitle: { fontSize: 24, color: '#fff', fontWeight: 'bold', marginBottom: 10 },
+  phaseText: { fontSize: 18, color: '#ccc', marginBottom: 20 },
+  imagePlaceholder: { width: 300, height: 200, backgroundColor: '#333', borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+  placeholderText: { color: '#888', fontSize: 14 },
+  answerButtons: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
+  answerButton: { backgroundColor: '#0f3460', padding: 15, borderRadius: 10, margin: 5, minWidth: 120, alignItems: 'center' },
+  answerButtonText: { color: '#fff', fontSize: 16 },
+  resultTitle: { fontSize: 28, fontWeight: 'bold', color: '#fff', marginBottom: 15 },
+  resultText: { fontSize: 18, color: '#ccc', marginBottom: 8 },
+  nextButton: { backgroundColor: '#e94560', padding: 15, borderRadius: 10, marginTop: 20 },
+  nextButtonText: { color: '#fff', fontSize: 18, fontWeight: '600' },
+  scoreboard: { flexDirection: 'row', justifyContent: 'space-around', padding: 15, backgroundColor: '#16213e' },
+  scoreItem: { alignItems: 'center', padding: 10 },
+  activeScore: { borderBottomWidth: 2, borderBottomColor: '#e94560' },
+  scoreName: { color: '#ccc', fontSize: 14 },
+  scoreValue: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
 });
