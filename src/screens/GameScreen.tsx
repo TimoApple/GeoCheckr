@@ -1,18 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import locations from '../data/locations_complete';
+import { calculateDistance, calculatePoints } from '../utils/distance';
+import StreetViewImage from '../components/StreetViewImage';
+import VoiceInput from '../components/VoiceInput';
+
+interface Player {
+  id: number;
+  name: string;
+}
+
+interface GameParams {
+  players: Player[];
+  difficulty: string;
+  targetScore: number;
+}
 
 export default function GameScreen({ route, navigation }: any) {
-  const { players, difficulty, targetScore } = route.params || {
+  const params: GameParams = route.params || {
     players: [{ id: 1, name: 'Spieler 1' }, { id: 2, name: 'Spieler 2' }],
     difficulty: 'mittel',
     targetScore: 10
   };
   
+  const { players, difficulty, targetScore } = params;
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [currentLocation, setCurrentLocation] = useState(locations[0]);
   const [scores, setScores] = useState<Record<number, number>>(
-    Object.fromEntries(players.map((p: any) => [p.id, 0]))
+    Object.fromEntries(players.map((p: Player) => [p.id, 0]))
   );
   const [timer, setTimer] = useState(30);
   const [phase, setPhase] = useState<'scan' | 'view' | 'answer' | 'result'>('scan');
@@ -37,7 +52,7 @@ export default function GameScreen({ route, navigation }: any) {
   useEffect(() => {
     const winner = Object.entries(scores).find(([_, score]) => score >= targetScore);
     if (winner) {
-      const winnerPlayer = players.find((p: any) => p.id === parseInt(winner[0]));
+      const winnerPlayer = players.find((p: Player) => p.id === parseInt(winner[0]));
       if (winnerPlayer) {
         navigation.navigate('Result', { 
           winner: winnerPlayer, 
@@ -107,7 +122,7 @@ export default function GameScreen({ route, navigation }: any) {
       
       {/* Scoreboard */}
       <View style={styles.scoreboard}>
-        {players.map((p: any) => (
+        {players.map((p: Player) => (
           <View key={p.id} style={[styles.scoreItem, p.id === currentPlayer.id && styles.activeScore]}>
             <Text style={styles.scoreName}>{p.name}</Text>
             <Text style={styles.scoreValue}>{scores[p.id]}</Text>
@@ -131,27 +146,18 @@ export default function GameScreen({ route, navigation }: any) {
           <View style={styles.phaseContainer}>
             <Text style={styles.timer}>{timer}</Text>
             <Text style={styles.phaseText}>Wo ist dieser Ort?</Text>
-            <View style={styles.imagePlaceholder}>
-              <Text style={styles.placeholderEmoji}>🌍</Text>
-              <Text style={styles.placeholderText}>Koordinaten:</Text>
-              <Text style={styles.coords}>{currentLocation.lat.toFixed(4)}°, {currentLocation.lng.toFixed(4)}°</Text>
+            <View style={styles.imageContainer}>
+              <StreetViewImage location={currentLocation} />
             </View>
             {timer <= 5 && <Text style={styles.countdown}>Noch {timer} Sekunden!</Text>}
           </View>
         )}
         
         {phase === 'answer' && (
-          <View style={styles.phaseContainer}>
-            <Text style={styles.phaseTitle}>Wo bist du?</Text>
-            <Text style={styles.phaseText}>Nenne die nächste Stadt</Text>
-            <View style={styles.answerButtons}>
-              {['Berlin', 'Paris', 'Tokyo', 'New York'].map(city => (
-                <TouchableOpacity key={city} style={styles.answerButton} onPress={() => submitAnswer(city)}>
-                  <Text style={styles.answerButtonText}>{city}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+          <VoiceInput 
+            onSubmit={submitAnswer}
+            placeholder="Stadtname eingeben..."
+          />
         )}
         
         {phase === 'result' && (
@@ -168,25 +174,6 @@ export default function GameScreen({ route, navigation }: any) {
       </View>
     </View>
   );
-}
-
-// Haversine formula
-function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLng/2) * Math.sin(dLng/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return Math.round(R * c);
-}
-
-function calculatePoints(distance: number): number {
-  if (distance < 100) return 3;
-  if (distance < 500) return 2;
-  if (distance < 2000) return 1;
-  return 0;
 }
 
 const styles = StyleSheet.create({
@@ -208,13 +195,7 @@ const styles = StyleSheet.create({
   phaseText: { fontSize: 18, color: '#ccc', marginBottom: 20, textAlign: 'center' },
   scanButton: { backgroundColor: '#e94560', paddingVertical: 18, paddingHorizontal: 40, borderRadius: 12 },
   scanButtonText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
-  imagePlaceholder: { width: 300, height: 200, backgroundColor: '#16213e', borderRadius: 15, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#2a2a4a' },
-  placeholderEmoji: { fontSize: 50, marginBottom: 10 },
-  placeholderText: { color: '#888', fontSize: 16 },
-  coords: { color: '#e94560', fontSize: 18, fontWeight: 'bold' },
-  answerButtons: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
-  answerButton: { backgroundColor: '#0f3460', padding: 15, borderRadius: 10, margin: 5, minWidth: 120, alignItems: 'center' },
-  answerButtonText: { color: '#fff', fontSize: 16 },
+  imageContainer: { width: '100%', height: 250, borderRadius: 15, overflow: 'hidden' },
   resultTitle: { fontSize: 28, fontWeight: 'bold', color: '#fff', marginBottom: 15 },
   resultText: { fontSize: 18, color: '#ccc', marginBottom: 8 },
   nextButton: { backgroundColor: '#e94560', padding: 15, borderRadius: 10, marginTop: 20 },
