@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -43,108 +43,72 @@ const tutorialSteps: TutorialStep[] = [
   },
   {
     id: 4,
-    title: 'Ortsnennung',
-    description: 'Nenne die Stadt, die am nächsten zum gezeigten Ort liegt. Nutze Spracheingabe oder tippe auf die Karte.',
+    title: 'Ort erraten',
+    description: 'Nenne die Stadt, die am nächsten zum gezeigten Ort liegt. Nutze Spracheingabe oder tippe den Namen ein.',
     icon: '🎤',
-    tip: 'Spracheingabe: Mikrofon-Symbol tippen.'
+    tip: 'Tipp: Nutze Hinweise wie Schilder, Sprache und Architektur.'
   },
   {
     id: 5,
     title: 'Punkte sammeln',
-    description: 'Je näher du bist, desto mehr Punkte! Ziel-Score: 10 Punkte. Erster Spieler, der das Ziel erreicht, gewinnt!',
+    description: 'Je näher du bist, desto mehr Punkte! Ziel: Erreiche zuerst den Ziel-Score um zu gewinnen!',
     icon: '🏆',
-    tip: '< 100km: 3 Punkte, < 500km: 2 Punkte, < 2000km: 1 Punkt'
+    tip: '< 100km = 3 Pkt, < 500km = 2 Pkt, < 2000km = 1 Punkt'
   },
   {
     id: 6,
-    title: 'Schwierigkeitsgrade',
-    description: '😊 Leicht: Berühmte Wahrzeichen | 🤔 Mittel: Stadtgebiete | 🔥 Schwer: Versteckte Orte',
-    icon: '⚖️',
-    tip: 'Wähle die passende Schwierigkeit für deine Gruppe.'
+    title: 'Bereit?',
+    description: 'Du bist jetzt startklar! Wähle Spieler, Schwierigkeit und leg los. Viel Spaß!',
+    icon: '🚀',
+    tip: ''
   }
 ];
 
 export default function TutorialScreen({ navigation }: any) {
   const [currentStep, setCurrentStep] = useState(0);
   const [userName, setUserName] = useState('');
-  const [showWelcome, setShowWelcome] = useState(false);
-  const fadeAnim = new Animated.Value(1);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  useEffect(() => {
-    checkFirstLaunch();
-  }, []);
+  const step = tutorialSteps[currentStep];
+  const progress = ((currentStep + 1) / tutorialSteps.length) * 100;
+  const isFirstStep = currentStep === 0;
+  const isLastStep = currentStep === tutorialSteps.length - 1;
 
-  const checkFirstLaunch = async () => {
-    try {
-      const hasSeenTutorial = await AsyncStorage.getItem('geocheckr_tutorial_seen');
-      const savedName = await AsyncStorage.getItem('geocheckr_user_name');
-      
-      if (!hasSeenTutorial) {
-        setShowWelcome(true);
-        if (savedName) {
-          setUserName(savedName);
-        }
-      } else {
-        navigation.replace('Home');
-      }
-    } catch (error) {
-      console.error('Error checking tutorial status:', error);
-    }
+  const animateStep = (newStep: number) => {
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 120,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 120,
+        useNativeDriver: true,
+      })
+    ]).start();
+    
+    setTimeout(() => {
+      setCurrentStep(newStep);
+    }, 130);
   };
 
   const handleNext = () => {
-    if (currentStep < tutorialSteps.length - 1) {
-      Animated.sequence([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 150,
-          useNativeDriver: true,
-        })
-      ]).start();
-      
-      setTimeout(() => {
-        setCurrentStep(currentStep + 1);
-      }, 150);
+    if (!isLastStep) {
+      animateStep(currentStep + 1);
     } else {
       completeTutorial();
     }
   };
 
   const handlePrev = () => {
-    if (currentStep > 0) {
-      Animated.sequence([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 150,
-          useNativeDriver: true,
-        })
-      ]).start();
-      
-      setTimeout(() => {
-        setCurrentStep(currentStep - 1);
-      }, 150);
+    if (!isFirstStep) {
+      animateStep(currentStep - 1);
     }
   };
 
   const handleSkip = () => {
-    Alert.alert(
-      'Tutorial überspringen?',
-      'Möchtest du das Tutorial wirklich überspringen? Du kannst es jederzeit in den Einstellungen wieder anzeigen.',
-      [
-        { text: 'Abbrechen', style: 'cancel' },
-        { text: 'Überspringen', onPress: completeTutorial }
-      ]
-    );
+    completeTutorial();
   };
 
   const completeTutorial = async () => {
@@ -153,24 +117,18 @@ export default function TutorialScreen({ navigation }: any) {
       if (userName.trim()) {
         await AsyncStorage.setItem('geocheckr_user_name', userName.trim());
       }
-      navigation.replace('Home');
     } catch (error) {
-      console.error('Error saving tutorial status:', error);
-      navigation.replace('Home');
+      console.error('Error saving tutorial:', error);
     }
+    navigation.replace('Home');
   };
 
   const saveUserName = async (name: string) => {
     setUserName(name);
     try {
       await AsyncStorage.setItem('geocheckr_user_name', name);
-    } catch (error) {
-      console.error('Error saving user name:', error);
-    }
+    } catch (error) {}
   };
-
-  const step = tutorialSteps[currentStep];
-  const progress = ((currentStep + 1) / tutorialSteps.length) * 100;
 
   return (
     <View style={styles.container}>
@@ -183,6 +141,11 @@ export default function TutorialScreen({ navigation }: any) {
           {currentStep + 1} / {tutorialSteps.length}
         </Text>
       </View>
+
+      {/* Skip Button */}
+      <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+        <Text style={styles.skipButtonText}>Überspringen</Text>
+      </TouchableOpacity>
 
       {/* Content */}
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
@@ -200,68 +163,62 @@ export default function TutorialScreen({ navigation }: any) {
           <Text style={styles.stepDescription}>{step.description}</Text>
           
           {/* Tip */}
-          {step.tip && (
+          {step.tip ? (
             <View style={styles.tipContainer}>
               <Text style={styles.tipText}>💡 {step.tip}</Text>
             </View>
-          )}
+          ) : null}
 
           {/* Name Input (nur beim ersten Schritt) */}
-          {currentStep === 0 && (
+          {isFirstStep && (
             <View style={styles.nameContainer}>
-              <Text style={styles.nameLabel}>Wie heißt du?</Text>
+              <Text style={styles.nameLabel}>Wie heißt du? (optional)</Text>
               <TextInput
                 style={styles.nameInput}
                 value={userName}
                 onChangeText={saveUserName}
                 placeholder="Dein Name"
-                placeholderTextColor="#666"
+                placeholderTextColor="#555"
                 autoCapitalize="words"
                 returnKeyType="done"
+                selectionColor="#4CAF50"
               />
             </View>
           )}
         </ScrollView>
       </Animated.View>
 
+      {/* Step Indicators */}
+      <View style={styles.stepIndicators}>
+        {tutorialSteps.map((_, index) => (
+          <View
+            key={index}
+            style={[
+              styles.stepIndicator,
+              index === currentStep && styles.stepIndicatorActive,
+              index < currentStep && styles.stepIndicatorCompleted
+            ]}
+          />
+        ))}
+      </View>
+
       {/* Navigation */}
       <View style={styles.navigationContainer}>
-        {/* Skip Button */}
-        <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-          <Text style={styles.skipButtonText}>Überspringen</Text>
-        </TouchableOpacity>
-
-        {/* Step Indicators */}
-        <View style={styles.stepIndicators}>
-          {tutorialSteps.map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.stepIndicator,
-                index === currentStep && styles.stepIndicatorActive,
-                index < currentStep && styles.stepIndicatorCompleted
-              ]}
-            />
-          ))}
-        </View>
-
-        {/* Navigation Buttons */}
-        <View style={styles.navButtons}>
-          {currentStep > 0 && (
-            <TouchableOpacity style={styles.prevButton} onPress={handlePrev}>
-              <Text style={styles.prevButtonText}>← Zurück</Text>
-            </TouchableOpacity>
-          )}
-          
-          <TouchableOpacity 
-            style={[styles.nextButton, currentStep === 0 && styles.nextButtonFull]} 
-            onPress={handleNext}
-          >
-            <Text style={styles.nextButtonText}>
-              {currentStep === tutorialSteps.length - 1 ? 'Starten' : 'Weiter →'}
-            </Text>
+        {!isFirstStep && (
+          <TouchableOpacity style={styles.prevButton} onPress={handlePrev}>
+            <Text style={styles.prevButtonText}>← Zurück</Text>
           </TouchableOpacity>
-        </View>
+        )}
+        
+        <TouchableOpacity 
+          style={[styles.nextButton, isFirstStep && styles.nextButtonFull]} 
+          onPress={handleNext}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.nextButtonText}>
+            {isLastStep ? '🚀 Los geht\'s!' : 'Weiter →'}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -270,22 +227,22 @@ export default function TutorialScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1a1a2e',
+    paddingTop: 50,
   },
   progressContainer: {
     paddingHorizontal: 20,
-    paddingTop: 20,
     paddingBottom: 10,
   },
   progressBar: {
     height: 4,
-    backgroundColor: '#333',
+    backgroundColor: '#2a2a4a',
     borderRadius: 2,
     marginBottom: 8,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#e94560',
     borderRadius: 2,
   },
   progressText: {
@@ -293,124 +250,132 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
   },
+  skipButton: {
+    alignSelf: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  skipButtonText: {
+    color: '#666',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
   content: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 30,
-    paddingTop: 20,
+    paddingTop: 10,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   stepIcon: {
     fontSize: 80,
     marginBottom: 20,
   },
   stepTitle: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: 'bold',
     color: '#fff',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   stepDescription: {
-    fontSize: 18,
-    color: '#ccc',
+    fontSize: 17,
+    color: '#bbb',
     textAlign: 'center',
-    lineHeight: 26,
-    marginBottom: 30,
+    lineHeight: 25,
+    marginBottom: 25,
   },
   tipContainer: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#16213e',
     padding: 15,
     borderRadius: 12,
-    marginBottom: 30,
     width: '100%',
+    borderWidth: 1,
+    borderColor: '#2a2a4a',
   },
   tipText: {
     color: '#FFD700',
-    fontSize: 16,
+    fontSize: 15,
     lineHeight: 22,
   },
   nameContainer: {
     width: '100%',
-    marginBottom: 20,
+    marginTop: 25,
   },
   nameLabel: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 16,
     marginBottom: 10,
     textAlign: 'center',
   },
   nameInput: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#0f3460',
     borderRadius: 12,
-    padding: 15,
+    padding: 16,
     fontSize: 18,
     color: '#fff',
     textAlign: 'center',
-    borderWidth: 1,
-    borderColor: '#4CAF50',
-  },
-  navigationContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
-  skipButton: {
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  skipButtonText: {
-    color: '#888',
-    fontSize: 16,
-    textDecorationLine: 'underline',
+    borderWidth: 2,
+    borderColor: '#2a2a4a',
   },
   stepIndicators: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 20,
+    paddingVertical: 20,
+    gap: 8,
   },
   stepIndicator: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#333',
-    marginHorizontal: 5,
+    backgroundColor: '#2a2a4a',
   },
   stepIndicatorActive: {
-    backgroundColor: '#4CAF50',
-    width: 20,
+    backgroundColor: '#e94560',
+    width: 24,
   },
   stepIndicatorCompleted: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#4CAF50',
   },
-  navButtons: {
+  navigationContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    gap: 10,
   },
   prevButton: {
-    padding: 15,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 14,
+    backgroundColor: '#16213e',
+    borderWidth: 1,
+    borderColor: '#2a2a4a',
   },
   prevButtonText: {
     color: '#888',
     fontSize: 16,
   },
   nextButton: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 30,
-    paddingVertical: 15,
-    borderRadius: 25,
     flex: 1,
-    marginLeft: 20,
+    backgroundColor: '#e94560',
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+    shadowColor: '#e94560',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   nextButtonFull: {
-    marginLeft: 0,
+    // No extra margin needed
   },
   nextButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
-    textAlign: 'center',
   },
 });
