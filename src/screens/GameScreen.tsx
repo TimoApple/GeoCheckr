@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Vibration } from 'react-native';
 import locations from '../data/locations_complete';
 import { calculateDistance, calculatePoints } from '../utils/distance';
 import StreetViewImage from '../components/StreetViewImage';
@@ -34,6 +34,14 @@ export default function GameScreen({ route, navigation }: any) {
   const [distance, setDistance] = useState<number>(0);
   const [points, setPoints] = useState<number>(0);
   const [round, setRound] = useState(1);
+  const [usedLocations, setUsedLocations] = useState<number[]>([]);
+  
+  // Animations
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const resultScaleAnim = useRef(new Animated.Value(0)).current;
+  const timerPulse = useRef(new Animated.Value(1)).current;
   
   const currentPlayer = players[currentPlayerIndex];
   
@@ -44,9 +52,21 @@ export default function GameScreen({ route, navigation }: any) {
       return () => clearInterval(interval);
     }
     if (timer === 0 && phase === 'view') {
+      Vibration.vibrate(500);
       setPhase('answer');
     }
   }, [phase, timer]);
+  
+  // Timer pulse animation when low
+  useEffect(() => {
+    if (phase === 'view' && timer <= 5 && timer > 0) {
+      Vibration.vibrate(200);
+      Animated.sequence([
+        Animated.timing(timerPulse, { toValue: 1.2, duration: 150, useNativeDriver: true }),
+        Animated.timing(timerPulse, { toValue: 1, duration: 150, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [timer, phase]);
   
   // Check win condition
   useEffect(() => {
@@ -63,7 +83,15 @@ export default function GameScreen({ route, navigation }: any) {
     }
   }, [scores, targetScore, players, navigation]);
   
-  const simulateScan = () => {
+  const animateTransition = (callback: () => void) => {
+    Animated.sequence([
+      Animated.timing(fadeAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
+    ]).start();
+    setTimeout(callback, 200);
+  };
+  
+  const getRandomLocation = () => {
     const difficultyMap: Record<string, string[]> = {
       'leicht': ['leicht'],
       'mittel': ['leicht', 'mittel'],
@@ -71,14 +99,28 @@ export default function GameScreen({ route, navigation }: any) {
     };
     
     const availableLocations = locations.filter(loc => 
-      difficultyMap[difficulty]?.includes(loc.difficulty) ?? true
+      (difficultyMap[difficulty]?.includes(loc.difficulty) ?? true) &&
+      !usedLocations.includes(loc.id)
     );
     
-    const randomLoc = availableLocations[Math.floor(Math.random() * availableLocations.length)];
-    setCurrentLocation(randomLoc);
-    setTimer(30);
-    setPhase('view');
-    setRound(r => r + 1);
+    // Reset if all locations used
+    if (availableLocations.length === 0) {
+      setUsedLocations([]);
+      return locations[Math.floor(Math.random() * locations.length)];
+    }
+    
+    return availableLocations[Math.floor(Math.random() * availableLocations.length)];
+  };
+  
+  const simulateScan = () => {
+    const randomLoc = getRandomLocation();
+    setUsedLocations(prev => [...prev, randomLoc.id]);
+    animateTransition(() => {
+      setCurrentLocation(randomLoc);
+      setTimer(30);
+      setPhase('view');
+      setRound(r => r + 1);
+    });
   };
   
   const submitAnswer = (cityName: string) => {
@@ -96,6 +138,25 @@ export default function GameScreen({ route, navigation }: any) {
     
     const pts = calculatePoints(dist);
     
+    // Animate result
+    Animated.spring(resultScaleAnim, {
+      toValue: 1,
+      friction: 6,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+    
+    if (pts > 0) {
+      Vibration.vibrate([100, 50, 100]); // Success vibration
+      // Pulse animation for score
+      Animated.sequence([
+        Animated.timing(scaleAnim, { toValue: 1.3, duration: 200, useNativeDriver: true }),
+        Animated.timing(scaleAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
+      ]).start();
+    } else {
+      Vibration.vibrate(500); // Fail vibration
+    }
+    
     setDistance(dist);
     setPoints(pts);
     setScores(prev => ({
@@ -106,18 +167,36 @@ export default function GameScreen({ route, navigation }: any) {
   };
   
   const nextTurn = () => {
+    resultScaleAnim.setValue(0);
     const nextIndex = (currentPlayerIndex + 1) % players.length;
-    setCurrentPlayerIndex(nextIndex);
-    setPhase('scan');
+    animateTransition(() => {
+      setCurrentPlayerIndex(nextIndex);
+      setPhase('scan');
+    });
+  };
+
+  const getTimerColor = () => {
+    if (timer <= 5) return '#ff4444';
+    if (timer <= 10) return '#ffaa00';
+    return '#e94560';
   };
   
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerLeft}>{currentPlayer.name}</Text>
-        <Text style={styles.headerCenter}>Runde {round}</Text>
-        <Text style={styles.headerRight}>{difficulty}</Text>
+        <View style={styles.headerLeft}>
+          <Text style={styles.playerName}>{currentPlayer.name}</Text>
+          <Text style={styles.playerTurn}>ist dran</Text>
+        </View>
+        <View style={styles.headerCenter}>
+          <Text style={styles.roundText}>Runde {round}</Text>
+        </View>
+        <View style={styles.headerRight}>
+          <Text style={styles.difficultyBadge}>
+            {difficulty === 'leicht' ? '😊' : difficulty === 'mittel' ? '🤔' : '🔥'}
+          </Text>
+        </View>
       </View>
       
       {/* Scoreboard */}
@@ -125,79 +204,219 @@ export default function GameScreen({ route, navigation }: any) {
         {players.map((p: Player) => (
           <View key={p.id} style={[styles.scoreItem, p.id === currentPlayer.id && styles.activeScore]}>
             <Text style={styles.scoreName}>{p.name}</Text>
-            <Text style={styles.scoreValue}>{scores[p.id]}</Text>
+            <Animated.Text style={[
+              styles.scoreValue,
+              p.id === currentPlayer.id && { transform: [{ scale: scaleAnim }] }
+            ]}>
+              {scores[p.id]}
+            </Animated.Text>
+            <Text style={styles.scoreTarget}>/ {targetScore}</Text>
           </View>
         ))}
       </View>
       
       {/* Main Content */}
-      <View style={styles.mainContent}>
+      <Animated.View style={[styles.mainContent, { opacity: fadeAnim }]}>
         {phase === 'scan' && (
           <View style={styles.phaseContainer}>
+            <Text style={styles.scanIcon}>📷</Text>
             <Text style={styles.phaseTitle}>QR-Code scannen</Text>
-            <Text style={styles.phaseText}>Scanne den QR-Code auf der Location-Karte</Text>
-            <TouchableOpacity style={styles.scanButton} onPress={simulateScan}>
-              <Text style={styles.scanButtonText}>📷 QR-Code scannen</Text>
+            <Text style={styles.phaseText}>
+              Scanne den QR-Code auf der Location-Karte oder tippe unten um zu testen
+            </Text>
+            <TouchableOpacity style={styles.scanButton} onPress={simulateScan} activeOpacity={0.8}>
+              <Text style={styles.scanButtonText}>📍 Location laden</Text>
             </TouchableOpacity>
+            <Text style={styles.scanHint}>
+              {locations.length - usedLocations.length} von {locations.length} Locations verfügbar
+            </Text>
           </View>
         )}
         
         {phase === 'view' && (
           <View style={styles.phaseContainer}>
-            <Text style={styles.timer}>{timer}</Text>
+            <Animated.Text style={[styles.timer, { color: getTimerColor(), transform: [{ scale: timerPulse }] }]}>
+              {timer}
+            </Animated.Text>
             <Text style={styles.phaseText}>Wo ist dieser Ort?</Text>
             <View style={styles.imageContainer}>
               <StreetViewImage location={currentLocation} />
             </View>
-            {timer <= 5 && <Text style={styles.countdown}>Noch {timer} Sekunden!</Text>}
+            {timer <= 10 && (
+              <Text style={[styles.countdown, timer <= 5 && styles.countdownUrgent]}>
+                {timer <= 5 ? '⚡ Schnell!' : '⏰ Zeit wird knapp...'}
+              </Text>
+            )}
           </View>
         )}
         
         {phase === 'answer' && (
-          <VoiceInput 
-            onSubmit={submitAnswer}
-            placeholder="Stadtname eingeben..."
-          />
+          <View style={styles.phaseContainer}>
+            <Text style={styles.answerIcon}>🎤</Text>
+            <Text style={styles.phaseTitle}>Deine Antwort</Text>
+            <Text style={styles.phaseText}>Nenne die Stadt, die am nächsten liegt</Text>
+            <VoiceInput 
+              onSubmit={submitAnswer}
+              placeholder="Stadtname eingeben..."
+            />
+          </View>
         )}
         
         {phase === 'result' && (
-          <View style={styles.phaseContainer}>
-            <Text style={styles.resultTitle}>{points > 0 ? '✅ Richtig!' : '❌ Falsch!'}</Text>
-            <Text style={styles.resultText}>Distanz: {distance} km</Text>
-            <Text style={styles.resultText}>Punkte: +{points}</Text>
-            <Text style={styles.resultText}>Ort: {currentLocation.city}, {currentLocation.country}</Text>
-            <TouchableOpacity style={styles.nextButton} onPress={nextTurn}>
-              <Text style={styles.nextButtonText}>Nächster Spieler →</Text>
+          <Animated.View style={[styles.phaseContainer, { transform: [{ scale: resultScaleAnim }] }]}>
+            <Text style={styles.resultIcon}>
+              {points >= 3 ? '🎯' : points >= 1 ? '👍' : '😅'}
+            </Text>
+            <Text style={[
+              styles.resultTitle, 
+              points > 0 ? styles.resultCorrect : styles.resultWrong
+            ]}>
+              {points >= 3 ? 'Perfekt!' : points >= 2 ? 'Gut!' : points >= 1 ? 'Nicht schlecht!' : 'Daneben!'}
+            </Text>
+            
+            <View style={styles.resultCard}>
+              <View style={styles.resultRow}>
+                <Text style={styles.resultLabel}>📍 Ort</Text>
+                <Text style={styles.resultValue}>{currentLocation.city}, {currentLocation.country}</Text>
+              </View>
+              <View style={styles.resultRow}>
+                <Text style={styles.resultLabel}>📏 Distanz</Text>
+                <Text style={styles.resultValue}>{distance.toLocaleString()} km</Text>
+              </View>
+              <View style={styles.resultRow}>
+                <Text style={styles.resultLabel}>⭐ Punkte</Text>
+                <Text style={[styles.resultValue, styles.pointsHighlight]}>+{points}</Text>
+              </View>
+            </View>
+            
+            <TouchableOpacity style={styles.nextButton} onPress={nextTurn} activeOpacity={0.8}>
+              <Text style={styles.nextButtonText}>
+                {players[(currentPlayerIndex + 1) % players.length].name} ist dran →
+              </Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         )}
-      </View>
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#1a1a2e' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 15, backgroundColor: '#16213e' },
-  headerLeft: { color: '#e94560', fontSize: 18, fontWeight: 'bold' },
-  headerCenter: { color: '#fff', fontSize: 16 },
-  headerRight: { color: '#888', fontSize: 14 },
-  scoreboard: { flexDirection: 'row', justifyContent: 'space-around', padding: 10, backgroundColor: '#0f3460' },
-  scoreItem: { alignItems: 'center', padding: 8 },
-  activeScore: { borderBottomWidth: 2, borderBottomColor: '#e94560' },
-  scoreName: { color: '#ccc', fontSize: 12 },
-  scoreValue: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
+  
+  // Header
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    padding: 15, 
+    backgroundColor: '#16213e',
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a4a',
+  },
+  headerLeft: { flex: 1 },
+  playerName: { color: '#e94560', fontSize: 18, fontWeight: 'bold' },
+  playerTurn: { color: '#888', fontSize: 12 },
+  headerCenter: { flex: 1, alignItems: 'center' },
+  roundText: { color: '#fff', fontSize: 16 },
+  headerRight: { flex: 1, alignItems: 'flex-end' },
+  difficultyBadge: { fontSize: 24 },
+  
+  // Scoreboard
+  scoreboard: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-around', 
+    padding: 12, 
+    backgroundColor: '#0f3460' 
+  },
+  scoreItem: { alignItems: 'center', padding: 8, minWidth: 80 },
+  activeScore: { 
+    borderBottomWidth: 3, 
+    borderBottomColor: '#e94560',
+    backgroundColor: 'rgba(233, 69, 96, 0.1)',
+    borderRadius: 8,
+  },
+  scoreName: { color: '#ccc', fontSize: 12, marginBottom: 2 },
+  scoreValue: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
+  scoreTarget: { color: '#666', fontSize: 10 },
+  
+  // Main Content
   mainContent: { flex: 1, justifyContent: 'center', padding: 20 },
   phaseContainer: { alignItems: 'center' },
-  timer: { fontSize: 72, color: '#e94560', fontWeight: 'bold', marginBottom: 10 },
-  countdown: { fontSize: 24, color: '#ff0', marginTop: 15 },
+  
+  // Scan Phase
+  scanIcon: { fontSize: 60, marginBottom: 15 },
   phaseTitle: { fontSize: 24, color: '#fff', fontWeight: 'bold', marginBottom: 10 },
-  phaseText: { fontSize: 18, color: '#ccc', marginBottom: 20, textAlign: 'center' },
-  scanButton: { backgroundColor: '#e94560', paddingVertical: 18, paddingHorizontal: 40, borderRadius: 12 },
+  phaseText: { fontSize: 16, color: '#aaa', marginBottom: 25, textAlign: 'center', lineHeight: 22 },
+  scanButton: { 
+    backgroundColor: '#e94560', 
+    paddingVertical: 18, 
+    paddingHorizontal: 40, 
+    borderRadius: 12,
+    shadowColor: '#e94560',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
   scanButtonText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
-  imageContainer: { width: '100%', height: 250, borderRadius: 15, overflow: 'hidden' },
-  resultTitle: { fontSize: 28, fontWeight: 'bold', color: '#fff', marginBottom: 15 },
-  resultText: { fontSize: 18, color: '#ccc', marginBottom: 8 },
-  nextButton: { backgroundColor: '#e94560', padding: 15, borderRadius: 10, marginTop: 20 },
-  nextButtonText: { color: '#fff', fontSize: 18, fontWeight: '600' },
+  scanHint: { color: '#666', fontSize: 12, marginTop: 15 },
+  
+  // View Phase
+  timer: { 
+    fontSize: 80, 
+    fontWeight: 'bold', 
+    marginBottom: 10,
+    textShadowColor: 'rgba(233, 69, 96, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 20,
+  },
+  countdown: { fontSize: 20, color: '#ffaa00', marginTop: 15, fontWeight: '600' },
+  countdownUrgent: { color: '#ff4444', fontSize: 22 },
+  imageContainer: { 
+    width: '100%', 
+    height: 280, 
+    borderRadius: 15, 
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#2a2a4a',
+  },
+  
+  // Answer Phase
+  answerIcon: { fontSize: 50, marginBottom: 15 },
+  
+  // Result Phase
+  resultIcon: { fontSize: 60, marginBottom: 10 },
+  resultTitle: { fontSize: 30, fontWeight: 'bold', marginBottom: 20 },
+  resultCorrect: { color: '#4CAF50' },
+  resultWrong: { color: '#ff4444' },
+  resultCard: {
+    backgroundColor: '#16213e',
+    borderRadius: 15,
+    padding: 20,
+    width: '100%',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#2a2a4a',
+  },
+  resultRow: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a4a',
+  },
+  resultLabel: { color: '#888', fontSize: 16 },
+  resultValue: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  pointsHighlight: { color: '#4CAF50', fontSize: 20 },
+  nextButton: { 
+    backgroundColor: '#0f3460', 
+    paddingVertical: 16, 
+    paddingHorizontal: 30, 
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e94560',
+  },
+  nextButtonText: { color: '#e94560', fontSize: 18, fontWeight: '600' },
 });

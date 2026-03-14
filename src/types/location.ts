@@ -11,9 +11,13 @@ export interface Location {
   qrCode: string;
   landmark?: string; // Optional landmark name
   hint?: string; // Optional hint for easier difficulty
-}
-
-export interface LocationWithImage extends Location {
-  imageUrl?: string;
-  imageSource?: 'wikimedia' | 'picsum' | 'mapillary';
+  
+  // Street View / Bild-Daten (von Timo kuratiert)
+  streetViewUrl?: string;      // Google Street View Link ODER Mapillary URL
+  streetViewCoords?: {         // Exakte Koordinaten des Bildes (falls abweichend von Stadtzentrum)
+    lat: number;
+    lng: number;
+  };
+  streetViewDescription?: string; // Kurzbeschreibung was man sieht (für Timo's Referenz)
+  isPlaceholder?: boolean;     // true = Daten müssen noch von Timo ersetzt werden
 }
