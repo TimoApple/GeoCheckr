@@ -30,7 +30,8 @@
     },
     "plugins": [
       "expo-camera",
-      "expo-asset"
+      "expo-asset",
+      "@react-native-voice/voice"
     ]
   }
 }
