@@ -30,6 +30,7 @@ export default function GameScreen({ route, navigation }: any) {
     Object.fromEntries(players.map((p: Player) => [p.id, 0]))
   );
   const [timer, setTimer] = useState(30);
+  const [countdownPaused, setCountdownPaused] = useState(false);
   const [phase, setPhase] = useState<'scan' | 'view' | 'answer' | 'result'>('scan');
   const [distance, setDistance] = useState<number>(0);
   const [points, setPoints] = useState<number>(0);
@@ -45,9 +46,9 @@ export default function GameScreen({ route, navigation }: any) {
   
   const currentPlayer = players[currentPlayerIndex];
   
-  // Timer countdown
+  // Timer countdown - only when view phase is active
   useEffect(() => {
-    if (phase === 'view' && timer > 0) {
+    if (phase === 'view' && timer > 0 && !countdownPaused) {
       const interval = setInterval(() => setTimer(t => t - 1), 1000);
       return () => clearInterval(interval);
     }
@@ -55,7 +56,7 @@ export default function GameScreen({ route, navigation }: any) {
       Vibration.vibrate(500);
       setPhase('answer');
     }
-  }, [phase, timer]);
+  }, [phase, timer, countdownPaused]);
   
   // Timer pulse animation when low
   useEffect(() => {
@@ -115,6 +116,7 @@ export default function GameScreen({ route, navigation }: any) {
   const simulateScan = () => {
     const randomLoc = getRandomLocation();
     setUsedLocations(prev => [...prev, randomLoc.id]);
+    setCountdownPaused(false);
     animateTransition(() => {
       setCurrentLocation(randomLoc);
       setTimer(30);
@@ -234,19 +236,32 @@ export default function GameScreen({ route, navigation }: any) {
         )}
         
         {phase === 'view' && (
-          <View style={styles.phaseContainer}>
-            <Animated.Text style={[styles.timer, { color: getTimerColor(), transform: [{ scale: timerPulse }] }]}>
-              {timer}
-            </Animated.Text>
-            <Text style={styles.phaseText}>Wo ist dieser Ort?</Text>
-            <View style={styles.imageContainer}>
-              <StreetViewImage location={currentLocation} />
+          <View style={styles.viewPhaseContainer}>
+            {/* Fullscreen Image */}
+            <View style={styles.fullscreenImageContainer}>
+              <StreetViewImage location={currentLocation} showInfo={false} />
+              
+              {/* Countdown Overlay */}
+              <View style={styles.countdownOverlay}>
+                <Animated.Text style={[styles.countdownTimer, { 
+                  color: getTimerColor(), 
+                  transform: [{ scale: timerPulse }] 
+                }]}>
+                  {timer}
+                </Animated.Text>
+              </View>
+              
+              {/* Skip/Pause Button */}
+              <TouchableOpacity 
+                style={styles.skipTimerButton}
+                onPress={() => {
+                  setCountdownPaused(true);
+                  setPhase('answer');
+                }}
+              >
+                <Text style={styles.skipTimerText}>Ich weiß es! →</Text>
+              </TouchableOpacity>
             </View>
-            {timer <= 10 && (
-              <Text style={[styles.countdown, timer <= 5 && styles.countdownUrgent]}>
-                {timer <= 5 ? '⚡ Schnell!' : '⏰ Zeit wird knapp...'}
-              </Text>
-            )}
           </View>
         )}
         
@@ -259,6 +274,12 @@ export default function GameScreen({ route, navigation }: any) {
               onSubmit={submitAnswer}
               placeholder="Stadtname eingeben..."
             />
+            <TouchableOpacity 
+              style={styles.skipAnswerButton}
+              onPress={() => submitAnswer('')}
+            >
+              <Text style={styles.skipAnswerText}>Überspringen →</Text>
+            </TouchableOpacity>
           </View>
         )}
         
@@ -362,28 +383,63 @@ const styles = StyleSheet.create({
   scanButtonText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
   scanHint: { color: '#666', fontSize: 12, marginTop: 15 },
   
-  // View Phase
-  timer: { 
-    fontSize: 80, 
-    fontWeight: 'bold', 
-    marginBottom: 10,
-    textShadowColor: 'rgba(233, 69, 96, 0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 20,
+  // View Phase - Fullscreen
+  viewPhaseContainer: {
+    flex: 1,
+    marginHorizontal: -20, // Extend to screen edges
+    marginTop: -10,
+    marginBottom: -20,
   },
-  countdown: { fontSize: 20, color: '#ffaa00', marginTop: 15, fontWeight: '600' },
-  countdownUrgent: { color: '#ff4444', fontSize: 22 },
-  imageContainer: { 
-    width: '100%', 
-    height: 280, 
-    borderRadius: 15, 
-    overflow: 'hidden',
+  fullscreenImageContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  countdownOverlay: {
+    position: 'absolute',
+    top: 15,
+    right: 15,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    borderRadius: 30,
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#2a2a4a',
+    borderColor: '#e94560',
+  },
+  countdownTimer: {
+    fontSize: 28,
+    fontWeight: 'bold',
+  },
+  skipTimerButton: {
+    position: 'absolute',
+    bottom: 20,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+  },
+  skipTimerText: {
+    color: '#4CAF50',
+    fontSize: 16,
+    fontWeight: '600',
   },
   
   // Answer Phase
   answerIcon: { fontSize: 50, marginBottom: 15 },
+  skipAnswerButton: {
+    marginTop: 15,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  skipAnswerText: {
+    color: '#666',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
   
   // Result Phase
   resultIcon: { fontSize: 60, marginBottom: 10 },
