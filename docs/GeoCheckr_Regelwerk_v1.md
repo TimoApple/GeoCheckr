@@ -1,7 +1,7 @@
-# GeoCheckr — Offizielles Regelwerk (v1.0)
+# GeoCheckr — Offizielles Regelwerk v1.0
 
-## ÜBERBLICK
-GeoCheckr ist ein Geografie-Party-Spiel für 2+ Spieler ab 10 Jahren. 
+## ÜBERSICHT
+GeoCheckr ist ein Geografie-Party-Spiel für 2+ Spieler ab 10 Jahren.
 Spieler scannen QR-Codes, betrachten Bilder und erraten Orte weltweit.
 
 ## SPIELZIEL
@@ -52,6 +52,12 @@ Spieler nennt die Stadt, die am nächsten zum gezeigten Ort liegt.
 **Mittel (P2):** Stadtgebiet, Architektur-Stil als Hinweis
 **Schwer (P3/P4):** Vororte, Natur, nur Klima/Vegetation
 
+## PUNKTESYSTEM
+- < 100km: 3 Punkte (Sehr nah)
+- < 500km: 2 Punkte (Nah)
+- < 2000km: 1 Punkt (Weit)
+- > 2000km: 0 Punkte (Sehr weit)
+
 ## BONUS-CHIPS (Optional)
 Jeder Spieler startet mit 3 Chips:
 - Hilfe-Chip: Zweites Bild
@@ -85,4 +91,4 @@ Spieler bilden Teams von 2. Teammitglieder dürfen sich beraten.
 Zusätzlich zur Stadt muss die Himmelsrichtung geschätzt werden.
 
 ---
-**Version:** 1.0 | **Datum:** 13. März 2026
+**Version:** 1.0 | **Datum:** 14. März 2026
