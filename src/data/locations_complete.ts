@@ -76,6 +76,7 @@ export const locations: Location[] = [
   { id: 68, city: "Dhaka", country: "Bangladesch", region: "Asien", continent: "Asien", lat: 23.8103, lng: 90.4125, difficulty: "mittel", qrCode: "QR068" },
   { id: 69, city: "Bagdad", country: "Irak", region: "Asien", continent: "Asien", lat: 33.3152, lng: 44.3661, difficulty: "mittel", qrCode: "QR069" },
   { id: 70, city: "Teheran", country: "Iran", region: "Asien", continent: "Asien", lat: 35.6892, lng: 51.3890, difficulty: "mittel", qrCode: "QR070" },
+  { id: 70.5, city: "Kharg", country: "Iran", region: "Asien", continent: "Asien", lat: 29.2406, lng: 50.3117, difficulty: "schwer", qrCode: "QR070b", streetViewUrl: "https://maps.app.goo.gl/QAprAfSCXrzAco4R8", streetViewDescription: "Insel im Persischen Golf, Ölterminal", isPlaceholder: false },
   { id: 71, city: "Riad", country: "Saudi-Arabien", region: "Asien", continent: "Asien", lat: 24.7136, lng: 46.6753, difficulty: "mittel", qrCode: "QR071" },
   { id: 72, city: "Amman", country: "Jordanien", region: "Asien", continent: "Asien", lat: 31.9454, lng: 35.9284, difficulty: "mittel", qrCode: "QR072" },
   { id: 73, city: "Beirut", country: "Libanon", region: "Asien", continent: "Asien", lat: 33.8938, lng: 35.5018, difficulty: "mittel", qrCode: "QR073" },
