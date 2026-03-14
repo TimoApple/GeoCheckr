@@ -113,7 +113,9 @@ export default function TutorialScreen({ navigation, onComplete }: any) {
 
   const completeTutorial = async () => {
     try {
+      // Save both keys for compatibility
       await AsyncStorage.setItem('geocheckr_tutorial_seen', 'true');
+      await AsyncStorage.setItem('geocheckr_tutorial_done', 'true');
       if (userName.trim()) {
         await AsyncStorage.setItem('geocheckr_user_name', userName.trim());
       }
@@ -121,10 +123,10 @@ export default function TutorialScreen({ navigation, onComplete }: any) {
       console.error('Error saving tutorial:', error);
     }
     // Support both navigation (inside Stack) and onComplete (outside Navigation)
-    if (navigation?.replace) {
-      navigation.replace('Home');
-    } else if (onComplete) {
+    if (onComplete) {
       onComplete();
+    } else if (navigation?.replace) {
+      navigation.replace('Home');
     }
   };
 
