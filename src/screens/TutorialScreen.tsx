@@ -64,7 +64,7 @@ const tutorialSteps: TutorialStep[] = [
   }
 ];
 
-export default function TutorialScreen({ navigation }: any) {
+export default function TutorialScreen({ navigation, onComplete }: any) {
   const [currentStep, setCurrentStep] = useState(0);
   const [userName, setUserName] = useState('');
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -120,7 +120,12 @@ export default function TutorialScreen({ navigation }: any) {
     } catch (error) {
       console.error('Error saving tutorial:', error);
     }
-    navigation.replace('Home');
+    // Support both navigation (inside Stack) and onComplete (outside Navigation)
+    if (navigation?.replace) {
+      navigation.replace('Home');
+    } else if (onComplete) {
+      onComplete();
+    }
   };
 
   const saveUserName = async (name: string) => {
