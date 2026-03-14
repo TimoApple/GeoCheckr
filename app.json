@@ -23,15 +23,32 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1a1a2e"
       },
-      "package": "com.geocheckr.app"
+      "package": "com.geocheckr.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "GeoCheckr — Geografie Party-Spiel",
+      "shortName": "GeoCheckr",
+      "description": "Finde den Ort! Ein Geografie-Party-Spiel für 2-8 Spieler.",
+      "backgroundColor": "#1a1a2e",
+      "themeColor": "#e94560",
+      "display": "standalone",
+      "orientation": "portrait"
     },
     "plugins": [
       "expo-camera",
       "expo-asset",
       "@react-native-voice/voice"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "b47d3e21-7bed-4c8b-bd12-e805eb1380f8"
+      }
+    },
+    "owner": "tboese"
   }
 }
