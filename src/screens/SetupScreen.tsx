@@ -8,15 +8,15 @@ interface Player {
 
 export default function SetupScreen({ navigation }: any) {
   const [players, setPlayers] = useState<Player[]>([
-    { id: 1, name: 'Spieler 1' },
-    { id: 2, name: 'Spieler 2' }
+    { id: 1, name: '' },
+    { id: 2, name: '' }
   ]);
   const [difficulty, setDifficulty] = useState<'leicht' | 'mittel' | 'schwer'>('mittel');
   const [targetScore, setTargetScore] = useState(10);
   
   const addPlayer = () => {
     if (players.length < 8) {
-      setPlayers([...players, { id: Date.now(), name: `Spieler ${players.length + 1}` }]);
+      setPlayers([...players, { id: Date.now(), name: '' }]);
     }
   };
   
@@ -31,20 +31,30 @@ export default function SetupScreen({ navigation }: any) {
   };
   
   const startGame = () => {
-    navigation.navigate('Game', { players, difficulty, targetScore });
+    // Fill in default names if empty
+    const filledPlayers = players.map((p, i) => ({
+      ...p,
+      name: p.name.trim() || `Spieler ${i + 1}`
+    }));
+    navigation.navigate('Game', { players: filledPlayers, difficulty, targetScore });
   };
   
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      {/* SPIELER */}
       <Text style={styles.sectionTitle}>👥 Spieler ({players.length})</Text>
       {players.map((player, index) => (
         <View key={player.id} style={styles.playerRow}>
+          <View style={styles.playerNumber}>
+            <Text style={styles.playerNumberText}>{index + 1}</Text>
+          </View>
           <TextInput
             style={styles.playerInput}
             value={player.name}
             onChangeText={(text) => updatePlayerName(player.id, text)}
             placeholder={`Spieler ${index + 1}`}
-            placeholderTextColor="#666"
+            placeholderTextColor="#555"
+            selectionColor="#e94560"
           />
           {players.length > 2 && (
             <TouchableOpacity onPress={() => removePlayer(player.id)} style={styles.removeButton}>
@@ -55,26 +65,38 @@ export default function SetupScreen({ navigation }: any) {
       ))}
       
       {players.length < 8 && (
-        <TouchableOpacity style={styles.addButton} onPress={addPlayer}>
+        <TouchableOpacity style={styles.addButton} onPress={addPlayer} activeOpacity={0.7}>
           <Text style={styles.addButtonText}>+ Spieler hinzufügen</Text>
         </TouchableOpacity>
       )}
       
+      {/* SCHWIERIGKEIT */}
       <Text style={styles.sectionTitle}>🎯 Schwierigkeit</Text>
       <View style={styles.diffRow}>
-        {(['leicht', 'mittel', 'schwer'] as const).map((level) => (
-          <TouchableOpacity
-            key={level}
-            style={[styles.diffButton, difficulty === level && styles.diffActive]}
-            onPress={() => setDifficulty(level)}
-          >
-            <Text style={[styles.diffText, difficulty === level && styles.diffTextActive]}>
-              {level === 'leicht' ? '😊 Leicht' : level === 'mittel' ? '🤔 Mittel' : '🔥 Schwer'}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        <TouchableOpacity
+          style={[styles.diffButton, difficulty === 'leicht' && styles.diffLeicht]}
+          onPress={() => setDifficulty('leicht')}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.diffText, difficulty === 'leicht' && styles.diffTextActive]}>😊 Leicht</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.diffButton, difficulty === 'mittel' && styles.diffMittel]}
+          onPress={() => setDifficulty('mittel')}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.diffText, difficulty === 'mittel' && styles.diffTextActive]}>🤔 Mittel</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.diffButton, difficulty === 'schwer' && styles.diffSchwer]}
+          onPress={() => setDifficulty('schwer')}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.diffText, difficulty === 'schwer' && styles.diffTextActive]}>🔥 Schwer</Text>
+        </TouchableOpacity>
       </View>
       
+      {/* ZIEL-SCORE */}
       <Text style={styles.sectionTitle}>🏁 Ziel-Score</Text>
       <View style={styles.scoreRow}>
         {[5, 10, 15, 20].map((score) => (
@@ -82,20 +104,21 @@ export default function SetupScreen({ navigation }: any) {
             key={score}
             style={[styles.scoreButton, targetScore === score && styles.scoreActive]}
             onPress={() => setTargetScore(score)}
+            activeOpacity={0.7}
           >
-            <Text style={[styles.scoreText, targetScore === score && styles.scoreTextActive]}>
-              {score}
-            </Text>
+            <Text style={[styles.scoreText, targetScore === score && styles.scoreTextActive]}>{score}</Text>
           </TouchableOpacity>
         ))}
       </View>
       
+      {/* INFO */}
       <View style={styles.infoBox}>
-        <Text style={styles.infoText}>📱 Benötigt: Kamera + Internet</Text>
-        <Text style={styles.infoText}>⏱️ Geschätzte Spielzeit: 20-45 Min</Text>
+        <Text style={styles.infoText}>📱 Kamera + Internet nötig</Text>
+        <Text style={styles.infoText}>⏱️ ~20-45 Min Spielzeit</Text>
       </View>
       
-      <TouchableOpacity style={styles.startButton} onPress={startGame}>
+      {/* START */}
+      <TouchableOpacity style={styles.startButton} onPress={startGame} activeOpacity={0.8}>
         <Text style={styles.startButtonText}>🚀 Spiel starten</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -103,26 +126,179 @@ export default function SetupScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1a1a2e', padding: 20 },
-  sectionTitle: { color: '#e94560', fontSize: 20, fontWeight: '600', marginTop: 25, marginBottom: 15 },
-  playerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  playerInput: { flex: 1, backgroundColor: '#16213e', color: '#fff', padding: 15, borderRadius: 10, fontSize: 16, borderWidth: 1, borderColor: '#2a2a4a' },
-  removeButton: { marginLeft: 10, width: 40, height: 40, backgroundColor: '#333', borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
-  removeButtonText: { color: '#e94560', fontSize: 18 },
-  addButton: { backgroundColor: '#0f3460', padding: 12, borderRadius: 10, alignItems: 'center', marginTop: 5 },
-  addButtonText: { color: '#fff', fontSize: 16 },
-  diffRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  diffButton: { flex: 1, backgroundColor: '#16213e', padding: 15, borderRadius: 10, marginHorizontal: 5, alignItems: 'center', borderWidth: 1, borderColor: '#2a2a4a' },
-  diffActive: { backgroundColor: '#e94560', borderColor: '#e94560' },
-  diffText: { color: '#666', fontSize: 14 },
-  diffTextActive: { color: '#fff', fontWeight: '600' },
-  scoreRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  scoreButton: { flex: 1, backgroundColor: '#16213e', padding: 15, borderRadius: 10, marginHorizontal: 5, alignItems: 'center', borderWidth: 1, borderColor: '#2a2a4a' },
-  scoreActive: { backgroundColor: '#0f3460', borderColor: '#0f3460' },
-  scoreText: { color: '#666', fontSize: 18 },
-  scoreTextActive: { color: '#fff', fontWeight: '600' },
-  infoBox: { backgroundColor: '#16213e', borderRadius: 10, padding: 15, marginTop: 25, borderWidth: 1, borderColor: '#2a2a4a' },
-  infoText: { color: '#888', fontSize: 14, marginBottom: 5 },
-  startButton: { backgroundColor: '#e94560', paddingVertical: 18, borderRadius: 12, marginTop: 30, alignItems: 'center' },
-  startButtonText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#1a1a2e',
+  },
+  contentContainer: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  
+  sectionTitle: { 
+    color: '#e94560', 
+    fontSize: 20, 
+    fontWeight: '700', 
+    marginTop: 25, 
+    marginBottom: 15 
+  },
+  
+  // Spieler
+  playerRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginBottom: 12 
+  },
+  playerNumber: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#e94560',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  playerNumberText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  playerInput: { 
+    flex: 1, 
+    backgroundColor: '#0f3460', 
+    color: '#ffffff', 
+    padding: 14, 
+    borderRadius: 10, 
+    fontSize: 16, 
+    borderWidth: 2, 
+    borderColor: '#2a2a4a',
+  },
+  removeButton: { 
+    marginLeft: 10, 
+    width: 36, 
+    height: 36, 
+    backgroundColor: '#2a2a4a', 
+    borderRadius: 18, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  removeButtonText: { 
+    color: '#e94560', 
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  addButton: { 
+    backgroundColor: '#16213e', 
+    padding: 14, 
+    borderRadius: 10, 
+    alignItems: 'center', 
+    marginTop: 5,
+    borderWidth: 2,
+    borderColor: '#2a2a4a',
+    borderStyle: 'dashed',
+  },
+  addButtonText: { 
+    color: '#aaa', 
+    fontSize: 16 
+  },
+  
+  // Schwierigkeit
+  diffRow: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  diffButton: { 
+    flex: 1, 
+    backgroundColor: '#16213e', 
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    borderRadius: 12, 
+    alignItems: 'center', 
+    borderWidth: 2, 
+    borderColor: '#2a2a4a' 
+  },
+  diffLeicht: { 
+    backgroundColor: '#1b4332', 
+    borderColor: '#4CAF50' 
+  },
+  diffMittel: { 
+    backgroundColor: '#3d2c00', 
+    borderColor: '#FF9800' 
+  },
+  diffSchwer: { 
+    backgroundColor: '#3d0000', 
+    borderColor: '#f44336' 
+  },
+  diffText: { 
+    color: '#888', 
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  diffTextActive: { 
+    color: '#fff',
+  },
+  
+  // Score
+  scoreRow: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  scoreButton: { 
+    flex: 1, 
+    backgroundColor: '#16213e', 
+    paddingVertical: 18,
+    borderRadius: 12, 
+    alignItems: 'center', 
+    borderWidth: 2, 
+    borderColor: '#2a2a4a' 
+  },
+  scoreActive: { 
+    backgroundColor: '#0f3460', 
+    borderColor: '#e94560',
+    borderWidth: 2,
+  },
+  scoreText: { 
+    color: '#888', 
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  scoreTextActive: { 
+    color: '#fff',
+  },
+  
+  // Info
+  infoBox: { 
+    backgroundColor: '#16213e', 
+    borderRadius: 12, 
+    padding: 16, 
+    marginTop: 25, 
+    borderWidth: 1, 
+    borderColor: '#2a2a4a' 
+  },
+  infoText: { 
+    color: '#888', 
+    fontSize: 14, 
+    marginBottom: 4 
+  },
+  
+  // Start
+  startButton: { 
+    backgroundColor: '#e94560', 
+    paddingVertical: 18, 
+    borderRadius: 14, 
+    marginTop: 30, 
+    alignItems: 'center',
+    shadowColor: '#e94560',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  startButtonText: { 
+    color: '#fff', 
+    fontSize: 20, 
+    fontWeight: 'bold' 
+  },
 });
