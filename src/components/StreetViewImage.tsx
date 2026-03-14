@@ -1,14 +1,22 @@
 // GeoCheckr — Street View Component
-// Free alternatives: Wikimedia Commons, Placeholder images
+// Supports: 360° Panorama, Wikimedia images, regular images
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, ActivityIndicator } from 'react-native';
-import { Location } from '../data/locations';
+import { View, Text, Image, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { Location } from '../types/location';
+import Panorama360Viewer from './Panorama360Viewer';
 
 interface StreetViewProps {
   location: Location;
-  blurAmount?: number; // For difficulty-based blur
 }
+
+/**
+ * 360° Panorama URLs (Timos echte Daten + freie Quellen)
+ */
+const PANORAMA_360_URLS: Record<string, string> = {
+  // Echte Daten von Timo
+  "Kharg": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Kharg_Island_panorama.jpg",
+};
 
 /**
  * Wikimedia Commons image URLs for major cities
@@ -30,43 +38,63 @@ const WIKIMEDIA_IMAGES: Record<string, string> = {
 };
 
 /**
- * Generate a Street View-like image URL
- * Uses a gradient/pattern based on location for demo
+ * Determine the best image source for a location
  */
-function getImageUrl(location: Location): string {
-  // Try Wikimedia first
-  if (WIKIMEDIA_IMAGES[location.city]) {
-    return WIKIMEDIA_IMAGES[location.city];
+function getImageInfo(location: Location): { url: string; is360: boolean } {
+  // Check for custom Street View URL from Timo
+  if (location.streetViewUrl && !location.isPlaceholder) {
+    return { url: location.streetViewUrl, is360: false };
   }
   
-  // Fallback: Use picsum.photos with location-based seed for consistency
+  // Check for 360° panorama
+  if (PANORAMA_360_URLS[location.city]) {
+    return { url: PANORAMA_360_URLS[location.city], is360: true };
+  }
+  
+  // Try Wikimedia
+  if (WIKIMEDIA_IMAGES[location.city]) {
+    return { url: WIKIMEDIA_IMAGES[location.city], is360: false };
+  }
+  
+  // Fallback: picsum with seed for consistency
   const seed = location.id * 7 + 42;
-  return `https://picsum.photos/seed/${seed}/800/600`;
+  return { url: `https://picsum.photos/seed/${seed}/800/600`, is360: false };
 }
 
 /**
  * Street View Component for GeoCheckr
- * Shows location image with optional blur for difficulty
+ * Supports 360° Panorama mode and regular images
  */
-export default function StreetViewImage({ location, blurAmount = 0 }: StreetViewProps) {
+export default function StreetViewImage({ location }: StreetViewProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [imageUrl, setImageUrl] = useState<string>('');
+  const [viewMode, setViewMode] = useState<'360' | 'flat'>('flat');
+  const [imageInfo, setImageInfo] = useState<{ url: string; is360: boolean }>({ url: '', is360: false });
 
   useEffect(() => {
-    setImageUrl(getImageUrl(location));
+    const info = getImageInfo(location);
+    setImageInfo(info);
+    setViewMode(info.is360 ? '360' : 'flat');
     setLoading(true);
     setError(false);
   }, [location]);
 
-  if (!imageUrl) {
+  // 360° Panorama Mode
+  if (viewMode === '360' && imageInfo.url) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#e94560" />
+        <Panorama360Viewer imageUrl={imageInfo.url} locationName={location.city} />
+        <TouchableOpacity 
+          style={styles.toggle360}
+          onPress={() => setViewMode('flat')}
+        >
+          <Text style={styles.toggle360Text}>📷 Normal</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
+  // Regular Image Mode
   return (
     <View style={styles.container}>
       {loading && (
@@ -77,11 +105,8 @@ export default function StreetViewImage({ location, blurAmount = 0 }: StreetView
       )}
       
       <Image
-        source={{ uri: imageUrl }}
-        style={[
-          styles.image,
-          blurAmount > 0 && { filter: `blur(${blurAmount}px)` as any }
-        ]}
+        source={{ uri: imageInfo.url }}
+        style={styles.image}
         onLoad={() => setLoading(false)}
         onError={() => {
           setError(true);
@@ -98,11 +123,19 @@ export default function StreetViewImage({ location, blurAmount = 0 }: StreetView
         </View>
       )}
       
-      {/* Hint overlay for easier difficulty */}
+      {/* Region hint */}
       <View style={styles.hintBar}>
         <Text style={styles.hintText}>
           📍 {location.region} • {location.continent}
         </Text>
+        {imageInfo.is360 && (
+          <TouchableOpacity 
+            style={styles.switch360}
+            onPress={() => setViewMode('360')}
+          >
+            <Text style={styles.switch360Text}>🔄 360°</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -160,10 +193,34 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: 'rgba(0,0,0,0.7)',
     padding: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   hintText: {
     color: '#aaa',
     fontSize: 12,
-    textAlign: 'center',
+  },
+  toggle360: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: 8,
+    borderRadius: 20,
+  },
+  toggle360Text: {
+    color: '#fff',
+    fontSize: 12,
+  },
+  switch360: {
+    backgroundColor: '#e94560',
+    padding: 6,
+    borderRadius: 12,
+  },
+  switch360Text: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '600',
   },
 });
