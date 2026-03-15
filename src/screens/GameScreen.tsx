@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Vibration, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Vibration, KeyboardAvoidingView, Platform, ScrollView, SafeAreaView } from 'react-native';
 import locations from '../data/locations_complete';
 import { calculateDistance, calculatePoints, findLocationByCity } from '../utils/distance';
 import StreetViewImage from '../components/StreetViewImage';
@@ -265,7 +265,7 @@ export default function GameScreen({ route, navigation }: any) {
             <View style={styles.fullscreenImageContainer}>
               <StreetViewImage location={currentLocation} showInfo={false} />
               
-              {/* Countdown Overlay */}
+              {/* Countdown Overlay - Safe Area aware */}
               <View style={styles.countdownOverlay}>
                 <Animated.Text style={[styles.countdownTimer, { 
                   color: getTimerColor(), 
@@ -279,6 +279,7 @@ export default function GameScreen({ route, navigation }: any) {
               <TouchableOpacity 
                 style={styles.skipTimerButton}
                 onPress={() => {
+                  playClickSound();
                   setCountdownPaused(true);
                   setPhase('answer');
                 }}
@@ -434,20 +435,22 @@ const styles = StyleSheet.create({
   },
   countdownOverlay: {
     position: 'absolute',
-    top: 15,
+    top: 50,
     right: 15,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    borderRadius: 30,
-    width: 60,
-    height: 60,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    borderRadius: 28,
+    width: 56,
+    height: 56,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
     borderColor: '#e94560',
+    zIndex: 10,
   },
   countdownTimer: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
+    color: '#fff',
   },
   skipTimerButton: {
     position: 'absolute',

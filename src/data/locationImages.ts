@@ -246,10 +246,9 @@ export const LOCATION_IMAGES: Record<string, string> = {
 
 // Fallback: colored placeholder with city name
 export function getPlaceholderImage(cityName: string, seed?: number): string {
-  const colors = ['1a1a2e', '16213e', '0f3460', 'e94560', '533483'];
-  const color = colors[(seed || cityName.length) % colors.length];
-  const text = encodeURIComponent(cityName);
-  return `https://placehold.co/800x600/${color}/white?text=${text}`;
+  // Use Unsplash Source for real city photos as fallback
+  const query = encodeURIComponent(`${cityName} city landmark`);
+  return `https://source.unsplash.com/800x600/?${query}`;
 }
 
 // Normalize city name for matching (handles umlauts)
