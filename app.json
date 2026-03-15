@@ -30,11 +30,6 @@
       ],
       "softwareKeyboardLayoutMode": "pan"
     },
-      "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
-      ]
-    },
     "web": {
       "favicon": "./assets/favicon.png",
       "name": "GeoCheckr — Geografie Party-Spiel",
