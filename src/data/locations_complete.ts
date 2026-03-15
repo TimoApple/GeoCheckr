@@ -217,6 +217,17 @@ export const locations: Location[] = [
   { id: 199, city: "Antalya", country: "Tuerkei", region: "EU", continent: "EU", lat: 36.8969, lng: 30.7133, difficulty: "mittel", qrCode: "QR198" },
   { id: 200, city: "Izmir", country: "Tuerkei", region: "EU", continent: "EU", lat: 38.4237, lng: 27.1428, difficulty: "mittel", qrCode: "QR199" },
   { id: 201, city: "Ankara", country: "Tuerkei", region: "EU", continent: "EU", lat: 39.9334, lng: 32.8597, difficulty: "mittel", qrCode: "QR200" },
+  // Street View Locations (von Timo, 15. März)
+  { id: 202, city: "Kyiv", country: "Ukraine", region: "EU", continent: "EU", lat: 50.4908, lng: 30.5409, difficulty: "mittel", qrCode: "QR202", streetViewUrl: "https://maps.app.goo.gl/GhU6VpqhG67ECHbz8", isPlaceholder: false },
+  { id: 203, city: "Stornoway", country: "Schottland", region: "EU", continent: "EU", lat: 58.1721, lng: -6.5851, difficulty: "schwer", qrCode: "QR203", streetViewUrl: "https://maps.app.goo.gl/w8oGzHCzHK8HYhto7", isPlaceholder: false },
+  { id: 204, city: "Slutsk", country: "Belarus", region: "EU", continent: "EU", lat: 53.3455, lng: 27.0820, difficulty: "schwer", qrCode: "QR204", streetViewUrl: "https://maps.app.goo.gl/Tt6MvFP3Zz3bq8E77", isPlaceholder: false },
+  { id: 205, city: "Lemvig", country: "Daenemark", region: "EU", continent: "EU", lat: 56.5099, lng: 8.1178, difficulty: "schwer", qrCode: "QR205", streetViewUrl: "https://maps.app.goo.gl/mgqsu9hUk75PXhQp6", isPlaceholder: false },
+  { id: 206, city: "Brest", country: "Belarus", region: "EU", continent: "EU", lat: 52.7364, lng: 24.1751, difficulty: "schwer", qrCode: "QR206", streetViewUrl: "https://maps.app.goo.gl/jQcs81F9a1nwTFxU9", isPlaceholder: false },
+  { id: 207, city: "Sizilien", country: "Italien", region: "EU", continent: "EU", lat: 36.7920, lng: 14.6826, difficulty: "mittel", qrCode: "QR207", streetViewUrl: "https://maps.app.goo.gl/E7KyGVUY4cZfArCQ9", isPlaceholder: false },
+  { id: 208, city: "Shetland", country: "Schottland", region: "EU", continent: "EU", lat: 60.8292, lng: -0.7813, difficulty: "schwer", qrCode: "QR208", streetViewUrl: "https://maps.app.goo.gl/ijdHVErHMsMvqm7i8", isPlaceholder: false },
+  { id: 209, city: "Caceres", country: "Spanien", region: "EU", continent: "EU", lat: 39.0418, lng: -6.1478, difficulty: "schwer", qrCode: "QR209", streetViewUrl: "https://maps.app.goo.gl/Jq1bDBhoDaMGmUmf8", isPlaceholder: false },
+  { id: 210, city: "Nordfjordeid", country: "Norwegen", region: "EU", continent: "EU", lat: 61.8310, lng: 6.1208, difficulty: "schwer", qrCode: "QR210", streetViewUrl: "https://maps.app.goo.gl/6Cv1bmaLgQucdwjN7", isPlaceholder: false },
+  { id: 211, city: "Bialystok", country: "Polen", region: "EU", continent: "EU", lat: 53.1195, lng: 23.1651, difficulty: "schwer", qrCode: "QR211", streetViewUrl: "https://maps.app.goo.gl/3hcqTxn5h8h6aqDd7", isPlaceholder: false },
 ];
 
 export default locations;

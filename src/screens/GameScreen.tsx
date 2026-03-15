@@ -240,7 +240,7 @@ export default function GameScreen({ route, navigation }: any) {
           <Text style={styles.playerTurn}>ist dran</Text>
         </View>
         <View style={styles.headerCenter}>
-          <Text style={styles.roundText}>Runde {round}</Text>
+          <Text style={styles.roundText}>Runde {round + 1}</Text>
         </View>
         <View style={styles.headerRight}>
           <Text style={styles.difficultyBadge}>
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
   
   // Main Content
   mainContent: { flex: 1, justifyContent: 'center', padding: 20 },
-  phaseContainer: { alignItems: 'center' },
+  phaseContainer: { alignItems: 'center', paddingBottom: 30, paddingHorizontal: 20 },
   
   // Scan Phase
   scanIcon: { fontSize: 60, marginBottom: 15 },
