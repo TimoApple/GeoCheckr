@@ -4,7 +4,6 @@
 import * as Haptics from 'expo-haptics';
 import { Audio } from 'expo-av';
 import { Platform } from 'react-native';
-import { Platform } from 'react-native';
 
 let audioInitialized = false;
 
