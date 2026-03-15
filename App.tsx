@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform, PermissionsAndroid } from 'react-native';
 
 import HomeScreen from './src/screens/HomeScreen';
 import SetupScreen from './src/screens/SetupScreen';
@@ -16,7 +17,24 @@ export default function App() {
 
   useEffect(() => {
     checkFirstLaunch();
+    requestMicPermission();
   }, []);
+
+  const requestMicPermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+          {
+            title: 'GeoCheckr Mikrofon',
+            message: 'GeoCheckr benötigt Mikrofon für Spracheingabe',
+            buttonPositive: 'Erlauben',
+            buttonNegative: 'Später',
+          }
+        );
+      } catch (e) {}
+    }
+  };
 
   const checkFirstLaunch = async () => {
     try {

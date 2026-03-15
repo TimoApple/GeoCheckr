@@ -5,7 +5,7 @@ import locations from '../data/locations_complete';
 import { calculateDistance, calculatePoints, findLocationByCity } from '../utils/distance';
 import StreetViewImage from '../components/StreetViewImage';
 import VoiceInput from '../components/VoiceInput';
-import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playSkipSound, playTimerWarning, playScanSound, playTimerTick, setAudioWebViewRef, onAudioReady, AUDIO_HTML } from '../utils/sounds';
+import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playSkipSound, playTimerWarning, playScanSound, playTimerTick, playAnswerphoneBeep, setAudioWebViewRef, onAudioReady, AUDIO_HTML } from '../utils/sounds';
 
 interface Player {
   id: number;
@@ -36,7 +36,7 @@ export default function GameScreen({ route, navigation }: any) {
   const [phase, setPhase] = useState<'scan' | 'view' | 'answer' | 'result'>('scan');
   const [distance, setDistance] = useState<number>(0);
   const [points, setPoints] = useState<number>(0);
-  const [round, setRound] = useState(1);
+  const [round, setRound] = useState(0);
   const [usedLocations, setUsedLocations] = useState<number[]>([]);
   
   // Animations
@@ -66,6 +66,8 @@ export default function GameScreen({ route, navigation }: any) {
       playTimerWarning();
       Vibration.vibrate(500);
       setPhase('answer');
+      // Anrufbeantworter-Ton nach kurzer Verzögerung
+      setTimeout(() => playAnswerphoneBeep(), 300);
     }
   }, [phase, timer, countdownPaused]);
   
@@ -223,7 +225,7 @@ export default function GameScreen({ route, navigation }: any) {
       <WebView
         ref={audioWebViewRef}
         source={{ html: AUDIO_HTML }}
-        style={{ width: 0, height: 0, position: 'absolute' }}
+        style={{ width: 1, height: 1, position: 'absolute', opacity: 0 }}
         javaScriptEnabled={true}
         onMessage={(e) => {
           if (e.nativeEvent.data === 'ready') onAudioReady();
@@ -304,6 +306,8 @@ export default function GameScreen({ route, navigation }: any) {
                   playClickSound();
                   setCountdownPaused(true);
                   setPhase('answer');
+                  // Anrufbeantworter-Ton
+                  setTimeout(() => playAnswerphoneBeep(), 200);
                 }}
               >
                 <Text style={styles.skipTimerText}>Ich weiß es! →</Text>

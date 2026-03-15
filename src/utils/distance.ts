@@ -70,6 +70,8 @@ const CITY_ALIASES: Record<string, string> = {
   'great wall': 'beijing',
   'chinesisch': 'beijing',
   'mauer': 'beijing',
+  'venedig': 'venedig',
+  'venezia': 'venedig',
 };
 
 // Find location by city name (fuzzy match with normalization + aliases)

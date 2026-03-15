@@ -33,6 +33,7 @@ window.addEventListener('message', (e) => {
     if (cmd.type === 'perfect') { beep(523, 0.1, 0.3); setTimeout(() => beep(659, 0.1, 0.3), 100); setTimeout(() => beep(784, 0.1, 0.3), 200); setTimeout(() => beep(1047, 0.2, 0.35), 300); }
     if (cmd.type === 'error') beep(220, 0.4, 0.3);
     if (cmd.type === 'scan') beep(440, 0.1, 0.25);
+    if (cmd.type === 'answerphone') { beep(660, 0.5, 0.3); }
   } catch(e) {}
 });
 window.ReactNativeWebView && window.ReactNativeWebView.postMessage('ready');
@@ -74,5 +75,6 @@ export async function playSkipSound() { sendCommand('click'); }
 export async function playTimerWarning() { sendCommand('warning'); }
 export async function playTimerTick() { sendCommand('tick'); }
 export async function playScanSound() { sendCommand('scan'); }
+export async function playAnswerphoneBeep() { sendCommand('answerphone'); }
 
 export { AUDIO_HTML };
