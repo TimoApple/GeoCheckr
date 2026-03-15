@@ -7,25 +7,45 @@ let webViewRef: any = null;
 const AUDIO_HTML = `<!DOCTYPE html>
 <html><body>
 <script>
-const ctx = new (window.AudioContext || window.webkitAudioContext)();
+let ctx = null;
+let ctxReady = false;
+
+function ensureCtx() {
+  if (!ctx) {
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (ctx.state === 'suspended') {
+    ctx.resume();
+  }
+  ctxReady = true;
+}
 
 function beep(freq, duration, volume) {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.frequency.value = freq;
-  osc.type = 'sine';
-  gain.gain.value = volume || 0.3;
-  osc.start();
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-  osc.stop(ctx.currentTime + duration);
+  if (!ctxReady) ensureCtx();
+  if (!ctx) return;
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = freq;
+    osc.type = 'sine';
+    gain.gain.value = volume || 0.3;
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.stop(ctx.currentTime + duration);
+  } catch(e) {}
 }
+
+// Initialize on first touch/click (required for Android WebView)
+document.addEventListener('touchstart', function() { ensureCtx(); }, {once: true});
+document.addEventListener('click', function() { ensureCtx(); }, {once: true});
 
 // Listen for commands from React Native
 window.addEventListener('message', (e) => {
   try {
     const cmd = JSON.parse(e.data);
+    ensureCtx();
     if (cmd.type === 'tick') beep(880, 0.08, 0.2);
     if (cmd.type === 'warning') { beep(440, 0.3, 0.4); setTimeout(() => beep(440, 0.3, 0.4), 350); }
     if (cmd.type === 'click') beep(660, 0.05, 0.15);
@@ -36,7 +56,11 @@ window.addEventListener('message', (e) => {
     if (cmd.type === 'answerphone') { beep(660, 0.5, 0.3); }
   } catch(e) {}
 });
-window.ReactNativeWebView && window.ReactNativeWebView.postMessage('ready');
+
+// Signal ready AND initialize audio context
+document.addEventListener('DOMContentLoaded', function() {
+  window.ReactNativeWebView && window.ReactNativeWebView.postMessage('ready');
+});
 </script>
 </body></html>`;
 
