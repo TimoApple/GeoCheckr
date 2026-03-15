@@ -1,271 +1,42 @@
-import React, { useState, useRef } from 'react';
+// GeoCheckr — Simple Text Input (no WebView, no crashes)
+// Just a text input with submit button
+
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Vibration } from 'react-native';
-import { WebView } from 'react-native-webview';
 
 interface VoiceInputProps {
   onSubmit: (cityName: string) => void;
   placeholder?: string;
 }
 
-// HTML page that uses Web Speech API (works in WebView without native modules)
-const VOICE_HTML = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      background: transparent; 
-      font-family: -apple-system, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-    #mic-btn {
-      width: 80px;
-      height: 80px;
-      border-radius: 40px;
-      background: #16213e;
-      border: 3px solid #2a2a4a;
-      color: #fff;
-      font-size: 32px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-    #mic-btn.listening {
-      background: #e94560;
-      border-color: #fff;
-      animation: pulse 1s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-    }
-    #status {
-      color: #888;
-      font-size: 14px;
-      margin-top: 10px;
-    }
-    #result {
-      color: #fff;
-      font-size: 18px;
-      margin-top: 8px;
-      min-height: 24px;
-    }
-  </style>
-</head>
-<body>
-  <button id="mic-btn" onclick="toggleVoice()">🎤</button>
-  <div id="status">Tippen zum Sprechen</div>
-  <div id="result"></div>
-  
-  <script>
-    let recognition = null;
-    let isListening = false;
-    
-    // Check for Web Speech API support
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
-    if (!SpeechRecognition) {
-      document.getElementById('status').textContent = 'Nicht unterstützt';
-      document.getElementById('mic-btn').style.opacity = '0.3';
-    }
-    
-    function toggleVoice() {
-      if (isListening) {
-        stopListening();
-      } else {
-        startListening();
-      }
-    }
-    
-    function startListening() {
-      if (!SpeechRecognition) return;
-      
-      recognition = new SpeechRecognition();
-      recognition.lang = 'de-DE';
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      
-      recognition.onstart = () => {
-        isListening = true;
-        document.getElementById('mic-btn').classList.add('listening');
-        document.getElementById('mic-btn').textContent = '🔴';
-        document.getElementById('status').textContent = 'Höre zu...';
-        document.getElementById('result').textContent = '';
-        
-        // Send status to React Native
-        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'listening', value: true }));
-      };
-      
-      recognition.onresult = (event) => {
-        let transcript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
-        }
-        document.getElementById('result').textContent = '"' + transcript + '"';
-        
-        if (event.results[event.results.length - 1].isFinal) {
-          // Final result - send to React Native
-          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'result', value: transcript }));
-          stopListening();
-        } else {
-          // Partial result
-          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'partial', value: transcript }));
-        }
-      };
-      
-      recognition.onerror = (event) => {
-        console.error('Speech error:', event.error);
-        document.getElementById('status').textContent = 'Fehler: ' + event.error;
-        stopListening();
-      };
-      
-      recognition.onend = () => {
-        stopListening();
-      };
-      
-      try {
-        recognition.start();
-      } catch (e) {
-        document.getElementById('status').textContent = 'Fehler beim Starten';
-      }
-    }
-    
-    function stopListening() {
-      isListening = false;
-      document.getElementById('mic-btn').classList.remove('listening');
-      document.getElementById('mic-btn').textContent = '🎤';
-      document.getElementById('status').textContent = 'Tippen zum Sprechen';
-      
-      if (recognition) {
-        try { recognition.stop(); } catch (e) {}
-        recognition = null;
-      }
-    }
-  </script>
-</body>
-</html>
-`;
-
 export default function VoiceInput({ onSubmit, placeholder = "Stadtname eingeben..." }: VoiceInputProps) {
   const [text, setText] = useState('');
-  const [isListening, setIsListening] = useState(false);
-  const [webViewHeight, setWebViewHeight] = useState(120);
-  const [webViewError, setWebViewError] = useState(false);
-  const webViewRef = useRef<WebView>(null);
-  const hasAutoStarted = useRef(false);
-  
-  const handleMessage = (event: any) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      
-      switch (data.type) {
-        case 'listening':
-          setIsListening(data.value);
-          if (data.value) {
-            setText('');
-          }
-          break;
-        case 'partial':
-          setText(data.value);
-          break;
-        case 'result':
-          setText(data.value);
-          Vibration.vibrate(100);
-          setIsListening(false);
-          // Auto-submit if result looks like a city name
-          if (data.value && data.value.trim().length >= 2) {
-            setTimeout(() => {
-              onSubmit(data.value.trim());
-              setText('');
-            }, 300);
-          }
-          break;
-      }
-    } catch (e) {
-      console.error('Message parse error:', e);
-    }
-  };
   
   const handleSubmit = () => {
     if (text.trim()) {
+      Vibration.vibrate(50);
       onSubmit(text.trim());
       setText('');
     }
   };
 
-  // Auto-start listening when component mounts
-  useEffect(() => {
-    if (!webViewError && !hasAutoStarted.current) {
-      hasAutoStarted.current = true;
-      // Give WebView time to load, then auto-start listening
-      const timer = setTimeout(() => {
-        try {
-          webViewRef.current?.injectJavaScript(`
-            if (typeof toggleVoice === 'function' && !isListening) {
-              toggleVoice();
-            }
-            true;
-          `);
-        } catch (e) {}
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [webViewError]);
-  
-  const handleWebViewError = () => {
-    setWebViewError(true);
-    setIsListening(false);
-  };
-  
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>🎤 Deine Antwort</Text>
+      <Text style={styles.title}>🏙️ Stadt erraten</Text>
       
-      {/* Text Input - Always visible */}
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.textInput}
-          value={text}
-          onChangeText={setText}
-          placeholder={placeholder}
-          placeholderTextColor="#555"
-          returnKeyType="send"
-          onSubmitEditing={handleSubmit}
-          selectionColor="#e94560"
-          autoCorrect={false}
-          autoCapitalize="words"
-        />
-      </View>
-      
-      {/* Voice Button - only if WebView works */}
-      {!webViewError && (
-        <View style={styles.voiceContainer}>
-          <WebView
-            ref={webViewRef}
-            source={{ html: VOICE_HTML }}
-            style={[styles.webview, { height: webViewHeight }]}
-            onMessage={handleMessage}
-            onError={handleWebViewError}
-            onHttpError={handleWebViewError}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-            mediaPlaybackRequiresUserAction={false}
-            allowsInlineMediaPlayback={true}
-            scrollEnabled={false}
-            bounces={false}
-            showsVerticalScrollIndicator={false}
-            containerStyle={styles.webviewContainer}
-          />
-        </View>
-      )}
+      {/* Text Input */}
+      <TextInput
+        style={styles.textInput}
+        value={text}
+        onChangeText={setText}
+        placeholder={placeholder}
+        placeholderTextColor="#666"
+        returnKeyType="send"
+        onSubmitEditing={handleSubmit}
+        selectionColor="#e94560"
+        autoCorrect={false}
+        autoCapitalize="words"
+      />
       
       {/* Submit Button */}
       <TouchableOpacity 
@@ -274,14 +45,12 @@ export default function VoiceInput({ onSubmit, placeholder = "Stadtname eingeben
         disabled={!text.trim()}
         activeOpacity={0.7}
       >
-        <Text style={styles.submitButtonText}>
-          {isListening ? '🎤...' : '✓ Antwort'}
-        </Text>
+        <Text style={styles.submitButtonText}>✓ Antwort abgeben</Text>
       </TouchableOpacity>
       
       {/* Hint */}
       <Text style={styles.hint}>
-        💡 Stadtnamen eintippen und auf ✓ drücken
+        💡 Stadtnamen eintippen und ✓ drücken
       </Text>
     </View>
   );
@@ -291,6 +60,7 @@ const styles = StyleSheet.create({
   container: { 
     padding: 15,
     alignItems: 'center',
+    width: '100%',
   },
   title: { 
     color: '#e94560', 
@@ -299,33 +69,17 @@ const styles = StyleSheet.create({
     marginBottom: 15, 
     textAlign: 'center' 
   },
-  inputContainer: { 
-    width: '100%',
-    marginBottom: 15,
-  },
   textInput: { 
     backgroundColor: '#0f3460', 
     color: '#fff', 
     padding: 16, 
     borderRadius: 12, 
-    fontSize: 18,
+    fontSize: 20,
     borderWidth: 2,
     borderColor: '#2a2a4a',
     textAlign: 'center',
-  },
-  voiceContainer: {
     width: '100%',
-    height: 120,
     marginBottom: 15,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: 'transparent',
-  },
-  webview: {
-    backgroundColor: 'transparent',
-  },
-  webviewContainer: {
-    backgroundColor: 'transparent',
   },
   submitButton: { 
     width: '100%',
@@ -333,15 +87,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#e94560',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
   },
   submitButtonDisabled: { 
     backgroundColor: '#333',
-    shadowOpacity: 0,
   },
   submitButtonText: { 
     color: '#fff', 
