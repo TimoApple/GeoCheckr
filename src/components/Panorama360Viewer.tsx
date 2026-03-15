@@ -3,31 +3,96 @@ import { View, StyleSheet, Dimensions, ActivityIndicator, Text } from 'react-nat
 import { WebView } from 'react-native-webview';
 
 interface Panorama360ViewerProps {
-  imageUrl: string;
+  imageUrl: string;  // Google Maps Street View URL or direct panorama image
   locationName?: string;
 }
 
-const { width, height } = Dimensions.get('window');
+const { width, height = 400 } = Dimensions.get('window');
 
 export default function Panorama360Viewer({ imageUrl, locationName }: Panorama360ViewerProps) {
   const [loading, setLoading] = useState(true);
   const webViewRef = useRef<WebView>(null);
 
-  // HTML mit einem einfachen 360°-Panorama-Viewer
-  // Nutzt Three.js für WebGL-Rendering auf einer Kugel
-  const html = `
-<!DOCTYPE html>
+  // If it's a Google Maps link, embed it directly
+  const isGoogleMaps = imageUrl.includes('maps.app.goo.gl') || imageUrl.includes('google.com/maps');
+  
+  const html = isGoogleMaps ? `<!DOCTYPE html>
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      overflow: hidden; 
-      background: #1a1a2e; 
-      touch-action: none;
+    body { overflow: hidden; background: #1a1a2e; }
+    iframe { width: 100vw; height: 100vh; border: none; }
+  </style>
+</head>
+<body>
+  <iframe src="https://www.google.com/maps/embed?pb=!4v1700000000000!6m8!1m7!1s!2m2!1d0!2d0!3f0!4f0!5f0" 
+          allowfullscreen loading="lazy" 
+          referrerpolicy="no-referrer"
+          onload="window.ReactNativeWebView && window.ReactNativeWebView.postMessage('loaded')">
+  </iframe>
+</body>
+</html>` : `<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { overflow: hidden; background: #1a1a2e; }
+  </style>
+</head>
+<body>
+  <div id="viewer" style="width:100vw;height:100vh;"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById('viewer').appendChild(renderer.domElement);
+    
+    const geometry = new THREE.SphereGeometry(500, 60, 40);
+    geometry.scale(-1, 1, 1);
+    
+    const texture = new THREE.TextureLoader().load('${imageUrl}', () => {
+      window.ReactNativeWebView && window.ReactNativeWebView.postMessage('loaded');
+    });
+    const material = new THREE.MeshBasicMaterial({ map: texture });
+    const sphere = new THREE.Mesh(geometry, material);
+    scene.add(sphere);
+    camera.position.set(0, 0, 0.1);
+    
+    let lon = 0, lat = 0, isDragging = false, prevX = 0, prevY = 0;
+    
+    renderer.domElement.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      prevX = e.touches[0].clientX;
+      prevY = e.touches[0].clientY;
+    });
+    renderer.domElement.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      lon += (prevX - e.touches[0].clientX) * 0.2;
+      lat += (prevY - e.touches[0].clientY) * 0.2;
+      lat = Math.max(-85, Math.min(85, lat));
+      prevX = e.touches[0].clientX;
+      prevY = e.touches[0].clientY;
+    });
+    renderer.domElement.addEventListener('touchend', () => isDragging = false);
+    
+    function animate() {
+      requestAnimationFrame(animate);
+      camera.lookAt(
+        500 * Math.cos(THREE.MathUtils.degToRad(lat)) * Math.sin(THREE.MathUtils.degToRad(lon)),
+        500 * Math.sin(THREE.MathUtils.degToRad(lat)),
+        500 * Math.cos(THREE.MathUtils.degToRad(lat)) * Math.cos(THREE.MathUtils.degToRad(lon))
+      );
+      renderer.render(scene, camera);
     }
-    #viewer { 
+    animate();
+  </script>
+</body>
+</html>`; 
       width: 100vw; 
       height: 100vh; 
       cursor: grab;

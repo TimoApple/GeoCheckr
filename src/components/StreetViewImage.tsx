@@ -1,11 +1,11 @@
 // GeoCheckr — Street View Component
-// Uses reliable Unsplash images with 360° panorama toggle
+// Shows 360° panorama by default when available, falls back to image
 
 import React, { useState, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Location } from '../types/location';
 import Panorama360Viewer from './Panorama360Viewer';
-import { getCityImage, getPlaceholderImage } from '../data/locationImages';
+import { getCityImage } from '../data/locationImages';
 
 interface StreetViewProps {
   location: Location;
@@ -15,58 +15,42 @@ interface StreetViewProps {
 export default function StreetViewImage({ location, showInfo = false }: StreetViewProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [viewMode, setViewMode] = useState<'360' | 'flat'>('flat');
-  const [retryCount, setRetryCount] = useState(0);
-
-  const imageUrl = getCityImage(location.city);
+  const [useFlatImage, setUseFlatImage] = useState(false);
+  
   const has360 = !!location.streetViewUrl;
-
+  
   useEffect(() => {
-    setViewMode('flat');
     setLoading(true);
     setError(false);
-    setRetryCount(0);
+    setUseFlatImage(false);
   }, [location]);
 
-  const handleError = () => {
-    if (retryCount === 0) {
-      setRetryCount(1);
-      // Will trigger re-render with placeholder via getPlaceholderImage
-    } else {
-      setError(true);
-      setLoading(false);
-    }
-  };
-
-  const getImageUrl = () => {
-    if (retryCount === 0) return imageUrl;
-    return getPlaceholderImage(location.city, location.id);
-  };
-
-  // 360° Panorama Mode
-  if (viewMode === '360' && has360) {
+  // 360° Panorama Mode (DEFAULT when available)
+  if (has360 && !useFlatImage) {
     return (
       <View style={styles.container}>
         <Panorama360Viewer 
           imageUrl={location.streetViewUrl!} 
           locationName={location.city}
         />
-        {/* Toggle back to flat */}
+        {/* Switch to flat image */}
         <TouchableOpacity 
           style={styles.toggleButton}
-          onPress={() => setViewMode('flat')}
+          onPress={() => setUseFlatImage(true)}
         >
           <Text style={styles.toggleText}>📷 Normal</Text>
         </TouchableOpacity>
-        {/* City name overlay */}
+        {/* City name */}
         <View style={styles.cityOverlay}>
-          <Text style={styles.cityName}>{location.city}</Text>
+          <Text style={styles.cityName}>🌐 360° — {location.city}</Text>
         </View>
       </View>
     );
   }
 
-  // Regular Image Mode (default)
+  // Flat Image Mode (fallback or when no panorama)
+  const imageUrl = getCityImage(location.city);
+  
   return (
     <View style={styles.container}>
       {loading && (
@@ -77,10 +61,10 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
       )}
       
       <Image
-        source={{ uri: getImageUrl() }}
+        source={{ uri: imageUrl }}
         style={styles.image}
         onLoad={() => setLoading(false)}
-        onError={handleError}
+        onError={() => { setError(true); setLoading(false); }}
         resizeMode="cover"
       />
       
@@ -92,22 +76,19 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
         </View>
       )}
       
-      {/* 360° Toggle Button */}
-      {has360 && !error && (
+      {/* 360° Toggle if panorama available */}
+      {has360 && (
         <TouchableOpacity 
           style={styles.toggleButton}
-          onPress={() => setViewMode('360')}
+          onPress={() => setUseFlatImage(false)}
         >
           <Text style={styles.toggleText}>🌐 360°</Text>
         </TouchableOpacity>
       )}
       
-      {/* Region hint */}
       {showInfo && (
         <View style={styles.hintBar}>
-          <Text style={styles.hintText}>
-            📍 {location.region} • {location.continent}
-          </Text>
+          <Text style={styles.hintText}>📍 {location.region} • {location.continent}</Text>
         </View>
       )}
     </View>
@@ -124,41 +105,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
+  image: { width: '100%', height: '100%' },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#16213e',
   },
-  loadingText: {
-    color: '#aaa',
-    marginTop: 10,
-    fontSize: 14,
-  },
+  loadingText: { color: '#aaa', marginTop: 10, fontSize: 14 },
   errorOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#16213e',
   },
-  errorEmoji: {
-    fontSize: 60,
-    marginBottom: 15,
-  },
-  errorText: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  errorHint: {
-    color: '#888',
-    fontSize: 14,
-    marginTop: 10,
-  },
+  errorEmoji: { fontSize: 60, marginBottom: 15 },
+  errorText: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
+  errorHint: { color: '#888', fontSize: 14, marginTop: 10 },
   toggleButton: {
     position: 'absolute',
     top: 12,
@@ -170,11 +133,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e94560',
   },
-  toggleText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
+  toggleText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   cityOverlay: {
     position: 'absolute',
     bottom: 12,
@@ -184,11 +143,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 12,
   },
-  cityName: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  cityName: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   hintBar: {
     position: 'absolute',
     bottom: 0,
@@ -196,12 +151,6 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: 'rgba(0,0,0,0.7)',
     padding: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
-  hintText: {
-    color: '#aaa',
-    fontSize: 12,
-  },
+  hintText: { color: '#aaa', fontSize: 12 },
 });
