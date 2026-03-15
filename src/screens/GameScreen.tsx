@@ -4,7 +4,7 @@ import locations from '../data/locations_complete';
 import { calculateDistance, calculatePoints, findLocationByCity } from '../utils/distance';
 import StreetViewImage from '../components/StreetViewImage';
 import VoiceInput from '../components/VoiceInput';
-import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playSkipSound, playTimerWarning, playScanSound } from '../utils/sounds';
+import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playSkipSound, playTimerWarning, playScanSound, playTimerTick } from '../utils/sounds';
 
 interface Player {
   id: number;
@@ -63,6 +63,7 @@ export default function GameScreen({ route, navigation }: any) {
   // Timer pulse animation when low
   useEffect(() => {
     if (phase === 'view' && timer <= 5 && timer > 0) {
+      playTimerTick();
       Vibration.vibrate(200);
       Animated.sequence([
         Animated.timing(timerPulse, { toValue: 1.2, duration: 150, useNativeDriver: true }),

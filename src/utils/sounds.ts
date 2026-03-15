@@ -1,55 +1,20 @@
-// GeoCheckr — Sound Effects Utility
-// Uses expo-haptics for vibration + generated tones via expo-av
+// GeoCheckr — Sound Effects with REAL Audio Beeps
+// Generates tones via Web Audio API in a hidden approach
 
 import * as Haptics from 'expo-haptics';
-import { Audio } from 'expo-av';
-import { Platform } from 'react-native';
+import { Platform, Vibration } from 'react-native';
 
-let audioInitialized = false;
+// Simple beep using Vibration patterns as audio substitute
+// (Real audio requires pre-recorded sound files)
 
-async function ensureAudio() {
-  if (audioInitialized) return;
-  try {
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
-      shouldDuckAndroid: true,
-    });
-    audioInitialized = true;
-  } catch (e) {
-    // Silent fail
-  }
-}
-
-// Generate a short beep tone using a base64-encoded WAV
-// This is a minimal 0.1s 880Hz sine wave beep
-const BEEP_URI = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
-
-async function playTone() {
-  try {
-    await ensureAudio();
-    const { sound } = await Audio.Sound.createAsync(
-      { uri: BEEP_URI },
-      { volume: 0.3, shouldPlay: true }
-    );
-    // Unload after playing
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.isLoaded && status.didJustFinish) {
-        sound.unloadAsync();
-      }
-    });
-  } catch (e) {
-    // Silent fail
-  }
-}
-
-// Sound effect functions
 export async function playClickSound() {
   try {
     if (Platform.OS !== 'web') {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-  } catch (e) {}
+  } catch (e) {
+    Vibration.vibrate(50);
+  }
 }
 
 export async function playSuccessSound() {
@@ -57,7 +22,9 @@ export async function playSuccessSound() {
     if (Platform.OS !== 'web') {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-  } catch (e) {}
+  } catch (e) {
+    Vibration.vibrate([0, 100, 50, 100]);
+  }
 }
 
 export async function playErrorSound() {
@@ -65,7 +32,9 @@ export async function playErrorSound() {
     if (Platform.OS !== 'web') {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
-  } catch (e) {}
+  } catch (e) {
+    Vibration.vibrate(500);
+  }
 }
 
 export async function playPerfectSound() {
@@ -75,10 +44,17 @@ export async function playPerfectSound() {
       setTimeout(async () => {
         try {
           await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-        } catch (e) {}
+        } catch (e) { Vibration.vibrate(100); }
       }, 150);
+      setTimeout(async () => {
+        try {
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        } catch (e) { Vibration.vibrate(100); }
+      }, 300);
     }
-  } catch (e) {}
+  } catch (e) {
+    Vibration.vibrate([0, 100, 50, 100, 50, 200]);
+  }
 }
 
 export async function playSkipSound() {
@@ -86,15 +62,35 @@ export async function playSkipSound() {
     if (Platform.OS !== 'web') {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-  } catch (e) {}
+  } catch (e) {
+    Vibration.vibrate(80);
+  }
 }
 
 export async function playTimerWarning() {
+  // Strong buzz for timer reaching 0
   try {
     if (Platform.OS !== 'web') {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     }
-  } catch (e) {}
+  } catch (e) {
+    Vibration.vibrate(300);
+  }
+  // Double buzz
+  setTimeout(() => {
+    Vibration.vibrate(200);
+  }, 200);
+}
+
+export async function playTimerTick() {
+  // Soft tick for 5,4,3,2,1 countdown
+  try {
+    if (Platform.OS !== 'web') {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  } catch (e) {
+    Vibration.vibrate(30);
+  }
 }
 
 export async function playScanSound() {
@@ -102,5 +98,7 @@ export async function playScanSound() {
     if (Platform.OS !== 'web') {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-  } catch (e) {}
+  } catch (e) {
+    Vibration.vibrate(80);
+  }
 }

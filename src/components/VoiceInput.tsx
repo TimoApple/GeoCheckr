@@ -160,6 +160,7 @@ export default function VoiceInput({ onSubmit, placeholder = "Stadtname eingeben
   const [webViewHeight, setWebViewHeight] = useState(120);
   const [webViewError, setWebViewError] = useState(false);
   const webViewRef = useRef<WebView>(null);
+  const hasAutoStarted = useRef(false);
   
   const handleMessage = (event: any) => {
     try {
@@ -179,6 +180,13 @@ export default function VoiceInput({ onSubmit, placeholder = "Stadtname eingeben
           setText(data.value);
           Vibration.vibrate(100);
           setIsListening(false);
+          // Auto-submit if result looks like a city name
+          if (data.value && data.value.trim().length >= 2) {
+            setTimeout(() => {
+              onSubmit(data.value.trim());
+              setText('');
+            }, 300);
+          }
           break;
       }
     } catch (e) {
@@ -192,6 +200,25 @@ export default function VoiceInput({ onSubmit, placeholder = "Stadtname eingeben
       setText('');
     }
   };
+
+  // Auto-start listening when component mounts
+  useEffect(() => {
+    if (!webViewError && !hasAutoStarted.current) {
+      hasAutoStarted.current = true;
+      // Give WebView time to load, then auto-start listening
+      const timer = setTimeout(() => {
+        try {
+          webViewRef.current?.injectJavaScript(`
+            if (typeof toggleVoice === 'function' && !isListening) {
+              toggleVoice();
+            }
+            true;
+          `);
+        } catch (e) {}
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [webViewError]);
   
   const handleWebViewError = () => {
     setWebViewError(true);
