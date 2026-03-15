@@ -1,5 +1,5 @@
 // GeoCheckr — Street View Component
-// Uses reliable Unsplash images with fallback
+// Uses reliable Unsplash images with 360° panorama toggle
 
 import React, { useState, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
@@ -16,12 +16,12 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [viewMode, setViewMode] = useState<'360' | 'flat'>('flat');
-  const [imageInfo, setImageInfo] = useState<{ url: string; is360: boolean }>({ url: '', is360: false });
   const [retryCount, setRetryCount] = useState(0);
 
+  const imageUrl = getCityImage(location.city);
+  const has360 = !!location.streetViewUrl;
+
   useEffect(() => {
-    const url = getCityImage(location.city);
-    setImageInfo({ url, is360: false });
     setViewMode('flat');
     setLoading(true);
     setError(false);
@@ -30,16 +30,43 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
 
   const handleError = () => {
     if (retryCount === 0) {
-      // First retry: try without query params (cleaner URL)
-      setImageInfo({ url: getPlaceholderImage(location.city, location.id), is360: false });
       setRetryCount(1);
+      // Will trigger re-render with placeholder via getPlaceholderImage
     } else {
       setError(true);
       setLoading(false);
     }
   };
 
-  // Regular Image Mode
+  const getImageUrl = () => {
+    if (retryCount === 0) return imageUrl;
+    return getPlaceholderImage(location.city, location.id);
+  };
+
+  // 360° Panorama Mode
+  if (viewMode === '360' && has360) {
+    return (
+      <View style={styles.container}>
+        <Panorama360Viewer 
+          imageUrl={location.streetViewUrl!} 
+          locationName={location.city}
+        />
+        {/* Toggle back to flat */}
+        <TouchableOpacity 
+          style={styles.toggleButton}
+          onPress={() => setViewMode('flat')}
+        >
+          <Text style={styles.toggleText}>📷 Normal</Text>
+        </TouchableOpacity>
+        {/* City name overlay */}
+        <View style={styles.cityOverlay}>
+          <Text style={styles.cityName}>{location.city}</Text>
+        </View>
+      </View>
+    );
+  }
+
+  // Regular Image Mode (default)
   return (
     <View style={styles.container}>
       {loading && (
@@ -50,7 +77,7 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
       )}
       
       <Image
-        source={{ uri: imageInfo.url }}
+        source={{ uri: getImageUrl() }}
         style={styles.image}
         onLoad={() => setLoading(false)}
         onError={handleError}
@@ -65,7 +92,17 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
         </View>
       )}
       
-      {/* Region hint - only when showInfo is true */}
+      {/* 360° Toggle Button */}
+      {has360 && !error && (
+        <TouchableOpacity 
+          style={styles.toggleButton}
+          onPress={() => setViewMode('360')}
+        >
+          <Text style={styles.toggleText}>🌐 360°</Text>
+        </TouchableOpacity>
+      )}
+      
+      {/* Region hint */}
       {showInfo && (
         <View style={styles.hintBar}>
           <Text style={styles.hintText}>
@@ -121,6 +158,36 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 14,
     marginTop: 10,
+  },
+  toggleButton: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#e94560',
+  },
+  toggleText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  cityOverlay: {
+    position: 'absolute',
+    bottom: 12,
+    left: 12,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  cityName: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   hintBar: {
     position: 'absolute',
