@@ -49,7 +49,6 @@ export const LOCATION_IMAGES: Record<string, string> = {
   "Genève": "https://images.unsplash.com/photo-1575372854122-534f12e44162?w=800&h=600&fit=crop",
   "Geneve": "https://images.unsplash.com/photo-1575372854122-534f12e44162?w=800&h=600&fit=crop",
   "Frankfurt": "https://images.unsplash.com/photo-1573866841710-1c498a5a1888?w=800&h=600&fit=crop",
-  "Stuttgart": "GENERIC_PLACEHOLDER",
   "Salzburg": "https://images.unsplash.com/photo-1516550893923-42d28e5677af?w=800&h=600&fit=crop",
   "Innsbruck": "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=800&h=600&fit=crop",
   "Florenz": "https://images.unsplash.com/photo-1541370976299-4d24ebbc9077?w=800&h=600&fit=crop",
@@ -66,13 +65,10 @@ export const LOCATION_IMAGES: Record<string, string> = {
   "Belgrad": "https://images.unsplash.com/photo-1596452409203-a66822e35a26?w=800&h=600&fit=crop",
   "Sofia": "https://images.unsplash.com/photo-1568792523829-8a618f8f5c36?w=800&h=600&fit=crop",
   "Zagreb": "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&h=600&fit=crop",
-  "Tirana": "GENERIC_PLACEHOLDER",
   "Skopje": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop",
-  "Sarajevo": "GENERIC_PLACEHOLDER",
   "Podgorica": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop",
   "Tallinn": "https://images.unsplash.com/photo-1567225557594-88d73e55f2cb?w=800&h=600&fit=crop",
   "Riga": "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&h=600&fit=crop",
-  "Vilnius": "GENERIC_PLACEHOLDER",
   "Minsk": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop",
   "Kiev": "https://images.unsplash.com/photo-1561542320-9a18cd340469?w=800&h=600&fit=crop",
   "Chișinău": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop",
@@ -80,7 +76,6 @@ export const LOCATION_IMAGES: Record<string, string> = {
   "Birmingham": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop",
   "Glasgow": "https://images.unsplash.com/photo-1506377585622-bedcbb027afc?w=800&h=600&fit=crop",
   "Manchester": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop",
-  "Basel": "GENERIC_PLACEHOLDER",
   "Nuuk": "https://images.unsplash.com/photo-1517783999520-f068d7431a60?w=800&h=600&fit=crop",
   
   // ASIEN
@@ -96,73 +91,26 @@ export const LOCATION_IMAGES: Record<string, string> = {
   "Taipei": "https://images.unsplash.com/photo-1470004914212-05527e49370b?w=800&h=600&fit=crop",
   "Dubai": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&h=600&fit=crop",
   "Jerusalem": "https://images.unsplash.com/photo-1549877452-9c387954fbc2?w=800&h=600&fit=crop",
-  "Amman": "GENERIC_PLACEHOLDER",
   "Beirut": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop",
-  "Bagdad": "GENERIC_PLACEHOLDER",
   "Teheran": "https://images.unsplash.com/photo-1564429238881-441449c774d9?w=800&h=600&fit=crop",
-  "Kuwait-Stadt": "GENERIC_PLACEHOLDER",
   "Doha": "https://images.unsplash.com/photo-1539768942893-daf53e448371?w=800&h=600&fit=crop",
   "Muscat": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop",
   "Riad": "https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?w=800&h=600&fit=crop",
-  "Ankara": "GENERIC_PLACEHOLDER",
   "Antalya": "https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=800&h=600&fit=crop",
-  "Izmir": "GENERIC_PLACEHOLDER",
-  "Baku": "GENERIC_PLACEHOLDER",
-  "Tiflis": "GENERIC_PLACEHOLDER",
-  "Eriwan": "GENERIC_PLACEHOLDER",
-  "Taschkent": "GENERIC_PLACEHOLDER",
-  "Almaty": "GENERIC_PLACEHOLDER",
-  "Bischkek": "GENERIC_PLACEHOLDER",
   "Dhaka": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop",
   "Kolkata": "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&h=600&fit=crop",
   "Chennai": "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=800&h=600&fit=crop",
   "Colombo": "https://images.unsplash.com/photo-1588416936097-41850ab3d86d?w=800&h=600&fit=crop",
-  "Phnom Penh": "GENERIC_PLACEHOLDER",
-  "Siem Reap": "GENERIC_PLACEHOLDER",
-  "Chiang Mai": "GENERIC_PLACEHOLDER",
   "Ho-Chi-Minh-Stadt": "https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800&h=600&fit=crop",
-  "Vientiane": "GENERIC_PLACEHOLDER",
-  "Chengdu": "GENERIC_PLACEHOLDER",
-  "Guangzhou": "GENERIC_PLACEHOLDER",
-  "Urumqi": "GENERIC_PLACEHOLDER",
-  "Lhasa": "GENERIC_PLACEHOLDER",
-  "Osaka": "GENERIC_PLACEHOLDER",
-  "Sapporo": "GENERIC_PLACEHOLDER",
-  "Denpasar": "GENERIC_PLACEHOLDER",
-  "Cebu": "GENERIC_PLACEHOLDER",
-  "Port Louis": "GENERIC_PLACEHOLDER",
   "Hanoi": "https://images.unsplash.com/photo-1557750255-c76072a7aad1?w=800&h=600&fit=crop",
   "Kuala Lumpur": "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=800&h=600&fit=crop",
   "Kathmandu": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&h=600&fit=crop",
-  "Ankara": "GENERIC_PLACEHOLDER",
   "Antalya": "https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=800&h=600&fit=crop",
-  "Izmir": "GENERIC_PLACEHOLDER",
-  "Baku": "GENERIC_PLACEHOLDER",
-  "Tiflis": "GENERIC_PLACEHOLDER",
-  "Eriwan": "GENERIC_PLACEHOLDER",
-  "Taschkent": "GENERIC_PLACEHOLDER",
-  "Almaty": "GENERIC_PLACEHOLDER",
-  "Bischkek": "GENERIC_PLACEHOLDER",
-  "Thimphu": "GENERIC_PLACEHOLDER",
   "Dhaka": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop",
   "Kolkata": "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&h=600&fit=crop",
   "Chennai": "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=800&h=600&fit=crop",
   "Colombo": "https://images.unsplash.com/photo-1588416936097-41850ab3d86d?w=800&h=600&fit=crop",
-  "Phnom Penh": "GENERIC_PLACEHOLDER",
-  "Siem Reap": "GENERIC_PLACEHOLDER",
-  "Chiang Mai": "GENERIC_PLACEHOLDER",
   "Ho-Chi-Minh-Stadt": "https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800&h=600&fit=crop",
-  "Vientiane": "GENERIC_PLACEHOLDER",
-  "Chengdu": "GENERIC_PLACEHOLDER",
-  "Guangzhou": "GENERIC_PLACEHOLDER",
-  "Urumqi": "GENERIC_PLACEHOLDER",
-  "Lhasa": "GENERIC_PLACEHOLDER",
-  "Osaka": "GENERIC_PLACEHOLDER",
-  "Sapporo": "GENERIC_PLACEHOLDER",
-  "Denpasar": "GENERIC_PLACEHOLDER",
-  "Cebu": "GENERIC_PLACEHOLDER",
-  "Ulaanbaatar": "GENERIC_PLACEHOLDER",
-  "Wladiwostok": "GENERIC_PLACEHOLDER",
   "Bagdad": "https://images.unsplash.com/photo-1589308454676-21cbe2ad2a89?w=800&h=600&fit=crop",
   "Teheran": "https://images.unsplash.com/photo-1564429238881-441449a54ccb?w=800&h=600&fit=crop",
   
@@ -185,22 +133,6 @@ export const LOCATION_IMAGES: Record<string, string> = {
   "Havanna": "https://images.unsplash.com/photo-1500759285222-a95626b934cb?w=800&h=600&fit=crop",
   "Bogota": "https://images.unsplash.com/photo-1568625502763-2a5ec6a94c47?w=800&h=600&fit=crop",
   "Medellin": "https://images.unsplash.com/photo-1568625502763-2a5ec6a94c47?w=800&h=600&fit=crop",
-  "Caracas": "GENERIC_PLACEHOLDER",
-  "Quito": "GENERIC_PLACEHOLDER",
-  "La Paz": "GENERIC_PLACEHOLDER",
-  "Santiago": "GENERIC_PLACEHOLDER",
-  "Montevideo": "GENERIC_PLACEHOLDER",
-  "Asuncion": "GENERIC_PLACEHOLDER",
-  "Brasilia": "GENERIC_PLACEHOLDER",
-  "Sao Paulo": "GENERIC_PLACEHOLDER",
-  "Guatemala-Stadt": "GENERIC_PLACEHOLDER",
-  "Panama-Stadt": "GENERIC_PLACEHOLDER",
-  "San Jose": "GENERIC_PLACEHOLDER",
-  "Kingston": "GENERIC_PLACEHOLDER",
-  "Santo Domingo": "GENERIC_PLACEHOLDER",
-  "Port-au-Prince": "GENERIC_PLACEHOLDER",
-  "Ushuaia": "GENERIC_PLACEHOLDER",
-  "Punta Arenas": "GENERIC_PLACEHOLDER",
   "Montreal": "https://images.unsplash.com/photo-1517935706615-2717063c2225?w=800&h=600&fit=crop",
   "São Paulo": "https://images.unsplash.com/photo-1543059080-f9b1272213d5?w=800&h=600&fit=crop",
   "Buenos Aires": "https://images.unsplash.com/photo-1589909202802-8f4aadce1849?w=800&h=600&fit=crop",
@@ -228,13 +160,8 @@ export const LOCATION_IMAGES: Record<string, string> = {
   "Dar es Salaam": "https://images.unsplash.com/photo-1577940892577-81f3d4e9cf88?w=800&h=600&fit=crop",
   "Antananarivo": "https://images.unsplash.com/photo-1577940892577-81f3d4e9cf88?w=800&h=600&fit=crop",
   "Tunis": "https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?w=800&h=600&fit=crop",
-  "Amman": "GENERIC_PLACEHOLDER",
-  "Beirut": "GENERIC_PLACEHOLDER",
-  "Bagdad": "GENERIC_PLACEHOLDER",
   "Teheran": "https://images.unsplash.com/photo-1564429238881-441449c774d9?w=800&h=600&fit=crop",
-  "Kuwait-Stadt": "GENERIC_PLACEHOLDER",
   "Doha": "https://images.unsplash.com/photo-1539768942893-daf53e448371?w=800&h=600&fit=crop",
-  "Muscat": "GENERIC_PLACEHOLDER",
   "Riad": "https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?w=800&h=600&fit=crop",
   
   // OZEANIEN
@@ -368,27 +295,28 @@ function getSourceUrl(city: string): string {
     }
   }
   
-  // Last resort: use a consistent placeholder based on city name hash
+  // Last resort: colored placeholder with city name (guaranteed to work)
+  const colors = ['0f3460', '16213e', '1a1a2e', 'e94560', '533483'];
   let hash = 0;
   for (let i = 0; i < city.length; i++) {
     hash = ((hash << 5) - hash) + city.charCodeAt(i);
     hash = hash & hash;
   }
-  const photoNum = 15000000000 + (Math.abs(hash) * 7);
-  return `https://images.unsplash.com/photo-${photoNum}?w=800&h=600&fit=crop`;
+  const color = colors[Math.abs(hash) % colors.length];
+  const text = encodeURIComponent(city);
+  return `https://placehold.co/800x600/${color}/white?text=${text}`;
 }
 
 // Get image for a city - fallback chain
 export function getCityImage(city: string): string {
   // Direct match
-  if (LOCATION_IMAGES[city] && LOCATION_IMAGES[city] !== 'GENERIC_PLACEHOLDER') {
+  if (LOCATION_IMAGES[city]) {
     return LOCATION_IMAGES[city];
   }
   
   // Normalized match (handles umlauts: Zürich vs Zuerich)
   const cityNorm = normalizeForMatch(city);
   for (const [key, url] of Object.entries(LOCATION_IMAGES)) {
-    if (url === 'GENERIC_PLACEHOLDER') continue;
     if (normalizeForMatch(key) === cityNorm) {
       return url;
     }
@@ -396,7 +324,6 @@ export function getCityImage(city: string): string {
   
   // Partial match (e.g., "Rio de Janeiro" vs "Rio")
   for (const [key, url] of Object.entries(LOCATION_IMAGES)) {
-    if (url === 'GENERIC_PLACEHOLDER') continue;
     const keyNorm = normalizeForMatch(key);
     if (keyNorm.includes(cityNorm) || cityNorm.includes(keyNorm)) {
       return url;
