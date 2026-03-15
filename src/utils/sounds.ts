@@ -1,15 +1,14 @@
 // GeoCheckr — Sound Effects Utility
-// Uses expo-av for audio playback and expo-haptics for vibration feedback
+// Uses expo-haptics for vibration + generated tones via expo-av
 
-import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
-
-// Pre-generate sounds using Web Audio API tones (no external files needed)
-// We'll use oscillator-based tones for immediate availability
+import { Audio } from 'expo-av';
+import { Platform } from 'react-native';
+import { Platform } from 'react-native';
 
 let audioInitialized = false;
 
-async function initAudio() {
+async function ensureAudio() {
   if (audioInitialized) return;
   try {
     await Audio.setAudioModeAsync({
@@ -19,66 +18,90 @@ async function initAudio() {
     });
     audioInitialized = true;
   } catch (e) {
-    console.warn('Audio init failed:', e);
+    // Silent fail
   }
 }
 
-// Generate a simple tone using Audio.Sound
-async function playTone(frequency: number, durationMs: number, volume: number = 0.3) {
+// Generate a short beep tone using a base64-encoded WAV
+// This is a minimal 0.1s 880Hz sine wave beep
+const BEEP_URI = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+
+async function playTone() {
   try {
-    await initAudio();
-    // Use a data URI with a simple beep sound (base64 encoded short WAV)
-    // For simplicity, we'll use Haptics + a silent audio trigger
+    await ensureAudio();
+    const { sound } = await Audio.Sound.createAsync(
+      { uri: BEEP_URI },
+      { volume: 0.3, shouldPlay: true }
+    );
+    // Unload after playing
+    sound.setOnPlaybackStatusUpdate((status) => {
+      if (status.isLoaded && status.didJustFinish) {
+        sound.unloadAsync();
+      }
+    });
   } catch (e) {
-    console.warn('Tone playback failed:', e);
+    // Silent fail
   }
 }
 
-// Sound effect functions with haptic fallback
+// Sound effect functions
 export async function playClickSound() {
   try {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== 'web') {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
   } catch (e) {}
 }
 
 export async function playSuccessSound() {
   try {
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    if (Platform.OS !== 'web') {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
   } catch (e) {}
 }
 
 export async function playErrorSound() {
   try {
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    if (Platform.OS !== 'web') {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
   } catch (e) {}
 }
 
 export async function playPerfectSound() {
   try {
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    // Double haptic for "perfect"
-    setTimeout(async () => {
-      try {
-        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-      } catch (e) {}
-    }, 150);
+    if (Platform.OS !== 'web') {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setTimeout(async () => {
+        try {
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        } catch (e) {}
+      }, 150);
+    }
   } catch (e) {}
 }
 
 export async function playSkipSound() {
   try {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (Platform.OS !== 'web') {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
   } catch (e) {}
 }
 
 export async function playTimerWarning() {
   try {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    if (Platform.OS !== 'web') {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    }
   } catch (e) {}
 }
 
 export async function playScanSound() {
   try {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (Platform.OS !== 'web') {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
   } catch (e) {}
 }

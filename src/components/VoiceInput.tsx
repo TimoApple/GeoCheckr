@@ -158,6 +158,7 @@ export default function VoiceInput({ onSubmit, placeholder = "Stadtname eingeben
   const [text, setText] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [webViewHeight, setWebViewHeight] = useState(120);
+  const [webViewError, setWebViewError] = useState(false);
   const webViewRef = useRef<WebView>(null);
   
   const handleMessage = (event: any) => {
@@ -193,7 +194,7 @@ export default function VoiceInput({ onSubmit, placeholder = "Stadtname eingeben
   };
   
   const handleWebViewError = () => {
-    // Fallback if WebView fails
+    setWebViewError(true);
     setIsListening(false);
   };
   
@@ -201,7 +202,7 @@ export default function VoiceInput({ onSubmit, placeholder = "Stadtname eingeben
     <View style={styles.container}>
       <Text style={styles.title}>🎤 Deine Antwort</Text>
       
-      {/* Text Input */}
+      {/* Text Input - Always visible */}
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.textInput}
@@ -212,27 +213,32 @@ export default function VoiceInput({ onSubmit, placeholder = "Stadtname eingeben
           returnKeyType="send"
           onSubmitEditing={handleSubmit}
           selectionColor="#e94560"
+          autoCorrect={false}
+          autoCapitalize="words"
         />
       </View>
       
-      {/* Voice Button via WebView */}
-      <View style={styles.voiceContainer}>
-        <WebView
-          ref={webViewRef}
-          source={{ html: VOICE_HTML }}
-          style={[styles.webview, { height: webViewHeight }]}
-          onMessage={handleMessage}
-          onError={handleWebViewError}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          mediaPlaybackRequiresUserAction={false}
-          allowsInlineMediaPlayback={true}
-          scrollEnabled={false}
-          bounces={false}
-          showsVerticalScrollIndicator={false}
-          containerStyle={styles.webviewContainer}
-        />
-      </View>
+      {/* Voice Button - only if WebView works */}
+      {!webViewError && (
+        <View style={styles.voiceContainer}>
+          <WebView
+            ref={webViewRef}
+            source={{ html: VOICE_HTML }}
+            style={[styles.webview, { height: webViewHeight }]}
+            onMessage={handleMessage}
+            onError={handleWebViewError}
+            onHttpError={handleWebViewError}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            mediaPlaybackRequiresUserAction={false}
+            allowsInlineMediaPlayback={true}
+            scrollEnabled={false}
+            bounces={false}
+            showsVerticalScrollIndicator={false}
+            containerStyle={styles.webviewContainer}
+          />
+        </View>
+      )}
       
       {/* Submit Button */}
       <TouchableOpacity 
@@ -248,7 +254,7 @@ export default function VoiceInput({ onSubmit, placeholder = "Stadtname eingeben
       
       {/* Hint */}
       <Text style={styles.hint}>
-        💡 Mikrofon tippen und Stadtnamen sprechen
+        💡 Stadtnamen eintippen und auf ✓ drücken
       </Text>
     </View>
   );

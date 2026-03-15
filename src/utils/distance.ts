@@ -32,16 +32,61 @@ export function normalizeCityName(name: string): string {
     .replace(/\s+/g, ' ');
 }
 
-// Find location by city name (fuzzy match with normalization)
+// City name aliases (German names, landmarks → canonical city names)
+const CITY_ALIASES: Record<string, string> = {
+  'peking': 'beijing',
+  'mailand': 'milano',
+  'florenz': 'firenze',
+  'venedig': 'venezia',
+  'neapel': 'napoli',
+  'rom': 'roma',
+  'genf': 'geneve',
+  'bruessel': 'bruxelles',
+  'den haag': 'the hague',
+  'kopenhagen': 'copenhagen',
+  'moskau': 'moscow',
+  'st petersburg': 'saint petersburg',
+  'sankt petersburg': 'saint petersburg',
+  'bombay': 'mumbai',
+  'kalkutta': 'kolkata',
+  'kanton': 'guangzhou',
+  'tokio': 'tokyo',
+  'japan': 'tokyo',
+  'china': 'beijing',
+  'deutschland': 'berlin',
+  'frankreich': 'paris',
+  'italien': 'roma',
+  'spanien': 'madrid',
+  'grossbritannien': 'london',
+  'tuerkei': 'istanbul',
+  'griechenland': 'athen',
+  'aegypten': 'kairo',
+  'thailand': 'bangkok',
+  'indien': 'delhi',
+  'brasilien': 'sao paulo',
+  'mexiko': 'mexiko stadt',
+  'chinesische mauer': 'beijing',
+  'grosse mauer': 'beijing',
+  'great wall': 'beijing',
+  'chinesisch': 'beijing',
+  'mauer': 'beijing',
+};
+
+// Find location by city name (fuzzy match with normalization + aliases)
 export function findLocationByCity(
   cityName: string,
   locations: Array<{ id: number; city: string; lat: number; lng: number }>
 ): { id: number; city: string; lat: number; lng: number } | undefined {
   const normalized = normalizeCityName(cityName);
+  if (!normalized) return undefined;
+  
+  // Check aliases first
+  const aliased = CITY_ALIASES[normalized];
+  const searchTerm = aliased || normalized;
   
   // Exact normalized match
   for (const loc of locations) {
-    if (normalizeCityName(loc.city) === normalized) {
+    if (normalizeCityName(loc.city) === searchTerm) {
       return loc;
     }
   }
@@ -49,7 +94,7 @@ export function findLocationByCity(
   // Partial match (input contained in city or vice versa)
   for (const loc of locations) {
     const locNorm = normalizeCityName(loc.city);
-    if (locNorm.includes(normalized) || normalized.includes(locNorm)) {
+    if (locNorm.includes(searchTerm) || searchTerm.includes(locNorm)) {
       return loc;
     }
   }

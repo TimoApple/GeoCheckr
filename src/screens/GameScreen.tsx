@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
   
   // Scan Phase
   scanIcon: { fontSize: 60, marginBottom: 15 },
-  phaseTitle: { fontSize: 24, color: '#fff', fontWeight: 'bold', marginBottom: 10 },
+  phaseTitle: { fontSize: 24, color: '#fff', fontWeight: 'bold', marginBottom: 10, textAlign: 'center' },
   phaseText: { fontSize: 16, color: '#aaa', marginBottom: 25, textAlign: 'center', lineHeight: 22 },
   scanButton: { 
     backgroundColor: '#e94560', 
@@ -501,7 +501,7 @@ const styles = StyleSheet.create({
   
   // Result Phase
   resultIcon: { fontSize: 60, marginBottom: 10 },
-  resultTitle: { fontSize: 30, fontWeight: 'bold', marginBottom: 20 },
+  resultTitle: { fontSize: 30, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
   resultCorrect: { color: '#4CAF50' },
   resultWrong: { color: '#ff4444' },
   resultCard: {
