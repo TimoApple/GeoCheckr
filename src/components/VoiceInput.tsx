@@ -85,6 +85,14 @@ function stop() {
 </body>
 </html>`;
 
+// Auto-start listening after WebView loads
+const AUTO_START_JS = `
+  setTimeout(() => {
+    if (typeof toggle === 'function' && !listening) toggle();
+  }, 500);
+  true;
+`;
+
 export default function VoiceInput({ onSubmit, placeholder = "Stadtname eingeben..." }: VoiceInputProps) {
   const [text, setText] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -141,6 +149,14 @@ export default function VoiceInput({ onSubmit, placeholder = "Stadtname eingeben
               onMessage={handleMessage}
               onError={() => setVoiceAvailable(false)}
               onHttpError={() => setVoiceAvailable(false)}
+              onLoadEnd={() => {
+                // Auto-start listening when WebView loads
+                setTimeout(() => {
+                  try {
+                    webViewRef.current?.injectJavaScript(AUTO_START_JS);
+                  } catch(e) {}
+                }, 1000);
+              }}
               javaScriptEnabled={true}
               domStorageEnabled={true}
               allowsInlineMediaPlayback={true}

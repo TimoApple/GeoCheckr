@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Vibration, KeyboardAvoidingView, Platform, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Vibration, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { WebView } from 'react-native-webview';
 import locations from '../data/locations_complete';
 import { calculateDistance, calculatePoints, findLocationByCity } from '../utils/distance';
 import StreetViewImage from '../components/StreetViewImage';
 import VoiceInput from '../components/VoiceInput';
-import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playSkipSound, playTimerWarning, playScanSound, playTimerTick } from '../utils/sounds';
+import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playSkipSound, playTimerWarning, playScanSound, playTimerTick, setAudioWebViewRef, onAudioReady, AUDIO_HTML } from '../utils/sounds';
 
 interface Player {
   id: number;
@@ -44,6 +45,14 @@ export default function GameScreen({ route, navigation }: any) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const resultScaleAnim = useRef(new Animated.Value(0)).current;
   const timerPulse = useRef(new Animated.Value(1)).current;
+  const audioWebViewRef = useRef<WebView>(null);
+  
+  // Setup audio WebView ref
+  useEffect(() => {
+    if (audioWebViewRef.current) {
+      setAudioWebViewRef(audioWebViewRef.current);
+    }
+  }, []);
   
   const currentPlayer = players[currentPlayerIndex];
   
@@ -210,6 +219,18 @@ export default function GameScreen({ route, navigation }: any) {
   
   return (
     <View style={styles.container}>
+      {/* Hidden Audio WebView */}
+      <WebView
+        ref={audioWebViewRef}
+        source={{ html: AUDIO_HTML }}
+        style={{ width: 0, height: 0, position: 'absolute' }}
+        javaScriptEnabled={true}
+        onMessage={(e) => {
+          if (e.nativeEvent.data === 'ready') onAudioReady();
+        }}
+        onError={() => {}}
+      />
+      
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
