@@ -1,6 +1,62 @@
 // GeoCheckr - Distance calculation utility
 // Haversine formula for calculating distance between two coordinates
 
+// Normalize city names for comparison (umlauts, special chars, whitespace)
+export function normalizeCityName(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/ä/g, 'ae')
+    .replace(/ö/g, 'oe')
+    .replace(/ü/g, 'ue')
+    .replace(/ß/g, 'ss')
+    .replace(/é/g, 'e')
+    .replace(/è/g, 'e')
+    .replace(/ê/g, 'e')
+    .replace(/á/g, 'a')
+    .replace(/à/g, 'a')
+    .replace(/â/g, 'a')
+    .replace(/ñ/g, 'n')
+    .replace(/ó/g, 'o')
+    .replace(/ò/g, 'o')
+    .replace(/ô/g, 'o')
+    .replace(/ú/g, 'u')
+    .replace(/ù/g, 'u')
+    .replace(/û/g, 'u')
+    .replace(/ç/g, 'c')
+    .replace(/ş/g, 's')
+    .replace(/ğ/g, 'g')
+    .replace(/ı/g, 'i')
+    .replace(/ș/g, 's')
+    .replace(/ț/g, 't')
+    .replace(/\s+/g, ' ');
+}
+
+// Find location by city name (fuzzy match with normalization)
+export function findLocationByCity(
+  cityName: string,
+  locations: Array<{ id: number; city: string; lat: number; lng: number }>
+): { id: number; city: string; lat: number; lng: number } | undefined {
+  const normalized = normalizeCityName(cityName);
+  
+  // Exact normalized match
+  for (const loc of locations) {
+    if (normalizeCityName(loc.city) === normalized) {
+      return loc;
+    }
+  }
+  
+  // Partial match (input contained in city or vice versa)
+  for (const loc of locations) {
+    const locNorm = normalizeCityName(loc.city);
+    if (locNorm.includes(normalized) || normalized.includes(locNorm)) {
+      return loc;
+    }
+  }
+  
+  return undefined;
+}
+
 export function calculateDistance(
   lat1: number,
   lng1: number,

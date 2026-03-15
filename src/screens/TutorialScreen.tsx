@@ -7,9 +7,12 @@ import {
   TextInput,
   ScrollView,
   Alert,
-  Animated 
+  Animated,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { playClickSound, playSuccessSound } from '../utils/sounds';
 
 interface TutorialStep {
   id: number;
@@ -94,6 +97,7 @@ export default function TutorialScreen({ navigation, onComplete }: any) {
   };
 
   const handleNext = () => {
+    playClickSound();
     if (!isLastStep) {
       animateStep(currentStep + 1);
     } else {
@@ -102,12 +106,14 @@ export default function TutorialScreen({ navigation, onComplete }: any) {
   };
 
   const handlePrev = () => {
+    playClickSound();
     if (!isFirstStep) {
       animateStep(currentStep - 1);
     }
   };
 
   const handleSkip = () => {
+    playSuccessSound();
     completeTutorial();
   };
 
@@ -138,7 +144,10 @@ export default function TutorialScreen({ navigation, onComplete }: any) {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       {/* Progress Bar */}
       <View style={styles.progressContainer}>
         <View style={styles.progressBar}>
@@ -227,7 +236,7 @@ export default function TutorialScreen({ navigation, onComplete }: any) {
           </Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

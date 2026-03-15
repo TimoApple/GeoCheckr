@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Vibration } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Vibration, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import locations from '../data/locations_complete';
-import { calculateDistance, calculatePoints } from '../utils/distance';
+import { calculateDistance, calculatePoints, findLocationByCity } from '../utils/distance';
 import StreetViewImage from '../components/StreetViewImage';
 import VoiceInput from '../components/VoiceInput';
+import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playSkipSound, playTimerWarning, playScanSound } from '../utils/sounds';
 
 interface Player {
   id: number;
@@ -53,6 +54,7 @@ export default function GameScreen({ route, navigation }: any) {
       return () => clearInterval(interval);
     }
     if (timer === 0 && phase === 'view') {
+      playTimerWarning();
       Vibration.vibrate(500);
       setPhase('answer');
     }
@@ -114,6 +116,7 @@ export default function GameScreen({ route, navigation }: any) {
   };
   
   const simulateScan = () => {
+    playScanSound();
     const randomLoc = getRandomLocation();
     setUsedLocations(prev => [...prev, randomLoc.id]);
     setCountdownPaused(false);
@@ -126,12 +129,10 @@ export default function GameScreen({ route, navigation }: any) {
   };
   
   const submitAnswer = (cityName: string) => {
-    const guessedLocation = locations.find(loc => 
-      loc.city.toLowerCase() === cityName.toLowerCase()
-    );
+    const guessedLocation = findLocationByCity(cityName, locations);
     
     let dist = 99999;
-    if (guessedLocation) {
+    if (guessedLocation && currentLocation) {
       dist = calculateDistance(
         currentLocation.lat, currentLocation.lng,
         guessedLocation.lat, guessedLocation.lng
@@ -148,15 +149,23 @@ export default function GameScreen({ route, navigation }: any) {
       useNativeDriver: true,
     }).start();
     
-    if (pts > 0) {
-      Vibration.vibrate([100, 50, 100]); // Success vibration
-      // Pulse animation for score
+    if (pts >= 3) {
+      playPerfectSound();
+      Vibration.vibrate([100, 50, 100]);
+      Animated.sequence([
+        Animated.timing(scaleAnim, { toValue: 1.3, duration: 200, useNativeDriver: true }),
+        Animated.timing(scaleAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
+      ]).start();
+    } else if (pts > 0) {
+      playSuccessSound();
+      Vibration.vibrate([100, 50, 100]);
       Animated.sequence([
         Animated.timing(scaleAnim, { toValue: 1.3, duration: 200, useNativeDriver: true }),
         Animated.timing(scaleAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
       ]).start();
     } else {
-      Vibration.vibrate(500); // Fail vibration
+      playErrorSound();
+      Vibration.vibrate(500);
     }
     
     setDistance(dist);
@@ -169,11 +178,26 @@ export default function GameScreen({ route, navigation }: any) {
   };
   
   const nextTurn = () => {
+    playClickSound();
     resultScaleAnim.setValue(0);
     const nextIndex = (currentPlayerIndex + 1) % players.length;
     animateTransition(() => {
       setCurrentPlayerIndex(nextIndex);
       setPhase('scan');
+    });
+  };
+
+  const newCard = () => {
+    playScanSound();
+    resultScaleAnim.setValue(0);
+    const randomLoc = getRandomLocation();
+    setUsedLocations(prev => [...prev, randomLoc.id]);
+    setCountdownPaused(false);
+    animateTransition(() => {
+      setCurrentLocation(randomLoc);
+      setTimer(30);
+      setPhase('view');
+      setRound(r => r + 1);
     });
   };
 
@@ -266,21 +290,31 @@ export default function GameScreen({ route, navigation }: any) {
         )}
         
         {phase === 'answer' && (
-          <View style={styles.phaseContainer}>
-            <Text style={styles.answerIcon}>🎤</Text>
-            <Text style={styles.phaseTitle}>Deine Antwort</Text>
-            <Text style={styles.phaseText}>Nenne die Stadt, die am nächsten liegt</Text>
-            <VoiceInput 
-              onSubmit={submitAnswer}
-              placeholder="Stadtname eingeben..."
-            />
-            <TouchableOpacity 
-              style={styles.skipAnswerButton}
-              onPress={() => submitAnswer('')}
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.keyboardAvoid}
+            keyboardVerticalOffset={100}
+          >
+            <ScrollView 
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
             >
-              <Text style={styles.skipAnswerText}>Überspringen →</Text>
-            </TouchableOpacity>
-          </View>
+              <Text style={styles.answerIcon}>🎤</Text>
+              <Text style={styles.phaseTitle}>Deine Antwort</Text>
+              <Text style={styles.phaseText}>Nenne die Stadt, die am nächsten liegt</Text>
+              <VoiceInput 
+                onSubmit={submitAnswer}
+                placeholder="Stadtname eingeben..."
+              />
+              <TouchableOpacity 
+                style={styles.skipAnswerButton}
+                onPress={() => { playSkipSound(); submitAnswer(''); }}
+              >
+                <Text style={styles.skipAnswerText}>Überspringen →</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </KeyboardAvoidingView>
         )}
         
         {phase === 'result' && (
@@ -314,6 +348,10 @@ export default function GameScreen({ route, navigation }: any) {
               <Text style={styles.nextButtonText}>
                 {players[(currentPlayerIndex + 1) % players.length].name} ist dran →
               </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.newCardButton} onPress={newCard} activeOpacity={0.8}>
+              <Text style={styles.newCardButtonText}>🔄 Neue Karte</Text>
             </TouchableOpacity>
           </Animated.View>
         )}
@@ -430,6 +468,8 @@ const styles = StyleSheet.create({
   
   // Answer Phase
   answerIcon: { fontSize: 50, marginBottom: 15 },
+  keyboardAvoid: { flex: 1, width: '100%' },
+  scrollContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 20 },
   skipAnswerButton: {
     marginTop: 15,
     paddingVertical: 10,
@@ -439,6 +479,21 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 14,
     textDecorationLine: 'underline',
+  },
+  newCardButton: {
+    marginTop: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+  },
+  newCardButtonText: {
+    color: '#4CAF50',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   
   // Result Phase

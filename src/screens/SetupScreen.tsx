@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { playClickSound } from '../utils/sounds';
 
 interface Player {
   id: number;
@@ -36,11 +37,16 @@ export default function SetupScreen({ navigation }: any) {
       ...p,
       name: p.name.trim() || `Spieler ${i + 1}`
     }));
+    playClickSound();
     navigation.navigate('Game', { players: filledPlayers, difficulty, targetScore });
   };
   
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps="handled">
       {/* SPIELER */}
       <Text style={styles.sectionTitle}>👥 Spieler ({players.length})</Text>
       {players.map((player, index) => (
@@ -121,7 +127,8 @@ export default function SetupScreen({ navigation }: any) {
       <TouchableOpacity style={styles.startButton} onPress={startGame} activeOpacity={0.8}>
         <Text style={styles.startButtonText}>🚀 Spiel starten</Text>
       </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
