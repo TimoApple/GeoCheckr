@@ -14,6 +14,7 @@ export default function SetupScreen({ navigation }: any) {
   ]);
   const [difficulty, setDifficulty] = useState<'leicht' | 'mittel' | 'schwer'>('mittel');
   const [targetScore, setTargetScore] = useState(10);
+  const [rounds, setRounds] = useState(10);
   
   const addPlayer = () => {
     if (players.length < 8) {
@@ -38,7 +39,7 @@ export default function SetupScreen({ navigation }: any) {
       name: p.name.trim() || `Spieler ${i + 1}`
     }));
     playClickSound();
-    navigation.navigate('Game', { players: filledPlayers, difficulty, targetScore });
+    navigation.navigate('Game', { players: filledPlayers, difficulty, targetScore, rounds });
   };
   
   return (
@@ -113,6 +114,21 @@ export default function SetupScreen({ navigation }: any) {
             activeOpacity={0.7}
           >
             <Text style={[styles.scoreText, targetScore === score && styles.scoreTextActive]}>{score}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      
+      {/* RUNDEN */}
+      <Text style={styles.sectionTitle}>🔄 Runden</Text>
+      <View style={styles.scoreRow}>
+        {[5, 10, 15, 20].map((r) => (
+          <TouchableOpacity
+            key={r}
+            style={[styles.scoreButton, rounds === r && styles.scoreActive]}
+            onPress={() => setRounds(r)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.scoreText, rounds === r && styles.scoreTextActive]}>{r}</Text>
           </TouchableOpacity>
         ))}
       </View>
