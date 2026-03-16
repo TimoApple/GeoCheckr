@@ -42,3 +42,8 @@ yarn-error.*
 
 # Project docs
 src/data/locations*.json
+
+# Credentials
+*credentials*.json
+*secret*.json
+.env
