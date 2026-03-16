@@ -102,7 +102,10 @@ export default function VoiceInput({ onSubmit, placeholder = "Stadtname eingeben
   const handleMessage = (event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
-      if (data.t === 'start') setIsListening(true);
+      if (data.t === 'start') {
+        setIsListening(true);
+        Vibration.vibrate(100); // Haptic feedback when mic starts
+      }
       if (data.t === 'partial') setText(data.v);
       if (data.t === 'result') {
         setText(data.v);
@@ -193,11 +196,11 @@ const styles = StyleSheet.create({
     width: '100%', marginBottom: 12,
   },
   voiceRow: { 
-    flexDirection: 'row', alignItems: 'center', marginBottom: 12, 
-    backgroundColor: '#0f3460', borderRadius: 12, padding: 8, width: '100%',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12, 
+    backgroundColor: '#0f3460', borderRadius: 12, padding: 12, width: '100%',
   },
-  webviewWrapper: { width: 70, height: 70 },
-  webview: { backgroundColor: 'transparent', width: 70, height: 70 },
+  webviewWrapper: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center' },
+  webview: { backgroundColor: 'transparent', width: 64, height: 64 },
   voiceHint: { color: '#aaa', fontSize: 14, marginLeft: 10, flex: 1 },
   submitButton: { 
     width: '100%', backgroundColor: '#e94560', paddingVertical: 16, borderRadius: 12, alignItems: 'center',
