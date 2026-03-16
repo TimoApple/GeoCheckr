@@ -1,87 +1,49 @@
-# Street View Alternativen — Research
+# Street View / Panorama Research
 
-## MAPILLARY (Empfohlen)
-- **Lizenz:** CC-BY-SA 4.0 (kostenlos für kommerzielle Nutzung)
-- **Besitzer:** Meta (Facebook) seit 2020
-- **API:** JSON API verfügbar, dokumentiert
-- **Abdeckung:** Global, crowdsourced
-- **Vorteile:**
-  - Kostenlos
-  - CC-BY-SA = nutzbar für Brettspiel
-  - Gute API
-  - OSM-Integration vorhanden
-- **Nachteile:**
-  - Weniger Abdeckung als Google
-  - Qualität variiert
-  - Meta-Daten (Datenschutz?)
+## Aktuelle Lösung: Google Maps Panoramen
 
-## GOOGLE STREET VIEW
-- **Kosten:** $7 pro 1000 Requests (Static API)
-- **Abdeckung:** Beste weltweit
-- **Vorteile:**
-  - Beste Qualität
-  - Beste Abdeckung
-  - Bekannteste Marke
-- **Nachteile:**
-  - Teuer bei vielen Requests
-  - API-Key nötig
-  - Nutzungsbedingungen einschränkend
+### Ansatz
+- Timo kuratiert 360° Panorama-Locations manuell
+- Jede Location bekommt einen Google Maps Link (maps.app.goo.gl)
+- App lädt Link direkt in WebView
+- Kein API-Key nötig, keine Kosten
 
-## PANORAMAX (FLOSS Alternative)
-- **Lizenz:** Vollständig Open Source
-- **Besitzer:** Community-basiert
-- **Status:** Neu, wachsend
-- **Vorteile:**
-  - 100% Open Source
-  - Keine Kosten
-  - Europäisch (Datenschutz)
-- **Nachteile:**
-  - Geringe Abdeckung
-  - Noch in Entwicklung
+### Vorteile
+- ✅ Keine API-Kosten
+- ✅ Timo kann Locations vorsortieren (interessante Orte)
+- ✅ Funktioniert auf allen Geräten
+- ✅ Keine Rate-Limits
 
-## KARTAVIEW (OpenStreetCam)
-- **Lizenz:** Kostenlos
-- **Besitzer:** Grab (seit 2020)
-- **Status:** Noch aktiv, aber weniger Fokus
-- **Vorteile:**
-  - Kostenlos
-  - OSM-Integration
-- **Nachteile:**
-  - Geringe Abdeckung
-  - Weniger Aktivität
+### 10 Aktuelle Locations (März 2026)
+1. Kyiv, Ukraine (50.49, 30.54)
+2. Stornoway, Schottland (58.17, -6.59)
+3. Slutsk, Belarus (53.35, 27.08)
+4. Lemvig, Dänemark (56.51, 8.12)
+5. Brest, Belarus (52.74, 24.18)
+6. Sizilien, Italien (36.79, 14.68)
+7. Shetland, Schottland (60.83, -0.78)
+8. Cáceres, Spanien (39.04, -6.15)
+9. Nordfjordeid, Norwegen (61.83, 6.12)
+10. Białystok, Polen (53.12, 23.17)
 
-## EMPFEHLUNG FÜR GEOCHECKR
+## Alternative APIs (falls nötig)
 
-**Primär:** Mapillary
-- Kostenlos, CC-BY-SA
-- Gute API
-- Ausreichend für Brettspiel-Zwecke
+### Google Street View Static API
+- **Kosten:** $7 pro 1000 Requests (28.000 gratis/Monat)
+- **Vorteil:** Direkte Bild-URLs, panorama_id support
+- **Nachteil:** Kosten ab >28K requests
 
-**Fallback:** OpenStreetMap Static Maps
-- Kostenlos
-- Kein Street View, aber Kartenansicht
-- Für Prototyping geeignet
+### Mapillary (Meta/Open Source)
+- **Kosten:** Kostenlos (Open Source)
+- **Vorteil:** Community-basiert, weltweit
+- **Nachteil:** Qualität variiert, nicht überall verfügbar
 
-**Später:** Google Street View
-- Wenn Budget vorhanden
-- Für bessere Qualität
-- Als Premium-Feature
+### Karta View (Open Source)
+- **Kosten:** Kostenlos
+- **Vorteil:** Open Source Alternative
+- **Nachteil:** Weniger Coverage als Google
 
-## TECHNISCHE UMSETZUNG
-
-```typescript
-// Mapillary API Beispiel
-const getImage = async (lat: number, lng: number) => {
-  const response = await fetch(
-    `https://graph.mapillary.com/images?access_token=TOKEN&fields=id,thumb_2048_url&closeto=${lng},${lat}&limit=1`
-  );
-  const data = await response.json();
-  return data.data[0]?.thumb_2048_url;
-};
-```
-
-## NÄCHSTE SCHRITTE
-1. Mapillary API-Key registrieren
-2. Testen mit Beispiel-Koordinaten
-3. Abdeckung für 200 Locations prüfen
-4. Fallback-Strategie für schlechte Abdeckung
+## Nächste Schritte
+- [ ] 190 weitere Panorama-Locations von Timo sammeln
+- [ ] Alternative: Google Street View Static API als Fallback
+- [ ] Panorama-Viewer optimieren (3D-Steuerung)
