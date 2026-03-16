@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   fullscreenImageContainer: { flex: 1, position: 'relative' },
   countdownOverlay: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.85)', borderRadius: 24, width: 48, height: 48, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#e94560', zIndex: 10 },
   countdownTimer: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
-  skipTimerButton: { position: 'absolute', bottom: 20, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 25, borderWidth: 1, borderColor: '#4CAF50' },
+  skipTimerButton: { position: 'absolute', bottom: 50, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 25, borderWidth: 1, borderColor: '#4CAF50', zIndex: 20 },
   skipTimerText: { color: '#4CAF50', fontSize: 16, fontWeight: '600' },
 
   // Answer
