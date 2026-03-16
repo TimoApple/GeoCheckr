@@ -34,17 +34,6 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
           imageUrl={panoramaLink} 
           locationName={location.city}
         />
-        {/* Switch to flat image */}
-        <TouchableOpacity 
-          style={styles.toggleButton}
-          onPress={() => setUseFlatImage(true)}
-        >
-          <Text style={styles.toggleText}>📷 Normal</Text>
-        </TouchableOpacity>
-        {/* City name */}
-        <View style={styles.cityOverlay}>
-          <Text style={styles.cityName}>🌐 360° — {location.city}</Text>
-        </View>
       </View>
     );
   }

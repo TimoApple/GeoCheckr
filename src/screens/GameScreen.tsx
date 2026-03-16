@@ -281,11 +281,13 @@ export default function GameScreen({ route, navigation }: any) {
           <View style={styles.viewPhaseContainer}>
             <View style={styles.fullscreenImageContainer}>
               <StreetViewImage location={currentLocation} showInfo={false} />
+              {/* Timer oben rechts */}
               <View style={styles.countdownOverlay}>
                 <Animated.Text style={[styles.countdownTimer, { color: getTimerColor(), transform: [{ scale: timerPulse }] }]}>
                   {timer}
                 </Animated.Text>
               </View>
+              {/* Skip Button unten */}
               <TouchableOpacity style={styles.skipTimerButton} onPress={() => {
                 playClickSound();
                 setCountdownPaused(true);
@@ -426,7 +428,7 @@ const styles = StyleSheet.create({
   // View
   viewPhaseContainer: { flex: 1, marginHorizontal: -20, marginTop: -10, marginBottom: -20 },
   fullscreenImageContainer: { flex: 1, position: 'relative' },
-  countdownOverlay: { position: 'absolute', top: 50, right: 15, backgroundColor: 'rgba(0,0,0,0.8)', borderRadius: 28, width: 56, height: 56, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#e94560', zIndex: 10 },
+  countdownOverlay: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.85)', borderRadius: 24, width: 48, height: 48, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#e94560', zIndex: 10 },
   countdownTimer: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
   skipTimerButton: { position: 'absolute', bottom: 20, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 25, borderWidth: 1, borderColor: '#4CAF50' },
   skipTimerText: { color: '#4CAF50', fontSize: 16, fontWeight: '600' },
