@@ -289,7 +289,7 @@ export default function GameScreen({ route, navigation }: any) {
             <View style={styles.fullscreenImageContainer}>
               <StreetViewImage location={currentLocation} showInfo={false} />
               
-              {/* Countdown Overlay - Safe Area aware */}
+              {/* Countdown Overlay */}
               <View style={styles.countdownOverlay}>
                 <Animated.Text style={[styles.countdownTimer, { 
                   color: getTimerColor(), 
@@ -306,8 +306,7 @@ export default function GameScreen({ route, navigation }: any) {
                   playClickSound();
                   setCountdownPaused(true);
                   setPhase('answer');
-                  // Anrufbeantworter-Ton
-                  setTimeout(() => playAnswerphoneBeep(), 200);
+                  playAnswerphoneBeep();
                 }}
               >
                 <Text style={styles.skipTimerText}>Ich weiß es! →</Text>
@@ -317,22 +316,19 @@ export default function GameScreen({ route, navigation }: any) {
         )}
         
         {phase === 'answer' && (
-          <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.keyboardAvoid}
-            keyboardVerticalOffset={100}
-          >
+          <View style={styles.answerPhaseContainer}>
             <ScrollView 
               contentContainerStyle={styles.scrollContent}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
+              keyboardDismissMode="interactive"
             >
               <Text style={styles.answerIcon}>🎤</Text>
               <Text style={styles.phaseTitle}>Deine Antwort</Text>
-              <Text style={styles.phaseText}>Nenne die Stadt, die am nächsten liegt</Text>
+              <Text style={styles.phaseText}>Nenne die Stadt</Text>
               <VoiceInput 
                 onSubmit={submitAnswer}
-                placeholder="Stadtname eingeben..."
+                placeholder="Stadtname..."
               />
               <TouchableOpacity 
                 style={styles.skipAnswerButton}
@@ -341,7 +337,7 @@ export default function GameScreen({ route, navigation }: any) {
                 <Text style={styles.skipAnswerText}>Überspringen →</Text>
               </TouchableOpacity>
             </ScrollView>
-          </KeyboardAvoidingView>
+          </View>
         )}
         
         {phase === 'result' && (
@@ -363,7 +359,9 @@ export default function GameScreen({ route, navigation }: any) {
               </View>
               <View style={styles.resultRow}>
                 <Text style={styles.resultLabel}>📏 Distanz</Text>
-                <Text style={styles.resultValue}>{distance.toLocaleString()} km</Text>
+                <Text style={styles.resultValue}>
+                  {distance >= 99999 ? '> 9.999 km' : distance.toLocaleString('de-DE') + ' km'}
+                </Text>
               </View>
               <View style={styles.resultRow}>
                 <Text style={styles.resultLabel}>⭐ Punkte</Text>
@@ -429,6 +427,7 @@ const styles = StyleSheet.create({
   // Main Content
   mainContent: { flex: 1, justifyContent: 'center', padding: 20 },
   phaseContainer: { alignItems: 'center', paddingBottom: 30, paddingHorizontal: 20 },
+  answerPhaseContainer: { flex: 1, width: '100%' },
   
   // Scan Phase
   scanIcon: { fontSize: 60, marginBottom: 15 },
