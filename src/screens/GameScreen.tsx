@@ -4,8 +4,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Vibration, ScrollView, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
-import locations from '../data/locations_complete';
-import { calculateDistance, calculatePoints, findLocationByCity } from '../utils/distance';
+import { panoramaLocations, PanoramaLocation } from '../data/panoramaLocations';
+import { calculateDistance, calculatePoints } from '../utils/distance';
 import StreetViewImage from '../components/StreetViewImage';
 import VoiceInput from '../components/VoiceInput';
 import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playSkipSound, playTimerWarning, playScanSound, playTimerTick, playAnswerphoneBeep, setAudioWebViewRef, onAudioReady, AUDIO_HTML } from '../utils/sounds';
@@ -32,7 +32,7 @@ export default function GameScreen({ route, navigation }: any) {
 
   const { players, difficulty, targetScore, rounds: maxRounds } = params;
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
-  const [currentLocation, setCurrentLocation] = useState(locations[0]);
+  const [currentLocation, setCurrentLocation] = useState<PanoramaLocation>(panoramaLocations[0]);
   const [scores, setScores] = useState<Record<number, number>>(
     Object.fromEntries(players.map((p: Player) => [p.id, 0]))
   );
@@ -95,18 +95,10 @@ export default function GameScreen({ route, navigation }: any) {
   };
 
   const getRandomLocation = () => {
-    const difficultyMap: Record<string, string[]> = {
-      'leicht': ['leicht'],
-      'mittel': ['leicht', 'mittel'],
-      'schwer': ['leicht', 'mittel', 'schwer']
-    };
-    const available = locations.filter(loc =>
-      (difficultyMap[difficulty]?.includes(loc.difficulty) ?? true) &&
-      !usedLocations.includes(loc.id)
-    );
+    const available = panoramaLocations.filter(loc => !usedLocations.includes(loc.id));
     if (available.length === 0) {
       setUsedLocations([]);
-      return locations[Math.floor(Math.random() * locations.length)];
+      return panoramaLocations[Math.floor(Math.random() * panoramaLocations.length)];
     }
     return available[Math.floor(Math.random() * available.length)];
   };
@@ -124,11 +116,27 @@ export default function GameScreen({ route, navigation }: any) {
   };
 
   const submitAnswer = (cityName: string) => {
-    const guessedLocation = findLocationByCity(cityName, locations);
-    let dist = 99999;
-    if (guessedLocation && currentLocation) {
-      dist = calculateDistance(currentLocation.lat, currentLocation.lng, guessedLocation.lat, guessedLocation.lng);
+    // ALWAYS calculate distance using Haversine
+    // Match answer to a location in the database
+    let dist = 20000; // Default: max Earth distance (~20000 km half globe)
+    
+    if (cityName.trim()) {
+      // Try to find matching city in panorama locations first, then all locations
+      const allLocs = require('../data/locations_complete').default;
+      const normalized = cityName.toLowerCase().trim()
+        .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+      
+      let match = allLocs.find((l: any) => l.city.toLowerCase() === normalized);
+      if (!match) match = allLocs.find((l: any) => l.city.toLowerCase().includes(normalized) || normalized.includes(l.city.toLowerCase()));
+      
+      if (match) {
+        dist = calculateDistance(currentLocation.lat, currentLocation.lng, match.lat, match.lng);
+      } else {
+        // No match found - use max distance (player gets 0 points)
+        dist = 20000;
+      }
     }
+    
     const pts = calculatePoints(dist);
 
     Animated.spring(resultScaleAnim, { toValue: 1, friction: 6, tension: 100, useNativeDriver: true }).start();
@@ -264,7 +272,7 @@ export default function GameScreen({ route, navigation }: any) {
             <TouchableOpacity style={styles.scanButton} onPress={simulateScan} activeOpacity={0.8}>
               <Text style={styles.scanButtonText}>📍 Location laden</Text>
             </TouchableOpacity>
-            <Text style={styles.scanHint}>{locations.length - usedLocations.length} Locations verfügbar</Text>
+            <Text style={styles.scanHint}>{panoramaLocations.length - usedLocations.length} von {panoramaLocations.length} Locations</Text>
           </View>
         )}
 
@@ -320,7 +328,7 @@ export default function GameScreen({ route, navigation }: any) {
               </View>
               <View style={styles.resultRow}>
                 <Text style={styles.resultLabel}>📏 Distanz</Text>
-                <Text style={styles.resultValue}>{distance >= 99999 ? '> 9.999 km' : distance.toLocaleString('de-DE') + ' km'}</Text>
+                <Text style={styles.resultValue}>{distance.toLocaleString('de-DE')} km</Text>
               </View>
               <View style={styles.resultRow}>
                 <Text style={styles.resultLabel}>⭐ Punkte</Text>

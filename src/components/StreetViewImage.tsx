@@ -8,7 +8,7 @@ import Panorama360Viewer from './Panorama360Viewer';
 import { getCityImage } from '../data/locationImages';
 
 interface StreetViewProps {
-  location: Location;
+  location: { city: string; country?: string; region?: string; continent?: string; panoramaUrl?: string; streetViewUrl?: string; lat?: number; lng?: number };
   showInfo?: boolean;
 }
 
@@ -17,7 +17,8 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
   const [error, setError] = useState(false);
   const [useFlatImage, setUseFlatImage] = useState(false);
   
-  const has360 = !!location.streetViewUrl;
+  const panoramaLink = location.panoramaUrl || location.streetViewUrl || '';
+  const has360 = !!panoramaLink;
   
   useEffect(() => {
     setLoading(true);
@@ -30,7 +31,7 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
     return (
       <View style={styles.container}>
         <Panorama360Viewer 
-          imageUrl={location.streetViewUrl!} 
+          imageUrl={panoramaLink} 
           locationName={location.city}
         />
         {/* Switch to flat image */}
