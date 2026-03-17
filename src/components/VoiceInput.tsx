@@ -22,13 +22,20 @@ body {
   align-items: center; 
   justify-content: center; 
   height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  margin: 0;
   font-family: -apple-system, sans-serif;
+}
+div[style] {
+  width: 100%;
 }
 #mic-btn {
   width: 60px; height: 60px; border-radius: 30px;
   background: #16213e; border: 2px solid #e94560;
-  color: #fff; font-size: 24px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 28px; cursor: pointer;
+  text-align: center; line-height: 60px;
+  padding: 0; outline: none;
   transition: all 0.2s;
 }
 #mic-btn.listening { background: #e94560; animation: pulse 1s infinite; }
@@ -199,8 +206,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12, 
     backgroundColor: '#0f3460', borderRadius: 12, padding: 12, width: '100%',
   },
-  webviewWrapper: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center' },
-  webview: { backgroundColor: 'transparent', width: 64, height: 64 },
+  webviewWrapper: { width: 70, height: 70, alignItems: 'center', justifyContent: 'center' },
+  webview: { backgroundColor: 'transparent', width: 70, height: 70 },
   voiceHint: { color: '#aaa', fontSize: 14, marginLeft: 10, flex: 1 },
   submitButton: { 
     width: '100%', backgroundColor: '#e94560', paddingVertical: 16, borderRadius: 12, alignItems: 'center',
