@@ -1,10 +1,10 @@
 // GeoCheckr — 360° Panorama Viewer
-// Uses Google Maps Embed API when available, falls back to direct URLs with consent handling
+// Uses Google Maps Embed API (designed for WebView, no consent needed)
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { getPanoramaEmbedUrl, hasApiKey } from '../config/api';
+import { getPanoramaEmbedUrl } from '../config/api';
 
 interface Panorama360ViewerProps {
   imageUrl: string;
@@ -13,60 +13,14 @@ interface Panorama360ViewerProps {
   lng?: number;
 }
 
-// Inject CSS and accept consent in one go
-const INJECT_JS = `
-  (function() {
-    // 1. Set consent cookie
-    document.cookie = "SOCS=CAISNQgDEitib3FfaWQiLCJkZS1ERS; domain=.google.com; path=/; max-age=31536000";
-    
-    // 2. Click consent button if present
-    var buttons = document.querySelectorAll('button');
-    for (var i = 0; i < buttons.length; i++) {
-      var text = (buttons[i].textContent || '').toLowerCase();
-      if (text.includes('akzeptieren') || text.includes('accept')) {
-        buttons[i].click();
-        break;
-      }
-    }
-    
-    // 3. Hide UI, make fullscreen
-    var s = document.createElement('style');
-    s.textContent = 'body,html{margin:0!important;padding:0!important;overflow:hidden!important;background:#000!important} .widget-scene,canvas{width:100vw!important;height:100vh!important;position:fixed!important;top:0!important;left:0!important;z-index:999!important} [role="search"],.searchbox,.app-viewcard-strip,.m6QErb,.scene-footer,.gm-iv-address,.gm-iv-title,.place-name,.address-text,[class*="title"],[class*="address"],[class*="label"],[class*="tooltip"],nav,header,footer,[aria-label]{display:none!important;visibility:hidden!important;height:0!important}';
-    document.head.appendChild(s);
-    return 'done';
-  })();
-`;
-
 export default function Panorama360Viewer({ imageUrl, locationName, lat, lng }: Panorama360ViewerProps) {
   const [loading, setLoading] = useState(true);
   const webViewRef = useRef<WebView>(null);
-  const injectTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // Use API key URL if available, otherwise fall back to direct URL
-  const panoramaUrl = (lat && lng && hasApiKey()) 
+  // Use Maps Embed API when we have coordinates, otherwise fall back to provided URL
+  const panoramaUrl = (lat && lng) 
     ? getPanoramaEmbedUrl(lat, lng) 
     : imageUrl;
-
-  const onLoadEnd = () => {
-    // Inject JS multiple times to handle consent page redirect
-    let attempts = 0;
-    const inject = () => {
-      if (attempts >= 6) {
-        setLoading(false);
-        return;
-      }
-      webViewRef.current?.injectJavaScript(INJECT_JS);
-      attempts++;
-      injectTimer.current = setTimeout(inject, 2000);
-    };
-    inject();
-  };
-
-  useEffect(() => {
-    return () => {
-      if (injectTimer.current) clearTimeout(injectTimer.current);
-    };
-  }, []);
 
   return (
     <View style={styles.container}>
@@ -83,19 +37,11 @@ export default function Panorama360Viewer({ imageUrl, locationName, lat, lng }: 
         domStorageEnabled={true}
         allowsInlineMediaPlayback={true}
         mediaPlaybackRequiresUserAction={false}
-        onLoadEnd={onLoadEnd}
+        onLoadEnd={() => setLoading(false)}
         onError={() => setLoading(false)}
-        onMessage={() => {}}
-        injectedJavaScriptBeforeContentLoaded={`
-          // Set consent cookie BEFORE page loads
-          document.cookie = "SOCS=CAISNQgDEitib3FfaWQiLCJkZS1ERS; domain=.google.com; path=/; max-age=31536000";
-        `}
-        injectedJavaScript={INJECT_JS}
         scrollEnabled={false}
         bounces={false}
         startInLoadingState={true}
-        sharedCookiesEnabled={true}
-        thirdPartyCookiesEnabled={true}
         mixedContentMode="always"
         userAgent="Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
       />
