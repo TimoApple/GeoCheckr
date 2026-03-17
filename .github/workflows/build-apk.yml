@@ -3,6 +3,9 @@ name: Build GeoCheckr APK
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'GeoCheckr_Material/**'
   workflow_dispatch:
 
 jobs:
@@ -31,15 +34,35 @@ jobs:
         run: npm ci
       
       - name: Prebuild Android
-        run: npx expo prebuild --platform android
+        run: npx expo prebuild --platform android --clean
       
-      - name: Build APK
+      - name: Build Debug APK (für Emulator)
+        working-directory: ./android
+        run: ./gradlew assembleDebug --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m"
+      
+      - name: Build Release APK
         working-directory: ./android
         run: ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m"
       
-      - name: Upload APK
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: geocheckr-apk
+          name: geocheckr-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+      
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: geocheckr-release-apk
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30
+
+      - name: Summary
+        run: |
+          echo "## 📱 APK Build erfolgreich!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Debug APK:** Für Emulator Testing" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release APK:** Für Veröffentlichung" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Download unter: Actions → Run → Artifacts" >> $GITHUB_STEP_SUMMARY
