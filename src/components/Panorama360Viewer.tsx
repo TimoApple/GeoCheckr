@@ -15,47 +15,14 @@ interface Panorama360ViewerProps {
 
 // Inject CSS and accept consent in one go
 const INJECT_JS = `
-(function() {
-  // 1. Try to accept cookie consent
-  var buttons = document.querySelectorAll('button');
-  for (var i = 0; i < buttons.length; i++) {
-    var text = (buttons[i].textContent || '').toLowerCase();
-    if (text.includes('akzeptieren') || text.includes('accept all') || text.includes('alle akzeptieren')) {
-      buttons[i].click();
-      break;
-    }
-  }
+  // Set consent cookie
+  document.cookie = "SOCS=CAISNQgDEitib3FfaWQiLCJkZS1ERS; domain=.google.com; path=/; max-age=31536000";
   
-  // 2. Hide ALL UI elements including location names, alt text, overlays
-  var style = document.createElement('style');
-  style.textContent = \`
-    [role="search"], .searchbox, .app-viewcard-strip, .section-layout,
-    .m6QErb, .siAUzd, .bJzME, .tTVLSc, .scene-footer, .image-header,
-    [aria-label="Search Google Maps"], [aria-label="Route"],
-    [aria-label="Share"], [aria-label="In Google Maps suchen"],
-    [aria-label="Teilen"], [aria-label="Maximieren"],
-    [aria-label="Back"], [aria-label="Zurück"],
-    .gm-iv-address, .gm-iv-short-description, .gm-iv-title,
-    .widget-scene-info-card, .photo-text, .location-info,
-    .place-name, .address-text, [class*="title"], [class*="address"],
-    [class*="label"], [class*="tooltip"], [class*="overlay"]:not(canvas) {
-      display: none !important;
-      visibility: hidden !important;
-      height: 0 !important;
-      opacity: 0 !important;
-    }
-    #mapDiv, .widget-scene, canvas {
-      width: 100vw !important;
-      height: 100vh !important;
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-    }
-    body, html { margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
-  \`;
-  document.head.appendChild(style);
+  // Hide UI, make fullscreen
+  var s = document.createElement('style');
+  s.textContent = 'body,html{margin:0!important;padding:0!important;overflow:hidden!important;background:#000!important} .widget-scene,canvas{width:100vw!important;height:100vh!important;position:fixed!important;top:0!important;left:0!important;z-index:999!important} [role="search"],.searchbox,.app-viewcard-strip,.m6QErb,.scene-footer,.gm-iv-address,.gm-iv-title,.place-name,.address-text,[class*="title"],[class*="address"],[class*="label"],[class*="tooltip"],nav,header,footer,[aria-label]{display:none!important;visibility:hidden!important;height:0!important}';
+  document.head.appendChild(s);
   return 'done';
-})();
 `;
 
 export default function Panorama360Viewer({ imageUrl, locationName, lat, lng }: Panorama360ViewerProps) {
@@ -107,24 +74,11 @@ export default function Panorama360Viewer({ imageUrl, locationName, lat, lng }: 
         onLoadEnd={onLoadEnd}
         onError={() => setLoading(false)}
         onMessage={() => {}}
-        injectedJavaScript={`
-          // Accept consent + hide UI + make fullscreen
-          (function() {
-            // Click consent button
-            var buttons = document.querySelectorAll('button');
-            for (var b of buttons) {
-              var t = (b.textContent||'').toLowerCase();
-              if (t.includes('akzeptieren') || t.includes('accept') || t.includes('alle')) {
-                b.click(); break;
-              }
-            }
-            // Hide everything except canvas
-            var s = document.createElement('style');
-            s.textContent = 'body,html{margin:0!important;padding:0!important;overflow:hidden!important;background:#000!important} .widget-scene,canvas{width:100vw!important;height:100vh!important;position:fixed!important;top:0!important;left:0!important;z-index:999!important} [role="search"],.searchbox,.app-viewcard-strip,.m6QErb,.scene-footer,.gm-iv-address,.gm-iv-title,.place-name,.address-text,[class*="title"],[class*="address"],[class*="label"],[class*="tooltip"],nav,header,footer,[aria-label]{display:none!important;visibility:hidden!important;height:0!important}';
-            document.head.appendChild(s);
-            return 'done';
-          })();
+        injectedBeforeContentLoaded={`
+          // Set consent cookie BEFORE page loads
+          document.cookie = "SOCS=CAISNQgDEitib3FfaWQiLCJkZS1ERS; domain=.google.com; path=/; max-age=31536000";
         `}
+        injectedJavaScript={INJECT_JS}
         scrollEnabled={false}
         bounces={false}
         startInLoadingState={true}
