@@ -449,7 +449,6 @@ const styles = StyleSheet.create({
   // Main
   mainContent: { flex: 1, justifyContent: 'center', padding: 20 },
   phaseContainer: { alignItems: 'center', paddingBottom: 40, paddingHorizontal: 20 },
-  answerPhaseContainer: { flex: 1, width: '100%', paddingBottom: 80 },
 
   // Scan
   scanIcon: { fontSize: 60, marginBottom: 15 },
