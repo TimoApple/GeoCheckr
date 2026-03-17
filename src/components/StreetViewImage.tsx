@@ -1,7 +1,7 @@
-// GeoCheckr — Street View Image (uses NATIVE Android SDK, not WebView)
+// GeoCheckr — Street View Image (uses NATIVE Android Activity for 360°)
 import React, { useState } from 'react';
 import { View, Image, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import NativeStreetView from './NativeStreetView';
+import { openStreetView } from '../modules/StreetViewNative';
 import { getCityImage } from '../data/locationImages';
 
 interface StreetViewProps {
@@ -21,7 +21,6 @@ interface StreetViewProps {
 export default function StreetViewImage({ location, showInfo = false }: StreetViewProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [useFlatImage, setUseFlatImage] = useState(false);
   
   const hasNative360 = !!(location.lat && location.lng);
   
@@ -29,33 +28,13 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
   React.useEffect(() => {
     setLoading(true);
     setError(false);
-    setUseFlatImage(false);
+    // Auto-open native Street View when location has coordinates
+    if (location.lat && location.lng) {
+      openStreetView(location.lat, location.lng);
+    }
   }, [location]);
 
-  // 360° Panorama Mode — NATIVE Android SDK (no WebView!)
-  if (hasNative360 && !useFlatImage) {
-    return (
-      <View style={styles.container}>
-        {loading && (
-          <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color="#8343ff" />
-          </View>
-        )}
-        <NativeStreetView 
-          lat={location.lat!} 
-          lng={location.lng!} 
-          style={styles.image}
-        />
-        {showInfo && (
-          <View style={styles.infoOverlay}>
-            <Text style={styles.infoText}>{location.city}</Text>
-          </View>
-        )}
-      </View>
-    );
-  }
-
-  // Flat Image Mode (fallback)
+  // Flat Image Mode (shown in background while Street View is in separate Activity)
   const imageUrl = getCityImage(location.city);
   
   return (
@@ -63,7 +42,7 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
       {loading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#e94560" />
-          <Text style={styles.loadingText}>Lade Bild...</Text>
+          <Text style={styles.loadingText}>Lade Street View...</Text>
         </View>
       )}
       
@@ -83,13 +62,13 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
         </View>
       )}
       
-      {/* 360° Toggle if panorama available */}
+      {/* 360° Button to re-open Street View */}
       {hasNative360 && (
         <TouchableOpacity 
-          style={styles.toggleButton}
-          onPress={() => setUseFlatImage(false)}
+          style={styles.streetViewButton}
+          onPress={() => openStreetView(location.lat!, location.lng!)}
         >
-          <Text style={styles.toggleText}>🌐 360°</Text>
+          <Text style={styles.streetViewButtonText}>🌐 Street View öffnen</Text>
         </TouchableOpacity>
       )}
       
@@ -123,17 +102,17 @@ const styles = StyleSheet.create({
   errorEmoji: { fontSize: 60, marginBottom: 15 },
   errorText: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
   errorHint: { color: '#888', fontSize: 14, marginTop: 8 },
-  toggleButton: {
+  streetViewButton: {
     position: 'absolute',
     bottom: 20,
     right: 20,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: '#e94560',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 20,
     zIndex: 20,
   },
-  toggleText: { color: '#fff', fontSize: 14 },
+  streetViewButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   infoOverlay: {
     position: 'absolute',
     bottom: 20,
