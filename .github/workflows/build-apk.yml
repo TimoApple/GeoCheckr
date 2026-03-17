@@ -57,23 +57,13 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m"
       
-      - name: Locate APK files
-        if: always()
-        run: |
-          echo "=== Searching entire workspace for APKs ==="
-          find . -name "*.apk" -type f 2>/dev/null | head -20
-          echo "=== gradle outputs ==="
-          find . -path "*/build/outputs/*" -type f 2>/dev/null | head -20
-          echo "=== All build dirs ==="
-          find . -name "build" -type d 2>/dev/null | head -10
-      
-      - name: Upload APK from outputs
-        if: always()
-        uses: actions/upload-artifact@v3
+      - name: Upload APK
+        if: success()
+        uses: actions/upload-artifact@v4
         with:
           name: geocheckr-apk
-          path: android/app/build/outputs/
-      
+          path: android/app/build/outputs/apk/release/app-release.apk
+
       - name: Summary
-        if: always()
-        run: echo "## Build done" >> $GITHUB_STEP_SUMMARY
+        run: |
+          echo "## APK Build Complete" >> $GITHUB_STEP_SUMMARY
