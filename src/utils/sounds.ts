@@ -59,7 +59,7 @@ window.addEventListener('message', (e) => {
     if (cmd.type === 'perfect') { beep(523, 0.1, 0.3); setTimeout(() => beep(659, 0.1, 0.3), 100); setTimeout(() => beep(784, 0.1, 0.3), 200); setTimeout(() => beep(1047, 0.2, 0.35), 300); }
     if (cmd.type === 'error') beep(220, 0.4, 0.3);
     if (cmd.type === 'scan') beep(440, 0.1, 0.25);
-    if (cmd.type === 'answerphone') { beep(1400, 0.4, 0.35); }
+    if (cmd.type === 'answerphone') { beep(1400, 0.6, 0.5); setTimeout(() => beep(1000, 0.3, 0.4), 200); }
   } catch(e) {}
 });
 
