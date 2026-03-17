@@ -1,14 +1,20 @@
-// GeoCheckr — Street View Component
-// Shows 360° panorama by default when available, falls back to image
-
-import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { Location } from '../types/location';
-import Panorama360Viewer from './Panorama360Viewer';
+// GeoCheckr — Street View Image (uses NATIVE Android SDK, not WebView)
+import React, { useState } from 'react';
+import { View, Image, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import NativeStreetView from './NativeStreetView';
 import { getCityImage } from '../data/locationImages';
 
 interface StreetViewProps {
-  location: { city: string; country?: string; region?: string; continent?: string; panoramaUrl?: string; streetViewUrl?: string; lat?: number; lng?: number };
+  location: { 
+    city: string; 
+    country?: string; 
+    region?: string; 
+    continent?: string; 
+    panoramaUrl?: string; 
+    streetViewUrl?: string; 
+    lat?: number; 
+    lng?: number;
+  };
   showInfo?: boolean;
 }
 
@@ -17,30 +23,39 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
   const [error, setError] = useState(false);
   const [useFlatImage, setUseFlatImage] = useState(false);
   
-  const panoramaLink = location.panoramaUrl || location.streetViewUrl || '';
-  const has360 = !!panoramaLink;
+  const hasNative360 = !!(location.lat && location.lng);
   
-  useEffect(() => {
+  // Reset when location changes
+  React.useEffect(() => {
     setLoading(true);
     setError(false);
     setUseFlatImage(false);
   }, [location]);
 
-  // 360° Panorama Mode (DEFAULT when available)
-  if (has360 && !useFlatImage) {
+  // 360° Panorama Mode — NATIVE Android SDK (no WebView!)
+  if (hasNative360 && !useFlatImage) {
     return (
       <View style={styles.container}>
-        <Panorama360Viewer 
-          imageUrl={panoramaLink} 
-          locationName={location.city}
-          lat={location.lat}
-          lng={location.lng}
+        {loading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#8343ff" />
+          </View>
+        )}
+        <NativeStreetView 
+          lat={location.lat!} 
+          lng={location.lng!} 
+          style={styles.image}
         />
+        {showInfo && (
+          <View style={styles.infoOverlay}>
+            <Text style={styles.infoText}>{location.city}</Text>
+          </View>
+        )}
       </View>
     );
   }
 
-  // Flat Image Mode (fallback or when no panorama)
+  // Flat Image Mode (fallback)
   const imageUrl = getCityImage(location.city);
   
   return (
@@ -69,7 +84,7 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
       )}
       
       {/* 360° Toggle if panorama available */}
-      {has360 && (
+      {hasNative360 && (
         <TouchableOpacity 
           style={styles.toggleButton}
           onPress={() => setUseFlatImage(false)}
@@ -78,9 +93,9 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
         </TouchableOpacity>
       )}
       
-      {showInfo && (
-        <View style={styles.hintBar}>
-          <Text style={styles.hintText}>📍 {location.region} • {location.continent}</Text>
+      {showInfo && !error && (
+        <View style={styles.infoOverlay}>
+          <Text style={styles.infoText}>{location.city}, {location.country}</Text>
         </View>
       )}
     </View>
@@ -88,61 +103,46 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
 }
 
 const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#16213e',
-    borderRadius: 15,
-    overflow: 'hidden',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  container: { flex: 1, backgroundColor: '#000', position: 'relative' },
   image: { width: '100%', height: '100%' },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#16213e',
+    backgroundColor: '#000',
+    zIndex: 10,
   },
   loadingText: { color: '#aaa', marginTop: 10, fontSize: 14 },
   errorOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#16213e',
+    backgroundColor: '#1a1a2e',
+    zIndex: 5,
   },
   errorEmoji: { fontSize: 60, marginBottom: 15 },
-  errorText: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
-  errorHint: { color: '#888', fontSize: 14, marginTop: 10 },
+  errorText: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
+  errorHint: { color: '#888', fontSize: 14, marginTop: 8 },
   toggleButton: {
     position: 'absolute',
-    top: 12,
-    left: 12,
+    bottom: 20,
+    right: 20,
     backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#e94560',
+    zIndex: 20,
   },
-  toggleText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  cityOverlay: {
+  toggleText: { color: '#fff', fontSize: 14 },
+  infoOverlay: {
     position: 'absolute',
-    bottom: 12,
-    left: 12,
+    bottom: 20,
+    left: 20,
     backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 12,
+    borderRadius: 8,
+    zIndex: 20,
   },
-  cityName: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  hintBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    padding: 10,
-  },
-  hintText: { color: '#aaa', fontSize: 12 },
+  infoText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });

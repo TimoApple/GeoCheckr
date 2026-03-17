@@ -26,6 +26,11 @@
         "backgroundColor": "#282828"
       },
       "package": "com.geocheckr.app",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI"
+        }
+      },
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
