@@ -26,7 +26,7 @@ const INJECT_JS = `
     }
   }
   
-  // 2. Hide Google Maps UI elements
+  // 2. Hide ALL UI elements including location names, alt text, overlays
   var style = document.createElement('style');
   style.textContent = \`
     [role="search"], .searchbox, .app-viewcard-strip, .section-layout,
@@ -34,10 +34,15 @@ const INJECT_JS = `
     [aria-label="Search Google Maps"], [aria-label="Route"],
     [aria-label="Share"], [aria-label="In Google Maps suchen"],
     [aria-label="Teilen"], [aria-label="Maximieren"],
-    [aria-label="Back"], [aria-label="Zurück"] {
+    [aria-label="Back"], [aria-label="Zurück"],
+    .gm-iv-address, .gm-iv-short-description, .gm-iv-title,
+    .widget-scene-info-card, .photo-text, .location-info,
+    .place-name, .address-text, [class*="title"], [class*="address"],
+    [class*="label"], [class*="tooltip"], [class*="overlay"]:not(canvas) {
       display: none !important;
       visibility: hidden !important;
       height: 0 !important;
+      opacity: 0 !important;
     }
     #mapDiv, .widget-scene, canvas {
       width: 100vw !important;

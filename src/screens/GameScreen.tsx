@@ -459,15 +459,16 @@ const styles = StyleSheet.create({
   scanButtonText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
   scanHint: { color: '#666', fontSize: 12, marginTop: 15 },
 
-  // View
-  viewPhaseContainer: { flex: 1, marginHorizontal: -20, marginTop: -10, marginBottom: -20 },
+  // View - TRUE FULLSCREEN
+  viewPhaseContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 5 },
   fullscreenImageContainer: { flex: 1, position: 'relative' },
   countdownOverlay: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.85)', borderRadius: 24, width: 48, height: 48, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#e94560', zIndex: 10 },
   countdownTimer: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
   skipTimerButton: { position: 'absolute', bottom: 60, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 25, borderWidth: 1, borderColor: '#4CAF50', zIndex: 20 },
   skipTimerText: { color: '#4CAF50', fontSize: 16, fontWeight: '600' },
 
-  // Answer
+  // Answer - SLIDES OVER PANORAMA
+  answerPhaseContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#1a1a2e', zIndex: 10, paddingBottom: 80 },
   answerIcon: { fontSize: 50, marginBottom: 15 },
   scrollContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 20 },
   skipAnswerButton: { marginTop: 15, paddingVertical: 10, paddingHorizontal: 20 },
