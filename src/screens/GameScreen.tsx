@@ -224,10 +224,20 @@ export default function GameScreen({ route, navigation }: any) {
       <WebView
         ref={audioWebViewRef}
         source={{ html: AUDIO_HTML }}
-        style={{ width: 1, height: 1, position: 'absolute', opacity: 0 }}
+        style={{ width: 60, height: 60, position: 'absolute', opacity: 0.01 }}
         javaScriptEnabled={true}
+        domStorageEnabled={true}
+        allowsInlineMediaPlayback={true}
+        mediaPlaybackRequiresUserAction={false}
         onMessage={(e) => { if (e.nativeEvent.data === 'ready') onAudioReady(); }}
         onError={() => {}}
+        onLoadEnd={() => {
+          // Initialize audio context on load
+          audioWebViewRef.current?.injectJavaScript(`
+            if (typeof ensureCtx === 'function') ensureCtx();
+            true;
+          `);
+        }}
       />
 
       {/* Header */}

@@ -5,20 +5,30 @@ let webViewRef: any = null;
 
 // HTML that generates beeps via Web Audio API
 const AUDIO_HTML = `<!DOCTYPE html>
-<html><body>
+<html><body style="margin:0;padding:0;background:transparent;">
 <script>
 let ctx = null;
 let ctxReady = false;
 
 function ensureCtx() {
   if (!ctx) {
-    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch(e) { return; }
   }
-  if (ctx.state === 'suspended') {
+  if (ctx && ctx.state === 'suspended') {
     ctx.resume();
   }
   ctxReady = true;
+  if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage('ready');
 }
+
+// Initialize immediately (works in newer Android WebViews)
+ensureCtx();
+
+// Also on touch (fallback for older WebViews)
+document.addEventListener('touchstart', function() { ensureCtx(); }, {once: true});
+document.addEventListener('click', function() { ensureCtx(); }, {once: true});
 
 function beep(freq, duration, volume) {
   if (!ctxReady) ensureCtx();
@@ -36,10 +46,6 @@ function beep(freq, duration, volume) {
     osc.stop(ctx.currentTime + duration);
   } catch(e) {}
 }
-
-// Initialize on first touch/click (required for Android WebView)
-document.addEventListener('touchstart', function() { ensureCtx(); }, {once: true});
-document.addEventListener('click', function() { ensureCtx(); }, {once: true});
 
 // Listen for commands from React Native
 window.addEventListener('message', (e) => {
