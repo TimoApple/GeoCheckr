@@ -1,7 +1,7 @@
 // GeoCheckr — 360° Panorama Viewer
-// Loads Google Maps panorama, auto-accepts consent, hides UI
+// Uses direct Google Maps URLs and auto-accepts consent
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 
@@ -10,105 +10,71 @@ interface Panorama360ViewerProps {
   locationName?: string;
 }
 
-// Auto-accept Google cookie consent
-const ACCEPT_CONSENT_JS = `
+// Inject CSS and accept consent in one go
+const INJECT_JS = `
 (function() {
+  // 1. Try to accept cookie consent
   var buttons = document.querySelectorAll('button');
   for (var i = 0; i < buttons.length; i++) {
-    var text = buttons[i].textContent || '';
-    if (text.includes('akzeptieren') || text.includes('Accept') || text.includes('Alle akzeptieren')) {
+    var text = (buttons[i].textContent || '').toLowerCase();
+    if (text.includes('akzeptieren') || text.includes('accept all') || text.includes('alle akzeptieren')) {
       buttons[i].click();
-      return 'accepted';
+      break;
     }
   }
-  return 'no consent';
-})();
-`;
-
-// Hide Google Maps UI to show only panorama
-const HIDE_UI_CSS = `
-(function() {
+  
+  // 2. Hide Google Maps UI elements
   var style = document.createElement('style');
   style.textContent = \`
-    /* Hide search bar, buttons, info panel */
-    [role="search"], 
-    .searchbox,
-    .app-viewcard-strip,
-    .section-layout,
-    .section-result,
-    .fontDisplayLarge,
-    .m6QErb,
-    .P底,
-    .ecPgSb,
-    .DxyBCb,
-    .k7OAlf,
-    .siAUzd,
-    .VfPpkd-WsjYwc,
-    .MHUqYd,
-    [data-value="Share"],
-    [aria-label="Route"],
-    [aria-label="Share"],
-    [aria-label="Search"],
-    [aria-label="In Google Maps suchen"],
-    [aria-label="Teilen"],
-    [aria-label="Maximieren"],
-    .bJzME,
-    .tTVLSc,
-    .widget-scene,
-    .scene-footer,
-    .image-header,
-    #photo-container > div:not(#mapDiv):not(.widget-scene) {
+    [role="search"], .searchbox, .app-viewcard-strip, .section-layout,
+    .m6QErb, .siAUzd, .bJzME, .tTVLSc, .scene-footer, .image-header,
+    [aria-label="Search Google Maps"], [aria-label="Route"],
+    [aria-label="Share"], [aria-label="In Google Maps suchen"],
+    [aria-label="Teilen"], [aria-label="Maximieren"],
+    [aria-label="Back"], [aria-label="Zurück"] {
       display: none !important;
       visibility: hidden !important;
       height: 0 !important;
-      overflow: hidden !important;
     }
-    /* Make map/fullscreen */
     #mapDiv, .widget-scene, canvas {
       width: 100vw !important;
       height: 100vh !important;
       position: fixed !important;
       top: 0 !important;
       left: 0 !important;
-      z-index: 1 !important;
     }
-    body, html {
-      margin: 0 !important;
-      padding: 0 !important;
-      overflow: hidden !important;
-    }
+    body, html { margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
   \`;
   document.head.appendChild(style);
-  return 'ui hidden';
+  return 'done';
 })();
 `;
 
 export default function Panorama360Viewer({ imageUrl, locationName }: Panorama360ViewerProps) {
   const [loading, setLoading] = useState(true);
   const webViewRef = useRef<WebView>(null);
-  const [step, setStep] = useState<'consent' | 'loaded'>('consent');
+  const injectTimer = useRef<NodeJS.Timeout | null>(null);
 
-  const handleLoad = () => {
-    if (step === 'consent') {
-      // First: accept cookies
-      setTimeout(() => {
-        webViewRef.current?.injectJavaScript(ACCEPT_CONSENT_JS);
-        // After consent, wait for redirect to panorama
-        setTimeout(() => {
-          // Hide UI elements
-          webViewRef.current?.injectJavaScript(HIDE_UI_CSS);
-          setLoading(false);
-          setStep('loaded');
-        }, 4000);
-      }, 1500);
-    } else {
-      // Already consented, just hide UI
-      setTimeout(() => {
-        webViewRef.current?.injectJavaScript(HIDE_UI_CSS);
+  const onLoadEnd = () => {
+    // Inject JS multiple times to handle consent page redirect
+    let attempts = 0;
+    const inject = () => {
+      if (attempts >= 6) {
         setLoading(false);
-      }, 2000);
-    }
+        return;
+      }
+      webViewRef.current?.injectJavaScript(INJECT_JS);
+      attempts++;
+      injectTimer.current = setTimeout(inject, 2000);
+    };
+    inject();
   };
+
+  useEffect(() => {
+    return () => {
+      if (injectTimer.current) clearTimeout(injectTimer.current);
+    };
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -125,12 +91,13 @@ export default function Panorama360Viewer({ imageUrl, locationName }: Panorama36
         domStorageEnabled={true}
         allowsInlineMediaPlayback={true}
         mediaPlaybackRequiresUserAction={false}
-        onLoadEnd={handleLoad}
+        onLoadEnd={onLoadEnd}
         onError={() => setLoading(false)}
         scrollEnabled={false}
         bounces={false}
         startInLoadingState={true}
         sharedCookiesEnabled={true}
+        thirdPartyCookiesEnabled={true}
         mixedContentMode="always"
         userAgent="Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
       />
@@ -141,5 +108,10 @@ export default function Panorama360Viewer({ imageUrl, locationName }: Panorama36
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   webview: { flex: 1, backgroundColor: '#000' },
-  loading: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' },
+  loading: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
+  },
 });

@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Vibration, ScrollView, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { panoramaLocations, PanoramaLocation } from '../data/panoramaLocations';
-import { calculateDistance, calculatePoints } from '../utils/distance';
+import { calculateDistance, calculatePoints, formatDistance } from '../utils/distance';
 import StreetViewImage from '../components/StreetViewImage';
 import VoiceInput from '../components/VoiceInput';
 import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playSkipSound, playTimerWarning, playScanSound, playTimerTick, playAnswerphoneBeep, setAudioWebViewRef, onAudioReady, AUDIO_HTML } from '../utils/sounds';
@@ -330,7 +330,7 @@ export default function GameScreen({ route, navigation }: any) {
               </View>
               <View style={styles.resultRow}>
                 <Text style={styles.resultLabel}>📏 Distanz</Text>
-                <Text style={styles.resultValue}>{distance.toLocaleString('de-DE')} km</Text>
+                <Text style={styles.resultValue}>{formatDistance(distance)}</Text>
               </View>
               <View style={styles.resultRow}>
                 <Text style={styles.resultLabel}>⭐ Punkte</Text>
@@ -414,8 +414,8 @@ const styles = StyleSheet.create({
 
   // Main
   mainContent: { flex: 1, justifyContent: 'center', padding: 20 },
-  phaseContainer: { alignItems: 'center', paddingBottom: 30, paddingHorizontal: 20 },
-  answerPhaseContainer: { flex: 1, width: '100%', paddingBottom: 30 },
+  phaseContainer: { alignItems: 'center', paddingBottom: 40, paddingHorizontal: 20 },
+  answerPhaseContainer: { flex: 1, width: '100%', paddingBottom: 80 },
 
   // Scan
   scanIcon: { fontSize: 60, marginBottom: 15 },
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   fullscreenImageContainer: { flex: 1, position: 'relative' },
   countdownOverlay: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.85)', borderRadius: 24, width: 48, height: 48, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#e94560', zIndex: 10 },
   countdownTimer: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
-  skipTimerButton: { position: 'absolute', bottom: 50, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 25, borderWidth: 1, borderColor: '#4CAF50', zIndex: 20 },
+  skipTimerButton: { position: 'absolute', bottom: 60, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 25, borderWidth: 1, borderColor: '#4CAF50', zIndex: 20 },
   skipTimerText: { color: '#4CAF50', fontSize: 16, fontWeight: '600' },
 
   // Answer

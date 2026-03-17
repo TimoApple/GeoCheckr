@@ -188,7 +188,7 @@ export default function VoiceInput({ onSubmit, placeholder = "Stadtname eingeben
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 15, alignItems: 'center', width: '100%' },
+  container: { padding: 15, paddingBottom: 60, alignItems: 'center', width: '100%' },
   title: { color: '#e94560', fontSize: 20, fontWeight: '600', marginBottom: 15, textAlign: 'center' },
   textInput: { 
     backgroundColor: '#0f3460', color: '#fff', padding: 16, borderRadius: 12, 

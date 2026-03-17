@@ -151,8 +151,16 @@ export function findClosestCity(
 
 // Calculate points based on distance
 export function calculatePoints(distance: number): number {
-  if (distance < 100) return 3; // Sehr nah
-  if (distance < 500) return 2; // Nah
-  if (distance < 2000) return 1; // Weit
+  // Round to integer first (safety check)
+  const dist = Math.round(distance);
+  if (dist < 100) return 3; // Sehr nah
+  if (dist < 500) return 2; // Nah
+  if (dist < 2000) return 1; // Weit
   return 0; // Sehr weit
+}
+
+// Format distance for display (always integer km)
+export function formatDistance(distance: number): string {
+  const dist = Math.round(distance);
+  return `${dist.toLocaleString('de-DE')} km`;
 }
