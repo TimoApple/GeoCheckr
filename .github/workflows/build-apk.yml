@@ -70,19 +70,16 @@ jobs:
         run: |
           echo "=== All APKs ==="
           find . -name "*.apk" -type f 2>/dev/null
-          mkdir -p apk-output
-          cp android/app/build/outputs/apk/release/*.apk apk-output/ 2>/dev/null || \
-          cp android/app/build/outputs/apk/*/*.apk apk-output/ 2>/dev/null || \
-          find android -name "*.apk" -exec cp {} apk-output/ \;
-          ls -la apk-output/
+          mkdir -p $GITHUB_WORKSPACE/apk-output
+          find android -name "*.apk" -exec cp {} $GITHUB_WORKSPACE/apk-output/ \;
+          ls -la $GITHUB_WORKSPACE/apk-output/
+          echo "APK_PATH=$GITHUB_WORKSPACE/apk-output" >> $GITHUB_ENV
 
       - name: Upload Release APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: geocheckr-release-apk
           path: apk-output/
-          if-no-files-found: error
-          overwrite: true
 
       - name: Summary
         run: |
