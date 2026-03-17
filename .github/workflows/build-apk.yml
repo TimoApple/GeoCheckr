@@ -64,7 +64,7 @@ jobs:
         working-directory: ./android
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m"
+          ./gradlew assembleRelease --no-daemon --stacktrace -Dorg.gradle.jvmargs="-Xmx2048m" 2>&1 | tail -80
       
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
