@@ -342,18 +342,18 @@ export default function GameScreen({ route, navigation }: any) {
           </View>
         )}
 
-        {/* ANSWER PHASE */}
+        {/* ANSWER PHASE - NO SCROLL, everything visible */}
         {phase === 'answer' && (
           <View style={styles.answerPhaseContainer}>
-            <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-              <Text style={styles.answerIcon}>🎤</Text>
-              <Text style={styles.phaseTitle}>Deine Antwort</Text>
-              <Text style={styles.phaseText}>Nenne die Stadt</Text>
+            <Text style={styles.answerIcon}>🎤</Text>
+            <Text style={styles.phaseTitle}>Deine Antwort</Text>
+            <Text style={styles.phaseText}>Nenne die Stadt</Text>
+            <View style={styles.answerInputArea}>
               <VoiceInput onSubmit={submitAnswer} placeholder="Stadtname..." />
-              <TouchableOpacity style={styles.skipAnswerButton} onPress={() => { playSkipSound(); submitAnswer(''); }}>
-                <Text style={styles.skipAnswerText}>Überspringen →</Text>
-              </TouchableOpacity>
-            </ScrollView>
+            </View>
+            <TouchableOpacity style={styles.skipAnswerButton} onPress={() => { playSkipSound(); submitAnswer(''); }}>
+              <Text style={styles.skipAnswerText}>Überspringen →</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -474,10 +474,10 @@ const styles = StyleSheet.create({
   skipTimerButton: { position: 'absolute', bottom: 60, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 25, borderWidth: 1, borderColor: '#4CAF50', zIndex: 20 },
   skipTimerText: { color: '#4CAF50', fontSize: 16, fontWeight: '600' },
 
-  // Answer - SLIDES OVER PANORAMA
-  answerPhaseContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#1a1a2e', zIndex: 10, paddingBottom: 80 },
-  answerIcon: { fontSize: 50, marginBottom: 15 },
-  scrollContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 20 },
+  // Answer - FULLY VISIBLE, no scroll
+  answerPhaseContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#1a1a2e', zIndex: 10, alignItems: 'center', justifyContent: 'center', padding: 20 },
+  answerInputArea: { width: '100%', marginVertical: 15 },
+  answerIcon: { fontSize: 40, marginBottom: 10 },
   skipAnswerButton: { marginTop: 15, paddingVertical: 10, paddingHorizontal: 20 },
   skipAnswerText: { color: '#666', fontSize: 14, textDecorationLine: 'underline' },
 
