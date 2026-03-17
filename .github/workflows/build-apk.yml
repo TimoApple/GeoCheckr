@@ -53,3 +53,4 @@ jobs:
         run: |
           echo "## 📱 Standalone APK Build!" >> $GITHUB_STEP_SUMMARY
           echo "Kein Dev-Server nötig - direkt installierbar!" >> $GITHUB_STEP_SUMMARY
+# rebuild Di 17. Mär 12:08:27 CET 2026
