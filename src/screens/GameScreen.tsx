@@ -36,8 +36,9 @@ export default function GameScreen({ route, navigation }: any) {
   const [scores, setScores] = useState<Record<number, number>>(
     Object.fromEntries(players.map((p: Player) => [p.id, 0]))
   );
-  // Timer based on difficulty: leicht=45s, mittel=30s, schwer=20s
-  const timerByDifficulty: Record<string, number> = { leicht: 45, mittel: 30, schwer: 20 };
+  // Timer: leicht/mittel = 30s, schwer = 20s
+  // Difficulty = Image difficulty, not timer
+  const timerByDifficulty: Record<string, number> = { leicht: 30, mittel: 30, schwer: 20 };
   const initialTimer = timerByDifficulty[difficulty] || 30;
   const [timer, setTimer] = useState(initialTimer);
   const [countdownPaused, setCountdownPaused] = useState(false);
