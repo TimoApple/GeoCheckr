@@ -66,20 +66,11 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon --stacktrace -Dorg.gradle.jvmargs="-Xmx2048m" 2>&1 | tail -80
       
-      - name: Find and copy APK
-        run: |
-          echo "=== All APKs ==="
-          find . -name "*.apk" -type f 2>/dev/null
-          mkdir -p $GITHUB_WORKSPACE/apk-output
-          find android -name "*.apk" -exec cp {} $GITHUB_WORKSPACE/apk-output/ \;
-          ls -la $GITHUB_WORKSPACE/apk-output/
-          echo "APK_PATH=$GITHUB_WORKSPACE/apk-output" >> $GITHUB_ENV
-
       - name: Upload Release APK
         uses: actions/upload-artifact@v3
         with:
           name: geocheckr-release-apk
-          path: apk-output/
+          path: android/app/build/outputs/apk/release/app-release.apk
 
       - name: Summary
         run: |
