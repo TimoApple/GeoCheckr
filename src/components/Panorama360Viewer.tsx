@@ -106,6 +106,25 @@ export default function Panorama360Viewer({ imageUrl, locationName, lat, lng }: 
         mediaPlaybackRequiresUserAction={false}
         onLoadEnd={onLoadEnd}
         onError={() => setLoading(false)}
+        onMessage={() => {}}
+        injectedJavaScript={`
+          // Accept consent + hide UI + make fullscreen
+          (function() {
+            // Click consent button
+            var buttons = document.querySelectorAll('button');
+            for (var b of buttons) {
+              var t = (b.textContent||'').toLowerCase();
+              if (t.includes('akzeptieren') || t.includes('accept') || t.includes('alle')) {
+                b.click(); break;
+              }
+            }
+            // Hide everything except canvas
+            var s = document.createElement('style');
+            s.textContent = 'body,html{margin:0!important;padding:0!important;overflow:hidden!important;background:#000!important} .widget-scene,canvas{width:100vw!important;height:100vh!important;position:fixed!important;top:0!important;left:0!important;z-index:999!important} [role="search"],.searchbox,.app-viewcard-strip,.m6QErb,.scene-footer,.gm-iv-address,.gm-iv-title,.place-name,.address-text,[class*="title"],[class*="address"],[class*="label"],[class*="tooltip"],nav,header,footer,[aria-label]{display:none!important;visibility:hidden!important;height:0!important}';
+            document.head.appendChild(s);
+            return 'done';
+          })();
+        `}
         scrollEnabled={false}
         bounces={false}
         startInLoadingState={true}

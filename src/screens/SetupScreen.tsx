@@ -133,17 +133,16 @@ export default function SetupScreen({ navigation }: any) {
         ))}
       </View>
       
-      {/* INFO */}
-      <View style={styles.infoBox}>
-        <Text style={styles.infoText}>📱 Kamera + Internet nötig</Text>
-        <Text style={styles.infoText}>⏱️ ~20-45 Min Spielzeit</Text>
-      </View>
+      {/* INFO — ins Tutorial verschoben, nicht hier */}
       
-      {/* START */}
+      {/* Spacer to push content up */}
+      <View style={{ height: 80 }} />
+      </ScrollView>
+      
+      {/* START — FIXED am unteren Rand */}
       <TouchableOpacity style={styles.startButton} onPress={startGame} activeOpacity={0.8}>
         <Text style={styles.startButtonText}>🚀 Spiel starten</Text>
       </TouchableOpacity>
-      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -311,8 +310,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#e94560', 
     paddingVertical: 18, 
     borderRadius: 14, 
-    marginTop: 30,
-    marginBottom: 40,  // Space above nav bar
+    marginHorizontal: 20,
+    marginBottom: 40,
     alignItems: 'center',
     shadowColor: '#e94560',
     shadowOffset: { width: 0, height: 4 },
