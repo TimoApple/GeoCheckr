@@ -21,13 +21,9 @@ export const API_CONFIG = {
   POINTS_MISS: 0,       // >= 2000km
 };
 
-// Generate Google Maps Embed URL with API Key
+// Generate Street View URL (Direct Google Maps - works in WebView)
 export function getPanoramaEmbedUrl(lat: number, lng: number, apiKey?: string): string {
-  const key = apiKey || API_CONFIG.GOOGLE_MAPS_API_KEY;
-  if (key) {
-    return `https://www.google.com/maps/embed/v1/streetview?key=${key}&location=${lat},${lng}&heading=0&pitch=0&fov=90`;
-  }
-  // Fallback: Direct URL (braucht Cookie-Consent Handling)
+  // Use direct Google Maps URL (works in WebView, no API key needed for display)
   return `https://www.google.com/maps/@${lat},${lng},3a,75y,0h,90t/data=!3m6!1e1!3m4!1s!2e0!7i16384!8i8192`;
 }
 
