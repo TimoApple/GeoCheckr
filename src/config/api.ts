@@ -4,7 +4,7 @@
 export const API_CONFIG = {
   // Google Maps Embed API Key (kostenlos bis 28K Requests/Monat)
   // Get it at: https://console.cloud.google.com/apis/library/maps-embed-api
-  GOOGLE_MAPS_API_KEY: '',  // <-- Timo holt Key am 17.03
+  GOOGLE_MAPS_API_KEY: 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI',  // ✅ Timo 17.03
 
   // Street View Static API (optional, $7/1000 Requests)
   STREET_VIEW_API_KEY: '',
