@@ -36,13 +36,37 @@ jobs:
       - name: Prebuild Android
         run: npx expo prebuild --platform android --clean
       
-      - name: Build Release APK (standalone, no dev server)
+      - name: Add Street View native files
+        run: |
+          # Copy Kotlin source files
+          SRC="android/app/src/main/java/com/geocheckr/app"
+          mkdir -p "$SRC"
+          cp native/StreetViewActivity.kt "$SRC/"
+          cp native/StreetViewModule.kt "$SRC/"
+          cp native/StreetViewPackage.kt "$SRC/"
+          
+          # Copy layout XML
+          mkdir -p android/app/src/main/res/layout
+          cp native/activity_street_view.xml android/app/src/main/res/layout/
+          
+          # Add play-services-maps to build.gradle
+          sed -i '/dependencies {/a\    implementation '\''com.google.android.gms:play-services-maps:19.0.0'\''' android/app/build.gradle
+          
+          # Add API key + Activity to AndroidManifest.xml
+          sed -i '/<application/a\    <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI"/>' android/app/src/main/AndroidManifest.xml
+          sed -i '/<application/a\    <activity android:name=".StreetViewActivity" android:theme="@style/Theme.AppCompat.NoActionBar" android:exported="false"/>' android/app/src/main/AndroidManifest.xml
+          
+          # Register package in MainApplication.kt
+          sed -i '/PackageList(this).packages.apply {/a\              add(StreetViewPackage())' android/app/src/main/java/com/geocheckr/app/MainApplication.kt
+          sed -i '1s/^/import com.geocheckr.app.StreetViewPackage\n/' android/app/src/main/java/com/geocheckr/app/MainApplication.kt
+      
+      - name: Build Release APK
         working-directory: ./android
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m"
       
-      - name: Upload Release APK (STANDALONE)
+      - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: geocheckr-standalone-apk
@@ -53,5 +77,3 @@ jobs:
         run: |
           echo "## 📱 Standalone APK Build!" >> $GITHUB_STEP_SUMMARY
           echo "Kein Dev-Server nötig - direkt installierbar!" >> $GITHUB_STEP_SUMMARY
-# rebuild Di 17. Mär 12:08:27 CET 2026
-# rebuild with panorama fix 12:14
