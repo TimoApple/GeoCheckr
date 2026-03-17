@@ -33,6 +33,8 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
         <Panorama360Viewer 
           imageUrl={panoramaLink} 
           locationName={location.city}
+          lat={location.lat}
+          lng={location.lng}
         />
       </View>
     );

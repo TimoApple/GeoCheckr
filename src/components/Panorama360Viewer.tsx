@@ -1,13 +1,16 @@
 // GeoCheckr — 360° Panorama Viewer
-// Uses direct Google Maps URLs and auto-accepts consent
+// Uses Google Maps Embed API when available, falls back to direct URLs with consent handling
 
 import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { getPanoramaEmbedUrl, hasApiKey } from '../config/api';
 
 interface Panorama360ViewerProps {
   imageUrl: string;
   locationName?: string;
+  lat?: number;
+  lng?: number;
 }
 
 // Inject CSS and accept consent in one go
@@ -50,10 +53,15 @@ const INJECT_JS = `
 })();
 `;
 
-export default function Panorama360Viewer({ imageUrl, locationName }: Panorama360ViewerProps) {
+export default function Panorama360Viewer({ imageUrl, locationName, lat, lng }: Panorama360ViewerProps) {
   const [loading, setLoading] = useState(true);
   const webViewRef = useRef<WebView>(null);
   const injectTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Use API key URL if available, otherwise fall back to direct URL
+  const panoramaUrl = (lat && lng && hasApiKey()) 
+    ? getPanoramaEmbedUrl(lat, lng) 
+    : imageUrl;
 
   const onLoadEnd = () => {
     // Inject JS multiple times to handle consent page redirect
@@ -85,7 +93,7 @@ export default function Panorama360Viewer({ imageUrl, locationName }: Panorama36
       )}
       <WebView
         ref={webViewRef}
-        source={{ uri: imageUrl }}
+        source={{ uri: panoramaUrl }}
         style={styles.webview}
         javaScriptEnabled={true}
         domStorageEnabled={true}

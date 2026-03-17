@@ -1,81 +1,74 @@
-# GeoCheckr App
+# GeoCheckr App 🌍
 
-Geografie-Party-Spiel mit QR-Code Mechanik.
+Geografie-Party-Spiel mit QR-Code Mechanik — "Hitster trifft GeoGuessr"
 
-## Status
+## Status: Beta (17.03.2026)
 
-✅ **App läuft!** expo-doctor 17/17, Web Build erfolgreich, alle Tests bestanden
+### ✅ Funktioniert
+- Spieler-Setup (2-10 Spieler)
+- QR-Code Scanner (simuliert)
+- 360° Panorama Viewer (WebView + Google Maps)
+- Timer-Countdown (30 Sekunden)
+- Voice Input (Sprache + Text)
+- Distanz-Berechnung (Haversine-Formel)
+- Punkte-System (3/2/1/0 basierend auf Distanz)
+- Runden-System (1-maxRounds)
+- Summary-Screen mit Leaderboard
+- 200 Location-Datenbank
+- 10 Panorama-Locations
 
-## Features
+### 🔧 In Arbeit
+- Panoramen mit API Key (Timo holt heute)
+- Sound-Effekte
+- Menu Auto-Hide
+- Distanz-Formatierung
 
-- 📱 QR-Code Scanner (expo-camera)
-- 🗺️ OpenStreetMap Integration
-- 🎤 Spracheingabe (Web Speech API)
-- 🌍 200 Locations weltweit
-- 👥 2-8 Spieler
-- 📊 Punktesystem
-- 🎨 Dunkles Theme
-- 📱 Tutorial für neue Spieler
+## Aufbau
 
-## Screens
+```
+src/
+├── screens/
+│   ├── GameScreen.tsx      # Hauptspiel
+│   ├── SetupScreen.tsx     # Spieler-Setup
+│   ├── MenuScreen.tsx      # Hauptmenü
+│   └── SummaryScreen.tsx   # Ergebnisse
+├── components/
+│   ├── VoiceInput.tsx      # Sprach- + Texteingabe
+│   ├── StreetViewImage.tsx # Panorama-Bild
+│   ├── Panorama360Viewer.tsx # 360° WebView
+│   └── MapView.tsx         # Karten-Ansicht
+├── data/
+│   ├── locations_complete.ts # 200 Locations
+│   ├── panoramaLocations.ts  # 10 Panorama-URLs
+│   └── locationImages.ts     # Fallback-Bilder
+├── utils/
+│   ├── distance.ts         # Haversine + Punkte
+│   └── sounds.ts           # Audio-System
+└── types/
+    ├── location.ts         # Location-Typen
+    └── game.ts             # Spiel-Typen
+```
 
-1. **HomeScreen** — Hauptmenü
-2. **SetupScreen** — Spieler, Schwierigkeit, Ziel
-3. **GameScreen** — Hauptspiel (QR → Bild → Antwort)
-4. **ResultScreen** — Endstand
-5. **TutorialScreen** — Onboarding
+## Build
 
-## Components
-
-- **QRScanner** — Kamera-basierte QR-Erkennung
-- **StreetViewImage** — Wikimedia + Picsum Fallback
-- **MapView** — OSM Karte mit Stadtauswahl
-- **VoiceInput** — Text/Spracheingabe
-
-## Development
-
+### Lokal
 ```bash
-npm install
 npx expo start
-npx expo-doctor  # 17/17 Checks
-npx ts-node src/__tests__/gameLogic.test.ts  # Tests
-npx expo export --platform web  # Web Build
 ```
 
-## Documentation
-
-- `docs/User-Guide.md` — Spielanleitung
-- `docs/Developer-Guide.md` — Entwicklung
-- `docs/Deployment-Guide.md` — App Store
-- `docs/API-Research.md` — API Vergleich
-- `docs/App-Store-Listing.md` — Store Texte
-
-## Projekt-Struktur
-
-```
-GeoCheckr_App/
-├── App.tsx                 # Navigation
-├── src/
-│   ├── screens/            # 5 Screens
-│   ├── components/         # 4 Components
-│   ├── data/               # 200 Locations
-│   ├── types/              # TypeScript Types
-│   ├── utils/              # Utilities
-│   └── __tests__/          # Tests
-├── qr_codes/               # 200 QR-Codes
-└── docs/                   # 5 Dokumente
+### APK (GitHub Actions)
+```bash
+git push  # Triggert automatisch Build
+# APK in Actions → Artifacts
 ```
 
-## GitHub
+## API Key Setup
 
-- Repo: TimoApple/GeoCheckr
-- Branch: main
-- Commits: 34+
-- Stand: 85% fertig
+1. Google Cloud Console → APIs → Maps Embed API
+2. Key erstellen
+3. In `src/config/api.ts` einfügen
 
-## Nächste Schritte
+## Links
 
-1. App auf echtem Gerät testen (Expo Go)
-2. Mapillary API integrieren
-3. Firebase Backend
-4. App Store vorbereiten
+- GitHub: https://github.com/TimoApple/GeoCheckr
+- Drive: https://drive.google.com/drive/folders/14YSPsUy-X4PnEpDghyA_0KLEmexXZ3m6
