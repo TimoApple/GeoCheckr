@@ -50,7 +50,22 @@ export default function GameScreen({ route, navigation }: any) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const resultScaleAnim = useRef(new Animated.Value(0)).current;
   const timerPulse = useRef(new Animated.Value(1)).current;
+  const headerSlide = useRef(new Animated.Value(0)).current; // 0 = visible, -100 = hidden
   const audioWebViewRef = useRef<WebView>(null);
+
+  // Auto-hide header during view phase
+  useEffect(() => {
+    if (phase === 'view') {
+      // Slide header up after 2 seconds
+      const timeout = setTimeout(() => {
+        Animated.timing(headerSlide, { toValue: -100, duration: 300, useNativeDriver: true }).start();
+      }, 2000);
+      return () => clearTimeout(timeout);
+    } else {
+      // Show header again
+      Animated.timing(headerSlide, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+    }
+  }, [phase]);
 
   useEffect(() => {
     if (audioWebViewRef.current) {
@@ -70,7 +85,8 @@ export default function GameScreen({ route, navigation }: any) {
       playTimerWarning();
       Vibration.vibrate(500);
       setPhase('answer');
-      setTimeout(() => playAnswerphoneBeep(), 300);
+      // BEEEEEP like Anrufbeantworter
+      setTimeout(() => playAnswerphoneBeep(), 100);
     }
   }, [phase, timer, countdownPaused]);
 
@@ -240,13 +256,21 @@ export default function GameScreen({ route, navigation }: any) {
         }}
       />
 
-      {/* Header */}
+      {/* Header - Auto-hides during view phase */}
       {phase !== 'summary' && (
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
+        <Animated.View style={[styles.header, { transform: [{ translateY: headerSlide }] }]}>
+          <TouchableOpacity 
+            style={styles.headerLeft} 
+            onPress={() => {
+              // Tap to show header when hidden
+              if (headerSlide.__getValue() < -50) {
+                Animated.timing(headerSlide, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+              }
+            }}
+          >
             <Text style={styles.playerName}>{currentPlayer.name}</Text>
             <Text style={styles.playerTurn}>ist dran</Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.headerCenter}>
             <Text style={styles.roundText}>Runde {round}/{maxRounds}</Text>
           </View>
@@ -255,7 +279,7 @@ export default function GameScreen({ route, navigation }: any) {
               {difficulty === 'leicht' ? '😊' : difficulty === 'mittel' ? '🤔' : '🔥'}
             </Text>
           </View>
-        </View>
+        </Animated.View>
       )}
 
       {/* Scoreboard */}
