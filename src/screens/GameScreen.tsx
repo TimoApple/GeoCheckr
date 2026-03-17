@@ -36,7 +36,10 @@ export default function GameScreen({ route, navigation }: any) {
   const [scores, setScores] = useState<Record<number, number>>(
     Object.fromEntries(players.map((p: Player) => [p.id, 0]))
   );
-  const [timer, setTimer] = useState(30);
+  // Timer based on difficulty: leicht=45s, mittel=30s, schwer=20s
+  const timerByDifficulty: Record<string, number> = { leicht: 45, mittel: 30, schwer: 20 };
+  const initialTimer = timerByDifficulty[difficulty] || 30;
+  const [timer, setTimer] = useState(initialTimer);
   const [countdownPaused, setCountdownPaused] = useState(false);
   const [phase, setPhase] = useState<'scan' | 'view' | 'answer' | 'result' | 'summary'>('scan');
   const [distance, setDistance] = useState<number>(0);
@@ -126,7 +129,7 @@ export default function GameScreen({ route, navigation }: any) {
     setCountdownPaused(false);
     animateTransition(() => {
       setCurrentLocation(randomLoc);
-      setTimer(30);
+      setTimer(initialTimer);
       setPhase('view');
     });
   };
@@ -154,20 +157,24 @@ export default function GameScreen({ route, navigation }: any) {
     }
     
     const pts = calculatePoints(dist);
+    
+    // Time bonus ONLY for "schwer" difficulty: faster = +1 point
+    const timeBonus = (difficulty === 'schwer' && timer > 10 && pts > 0) ? 1 : 0;
+    const totalPts = pts + timeBonus;
 
     Animated.spring(resultScaleAnim, { toValue: 1, friction: 6, tension: 100, useNativeDriver: true }).start();
 
-    if (pts >= 3) { playPerfectSound(); Vibration.vibrate([100, 50, 100]); }
-    else if (pts > 0) { playSuccessSound(); Vibration.vibrate([100, 50, 100]); }
+    if (totalPts >= 3) { playPerfectSound(); Vibration.vibrate([100, 50, 100]); }
+    else if (totalPts > 0) { playSuccessSound(); Vibration.vibrate([100, 50, 100]); }
     else { playErrorSound(); Vibration.vibrate(500); }
 
     setDistance(dist);
-    setPoints(pts);
-    setScores(prev => ({ ...prev, [currentPlayer.id]: prev[currentPlayer.id] + pts }));
+    setPoints(totalPts);
+    setScores(prev => ({ ...prev, [currentPlayer.id]: prev[currentPlayer.id] + totalPts }));
 
     // Track history
     setRoundHistory(prev => [...prev, {
-      round, playerId: currentPlayer.id, location: currentLocation.city, distance: dist, points: pts
+      round, playerId: currentPlayer.id, location: currentLocation.city, distance: dist, points: totalPts
     }]);
 
     setPhase('result');
@@ -208,7 +215,7 @@ export default function GameScreen({ route, navigation }: any) {
     setCountdownPaused(false);
     animateTransition(() => {
       setCurrentLocation(randomLoc);
-      setTimer(30);
+      setTimer(initialTimer);
       setPhase('view');
     });
   };
