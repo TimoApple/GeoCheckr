@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 100,  // More space for Start button (nav bar overlap)
   },
   
   sectionTitle: { 
@@ -311,7 +311,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#e94560', 
     paddingVertical: 18, 
     borderRadius: 14, 
-    marginTop: 30, 
+    marginTop: 30,
+    marginBottom: 40,  // Space above nav bar
     alignItems: 'center',
     shadowColor: '#e94560',
     shadowOffset: { width: 0, height: 4 },
