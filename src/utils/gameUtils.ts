@@ -1,4 +1,4 @@
-import { Location } from '../data/locations_complete';
+import { Location } from '../types/location';
 
 export interface Player {
   id: number;
