@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/streetview_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000">
 
+    <!-- Fragment container -->
+    <FrameLayout
+        android:id="@+id/fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Loading overlay (removed when panorama ready) -->
     <TextView
         android:id="@+id/loadingText"
         android:layout_width="wrap_content"
@@ -12,6 +18,18 @@
         android:layout_gravity="center"
         android:text="Lade Street View..."
         android:textColor="#FFFFFF"
-        android:textSize="16sp" />
+        android:textSize="18sp" />
+
+    <!-- Close button -->
+    <ImageButton
+        android:id="@+id/btnClose"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="16dp"
+        android:background="#80000000"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        android:contentDescription="Schließen"
+        android:tint="#FFFFFF" />
 
 </FrameLayout>
