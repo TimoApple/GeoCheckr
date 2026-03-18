@@ -1,6 +1,7 @@
 package com.geocheckr.app
 
 import android.content.Intent
+import android.util.Log
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
@@ -14,12 +15,18 @@ class StreetViewModule(reactContext: ReactApplicationContext) : ReactContextBase
     fun openStreetView(latitude: Double, longitude: Double) {
         val context = reactApplicationContext
         UiThreadUtil.runOnUiThread {
-            val intent = Intent(context, StreetViewActivity::class.java).apply {
-                putExtra("latitude", latitude)
-                putExtra("longitude", longitude)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            try {
+                val intent = Intent(context, StreetViewActivity::class.java).apply {
+                    putExtra("latitude", latitude)
+                    putExtra("longitude", longitude)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                Log.d("GeoCheckr", "Starting StreetViewActivity...")
+                context.startActivity(intent)
+                Log.d("GeoCheckr", "startActivity OK")
+            } catch (e: Exception) {
+                Log.e("GeoCheckr", "FAILED to start StreetViewActivity", e)
             }
-            context.startActivity(intent)
         }
     }
 }
