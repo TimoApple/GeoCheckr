@@ -100,3 +100,4 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
 });
+// build trigger
