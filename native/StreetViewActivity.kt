@@ -2,64 +2,90 @@ package com.geocheckr.app
 
 import android.os.Bundle
 import android.util.Log
+import android.widget.FrameLayout
 import android.widget.ImageButton
-import android.widget.Toast
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.maps.OnStreetViewPanoramaReadyCallback
-import com.google.android.gms.maps.SupportStreetViewPanoramaFragment
 import com.google.android.gms.maps.StreetViewPanorama
+import com.google.android.gms.maps.StreetViewPanoramaFragment
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.common.GoogleApiAvailability
-import com.google.android.gms.common.ConnectionResult
 
 class StreetViewActivity : AppCompatActivity(), OnStreetViewPanoramaReadyCallback {
 
     private var targetLat = 0.0
     private var targetLng = 0.0
+    private val TAG = "GeoCheckr"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Check Google Play Services availability
-        val availability = GoogleApiAvailability.getInstance()
-        val result = availability.isGooglePlayServicesAvailable(this)
-        if (result != ConnectionResult.SUCCESS) {
-            Log.e("GeoCheckr", "Google Play Services not available: $result")
-            Toast.makeText(this, "Google Play Services erforderlich für Street View", Toast.LENGTH_LONG).show()
-            finish()
-            return
-        }
-
         try {
-            setContentView(R.layout.activity_street_view)
-
-            // Get coordinates from intent
+            // Get coordinates FIRST — before any Google Play Services code
             targetLat = intent.getDoubleExtra("latitude", 0.0)
             targetLng = intent.getDoubleExtra("longitude", 0.0)
+            Log.d(TAG, "StreetViewActivity: lat=$targetLat lng=$targetLng")
 
-            if (targetLat == 0.0 && targetLng == 0.0) {
-                Log.e("GeoCheckr", "Invalid coordinates: $targetLat, $targetLng")
-                finish()
-                return
+            // Create layout programmatically — no XML dependencies
+            val frame = FrameLayout(this).apply {
+                id = android.R.id.content
+                setBackgroundColor(0xFF000000.toInt())
+            }
+            setContentView(frame)
+
+            // Add close button
+            val closeBtn = ImageButton(this).apply {
+                setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
+                setBackgroundColor(0x80000000.toInt())
+                setOnClickListener { finish() }
+            }
+            val closeParams = FrameLayout.LayoutParams(144, 144).apply {
+                gravity = android.view.Gravity.TOP or android.view.Gravity.END
+                setMargins(0, 48, 48, 0)
+            }
+            frame.addView(closeBtn, closeParams)
+
+            // Try to load Street View Fragment programmatically
+            try {
+                val fragment = StreetViewPanoramaFragment()
+                supportFragmentManager.beginTransaction()
+                    .add(android.R.id.content, fragment)
+                    .commitAllowingStateLoss()
+                fragment.getStreetViewPanoramaAsync(this)
+                Log.d(TAG, "Fragment loaded successfully")
+            } catch (e: Exception) {
+                Log.e(TAG, "Fragment failed, trying Support fragment", e)
+                // Fallback: try SupportStreetViewPanoramaFragment
+                try {
+                    val supportFragment = com.google.android.gms.maps.SupportStreetViewPanoramaFragment.newInstance()
+                    supportFragmentManager.beginTransaction()
+                        .add(android.R.id.content, supportFragment)
+                        .commitAllowingStateLoss()
+                    supportFragment.getStreetViewPanoramaAsync(this)
+                    Log.d(TAG, "Support fragment loaded successfully")
+                } catch (e2: Exception) {
+                    Log.e(TAG, "Both fragments failed", e2)
+                    showError("Street View nicht verfügbar: ${e2.message}")
+                }
             }
 
-            // Find fragment and request panorama async
-            val streetViewFragment = supportFragmentManager
-                .findFragmentById(R.id.streetviewpanorama) as? SupportStreetViewPanoramaFragment
-            if (streetViewFragment == null) {
-                Log.e("GeoCheckr", "StreetView fragment not found")
-                finish()
-                return
-            }
-            streetViewFragment.getStreetViewPanoramaAsync(this)
-
-            // Close button
-            findViewById<ImageButton>(R.id.btnClose)?.setOnClickListener {
-                finish()
-            }
         } catch (e: Exception) {
-            Log.e("GeoCheckr", "StreetViewActivity onCreate failed", e)
-            Toast.makeText(this, "Street View konnte nicht geladen werden", Toast.LENGTH_SHORT).show()
+            Log.e(TAG, "StreetViewActivity onCreate failed completely", e)
+            showError("Fehler: ${e.message}")
+        }
+    }
+
+    private fun showError(msg: String) {
+        try {
+            val tv = TextView(this).apply {
+                text = msg
+                setTextColor(0xFFFFFFFF.toInt())
+                textSize = 16f
+                setPadding(48, 200, 48, 48)
+            }
+            setContentView(tv)
+        } catch (e: Exception) {
+            Log.e(TAG, "Even showing error failed", e)
             finish()
         }
     }
@@ -67,7 +93,6 @@ class StreetViewActivity : AppCompatActivity(), OnStreetViewPanoramaReadyCallbac
     override fun onStreetViewPanoramaReady(panorama: StreetViewPanorama) {
         try {
             val location = LatLng(targetLat, targetLng)
-
             panorama.apply {
                 setPosition(location)
                 isStreetNamesEnabled = false
@@ -75,8 +100,10 @@ class StreetViewActivity : AppCompatActivity(), OnStreetViewPanoramaReadyCallbac
                 isZoomGesturesEnabled = true
                 isPanningGesturesEnabled = true
             }
+            Log.d(TAG, "Panorama ready at $targetLat, $targetLng")
         } catch (e: Exception) {
-            Log.e("GeoCheckr", "Failed to set panorama position", e)
+            Log.e(TAG, "Failed to set panorama", e)
+            showError("Panorama Fehler: ${e.message}")
         }
     }
 }
