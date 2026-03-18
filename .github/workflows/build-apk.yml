@@ -2,7 +2,7 @@ name: Build GeoCheckr APK
 
 on:
   push:
-    branches: [main]
+    branches: [main, panorama-test]
     paths-ignore:
       - '**.md'
       - 'GeoCheckr_Material/**'
