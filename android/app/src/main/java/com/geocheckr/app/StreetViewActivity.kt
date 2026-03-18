@@ -1,74 +1,56 @@
 package com.geocheckr.app
 
+import android.annotation.SuppressLint
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
+import android.webkit.WebChromeClient
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.ImageButton
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.MapsInitializer
-import com.google.android.gms.maps.OnStreetViewPanoramaReadyCallback
-import com.google.android.gms.maps.StreetViewPanorama
-import com.google.android.gms.maps.SupportStreetViewPanoramaFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.StreetViewPanoramaCamera
 
-class StreetViewActivity : AppCompatActivity(), OnStreetViewPanoramaReadyCallback {
+class StreetViewActivity : AppCompatActivity() {
 
-    private var targetLat = 0.0
-    private var targetLng = 0.0
-
+    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_street_view)
 
-        targetLat = intent.getDoubleExtra("latitude", 0.0)
-        targetLng = intent.getDoubleExtra("longitude", 0.0)
+        val lat = intent.getDoubleExtra("latitude", 52.52)
+        val lng = intent.getDoubleExtra("longitude", 13.41)
 
-        findViewById<ImageButton>(R.id.btnClose).setOnClickListener { finish() }
-
-        val loadingText = findViewById<TextView>(R.id.loadingText)
-
-        // Initialize Maps SDK explicitly
-        try {
-            MapsInitializer.initialize(applicationContext, MapsInitializer.Renderer.LATEST) { result ->
-                Log.d("GeoCheckr", "MapsInitializer result: $result")
+        // Create WebView programmatically
+        val webView = WebView(this).apply {
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            settings.loadWithOverviewMode = true
+            settings.useWideViewPort = true
+            webChromeClient = WebChromeClient()
+            webViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    Log.d("GeoCheckr", "WebView loaded: $url")
+                }
             }
-        } catch (e: Exception) {
-            Log.e("GeoCheckr", "MapsInitializer failed", e)
         }
+        setContentView(webView)
 
-        // Timeout
-        Handler(Looper.getMainLooper()).postDelayed({
-            loadingText?.text = "Timeout: $targetLat, $targetLng"
-        }, 10000)
-
-        // Load fragment
-        try {
-            val fragment = SupportStreetViewPanoramaFragment.newInstance()
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, fragment)
-                .commitNowAllowingStateLoss()
-
-            fragment.getStreetViewPanoramaAsync(this)
-            Log.d("GeoCheckr", "Fragment OK")
-        } catch (e: Exception) {
-            Log.e("GeoCheckr", "Fragment FAIL", e)
-            loadingText?.text = "Error: ${e.message}"
+        // Add close button
+        val closeBtn = ImageButton(this).apply {
+            setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
+            setBackgroundColor(0x80000000.toInt())
+            setOnClickListener { finish() }
         }
-    }
+        val closeParams = android.widget.FrameLayout.LayoutParams(144, 144).apply {
+            gravity = android.view.Gravity.TOP or android.view.Gravity.END
+            setMargins(0, 48, 48, 0)
+        }
+        val frame = android.widget.FrameLayout(this)
+        frame.addView(webView)
+        frame.addView(closeBtn, closeParams)
+        setContentView(frame)
 
-    override fun onStreetViewPanoramaReady(panorama: StreetViewPanorama) {
-        Log.d("GeoCheckr", "Panorama ready!")
-        findViewById<TextView>(R.id.loadingText)?.visibility = TextView.GONE
-
-        val location = LatLng(targetLat, targetLng)
-        panorama.setPosition(location)
-        panorama.isStreetNamesEnabled = false
-        panorama.isUserNavigationEnabled = true
-        panorama.isZoomGesturesEnabled = true
-        panorama.isPanningGesturesEnabled = true
+        // Load Google Street View via Embed URL
+        val url = "https://www.google.com/maps/@$lat,$lng,3a,75y,0h,90t/data=!3m6!1e1!3m4!1s!2e0!7i16384!8i8192"
+        Log.d("GeoCheckr", "Loading: $url")
+        webView.loadUrl(url)
     }
 }
