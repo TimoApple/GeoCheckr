@@ -8,7 +8,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.maps.OnStreetViewPanoramaReadyCallback
 import com.google.android.gms.maps.StreetViewPanorama
-import com.google.android.gms.maps.StreetViewPanoramaFragment
+import com.google.android.gms.maps.SupportStreetViewPanoramaFragment
 import com.google.android.gms.maps.model.LatLng
 
 class StreetViewActivity : AppCompatActivity(), OnStreetViewPanoramaReadyCallback {
@@ -47,26 +47,15 @@ class StreetViewActivity : AppCompatActivity(), OnStreetViewPanoramaReadyCallbac
 
             // Try to load Street View Fragment programmatically
             try {
-                val fragment = StreetViewPanoramaFragment()
+                val fragment = SupportStreetViewPanoramaFragment.newInstance()
                 supportFragmentManager.beginTransaction()
                     .add(android.R.id.content, fragment)
                     .commitAllowingStateLoss()
                 fragment.getStreetViewPanoramaAsync(this)
-                Log.d(TAG, "Fragment loaded successfully")
+                Log.d(TAG, "Support fragment loaded successfully")
             } catch (e: Exception) {
-                Log.e(TAG, "Fragment failed, trying Support fragment", e)
-                // Fallback: try SupportStreetViewPanoramaFragment
-                try {
-                    val supportFragment = com.google.android.gms.maps.SupportStreetViewPanoramaFragment.newInstance()
-                    supportFragmentManager.beginTransaction()
-                        .add(android.R.id.content, supportFragment)
-                        .commitAllowingStateLoss()
-                    supportFragment.getStreetViewPanoramaAsync(this)
-                    Log.d(TAG, "Support fragment loaded successfully")
-                } catch (e2: Exception) {
-                    Log.e(TAG, "Both fragments failed", e2)
-                    showError("Street View nicht verfügbar: ${e2.message}")
-                }
+                Log.e(TAG, "Fragment failed", e)
+                showError("Street View nicht verfügbar: ${e.message}")
             }
 
         } catch (e: Exception) {
