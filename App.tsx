@@ -1,77 +1,102 @@
-// GeoCheckr Panorama Test — crash-proof mit Diagnostics
+// GeoCheckr Panorama Test — BIG button, full diagnostics
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, NativeModules } from 'react-native';
-
-const TAG = '[GeoCheckr Test]';
-
-// Debug: list all available native modules
-const allModules = Object.keys(NativeModules);
-console.log(TAG, 'All native modules:', allModules);
+import { View, Text, TouchableOpacity, StyleSheet, Platform, NativeModules, ScrollView } from 'react-native';
 
 const StreetViewModule = NativeModules.StreetViewModule;
-console.log(TAG, 'StreetViewModule:', StreetViewModule ? 'FOUND' : 'NULL');
 
 export default function App() {
   const [log, setLog] = React.useState<string[]>([
     `Platform: ${Platform.OS}`,
-    `StreetViewModule: ${StreetViewModule ? 'FOUND' : 'NULL'}`,
-    `Available modules: ${allModules.join(', ')}`,
+    `Module: ${StreetViewModule ? 'YES ✅' : 'NULL ❌'}`,
   ]);
 
   const addLog = (msg: string) => {
-    console.log(TAG, msg);
-    setLog(prev => [...prev, msg]);
+    setLog(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
   };
 
   const openPanorama = () => {
-    addLog('Button tapped');
-
-    if (Platform.OS !== 'android') {
-      addLog('ERROR: Not Android');
-      return;
-    }
+    addLog('TAP registered ✅');
 
     if (!StreetViewModule) {
-      addLog('ERROR: StreetViewModule is NULL!');
-      addLog('Module not registered in native code');
+      addLog('ERROR: StreetViewModule is null');
       return;
     }
 
-    addLog('Calling openStreetView(50.49, 30.54)...');
-
     try {
+      addLog('Calling openStreetView(50.49, 30.54)...');
       StreetViewModule.openStreetView(50.49, 30.54);
-      addLog('Call succeeded!');
+      addLog('Call returned (no crash yet)');
     } catch (e: any) {
-      addLog('CRASH: ' + (e?.message || String(e)));
-      addLog('Stack: ' + (e?.stack || 'no stack'));
+      addLog('EXCEPTION: ' + String(e?.message || e));
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Panorama Test</Text>
-      <Text style={styles.subtitle}>Tap button, watch log below</Text>
+      <Text style={styles.title}>🌐 Panorama Test</Text>
 
-      <TouchableOpacity style={styles.button} onPress={openPanorama}>
-        <Text style={styles.buttonText}>📍 Öffnen (Kyiv)</Text>
+      {/* FULL WIDTH BUTTON — can't miss it */}
+      <TouchableOpacity
+        style={styles.bigButton}
+        onPress={openPanorama}
+        activeOpacity={0.6}
+      >
+        <Text style={styles.bigButtonText}>📍 STREET VIEW ÖFFNEN</Text>
+        <Text style={styles.bigButtonSub}>Kyiv 50.49, 30.54</Text>
       </TouchableOpacity>
 
-      <View style={styles.logBox}>
+      {/* LOG */}
+      <ScrollView style={styles.logBox}>
         {log.map((l, i) => (
           <Text key={i} style={styles.logLine}>{l}</Text>
         ))}
-      </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1a1a2e', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#fff', marginBottom: 8 },
-  subtitle: { fontSize: 13, color: '#888', marginBottom: 20 },
-  button: { backgroundColor: '#e94560', borderRadius: 12, padding: 18, paddingHorizontal: 40, marginBottom: 30 },
-  buttonText: { color: '#fff', fontSize: 18, fontWeight: '600' },
-  logBox: { backgroundColor: '#0f0f23', borderRadius: 10, padding: 15, width: '100%', maxHeight: 300 },
-  logLine: { color: '#4ade80', fontSize: 11, fontFamily: 'monospace', marginBottom: 4 },
+  container: {
+    flex: 1,
+    backgroundColor: '#1a1a2e',
+    padding: 20,
+    paddingTop: 60,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 30,
+  },
+  bigButton: {
+    backgroundColor: '#e94560',
+    borderRadius: 16,
+    padding: 30,
+    marginBottom: 30,
+    alignItems: 'center',
+    elevation: 8,
+  },
+  bigButtonText: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  bigButtonSub: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 14,
+    marginTop: 6,
+  },
+  logBox: {
+    flex: 1,
+    backgroundColor: '#0f0f23',
+    borderRadius: 12,
+    padding: 16,
+  },
+  logLine: {
+    color: '#4ade80',
+    fontSize: 13,
+    fontFamily: 'monospace',
+    marginBottom: 6,
+  },
 });
