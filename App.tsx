@@ -23,8 +23,8 @@ export default function App() {
     }
 
     try {
-      addLog('Calling openStreetView(50.49, 30.54)...');
-      StreetViewModule.openStreetView(50.49, 30.54);
+      addLog('Calling openStreetView(52.52, 13.41)...');
+      StreetViewModule.openStreetView(52.52, 13.41);
       addLog('Call returned (no crash yet)');
     } catch (e: any) {
       addLog('EXCEPTION: ' + String(e?.message || e));
@@ -42,7 +42,7 @@ export default function App() {
         activeOpacity={0.6}
       >
         <Text style={styles.bigButtonText}>📍 STREET VIEW ÖFFNEN</Text>
-        <Text style={styles.bigButtonSub}>Kyiv 50.49, 30.54</Text>
+        <Text style={styles.bigButtonSub}>Berlin 52.52, 13.41</Text>
       </TouchableOpacity>
 
       {/* LOG */}
