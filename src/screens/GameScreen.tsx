@@ -448,11 +448,11 @@ const styles = StyleSheet.create({
   difficultyBadge: { fontSize: 24 },
 
   // Scoreboard
-  scoreboard: { flexDirection: 'row', justifyContent: 'space-around', padding: 12, backgroundColor: '#0f3460' },
-  scoreItem: { alignItems: 'center', padding: 8, minWidth: 80 },
-  activeScore: { borderBottomWidth: 3, borderBottomColor: '#e94560', backgroundColor: 'rgba(233, 69, 96, 0.1)', borderRadius: 8 },
-  scoreName: { color: '#ccc', fontSize: 12, marginBottom: 2 },
-  scoreValue: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
+  scoreboard: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 14, paddingHorizontal: 16, backgroundColor: '#0f3460', borderBottomWidth: 2, borderBottomColor: '#1a4a8a' },
+  scoreItem: { alignItems: 'center', padding: 10, minWidth: 90, borderRadius: 8 },
+  activeScore: { borderBottomWidth: 3, borderBottomColor: '#e94560', backgroundColor: 'rgba(233, 69, 96, 0.15)' },
+  scoreName: { color: '#ccc', fontSize: 13, marginBottom: 4, textAlign: 'center' },
+  scoreValue: { color: '#fff', fontSize: 26, fontWeight: 'bold', textAlign: 'center' },
 
   // Main
   mainContent: { flex: 1, justifyContent: 'center', padding: 20 },
@@ -486,11 +486,11 @@ const styles = StyleSheet.create({
   resultTitle: { fontSize: 30, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
   resultCorrect: { color: '#4CAF50' },
   resultWrong: { color: '#ff4444' },
-  resultCard: { backgroundColor: '#16213e', borderRadius: 15, padding: 20, width: '100%', marginBottom: 20, borderWidth: 1, borderColor: '#2a2a4a' },
-  resultRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#2a2a4a' },
-  resultLabel: { color: '#888', fontSize: 16 },
-  resultValue: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  pointsHighlight: { color: '#4CAF50', fontSize: 20 },
+  resultCard: { backgroundColor: '#16213e', borderRadius: 15, padding: 20, width: '100%', marginBottom: 20, borderWidth: 2, borderColor: '#3a3a5a' },
+  resultRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#3a3a5a' },
+  resultLabel: { color: '#aaa', fontSize: 16, flexShrink: 0 },
+  resultValue: { color: '#fff', fontSize: 16, fontWeight: '600', textAlign: 'right', flexShrink: 1, marginLeft: 10 },
+  pointsHighlight: { color: '#4CAF50', fontSize: 22, fontWeight: 'bold' },
   nextButton: { backgroundColor: '#0f3460', paddingVertical: 16, paddingHorizontal: 30, borderRadius: 12, borderWidth: 1, borderColor: '#e94560', marginBottom: 10 },
   nextButtonText: { color: '#e94560', fontSize: 18, fontWeight: '600' },
   newCardButton: { marginTop: 12, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 10, borderWidth: 1, borderColor: '#4CAF50', backgroundColor: 'rgba(76, 175, 80, 0.1)' },

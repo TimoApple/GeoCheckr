@@ -29,8 +29,16 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
     setLoading(true);
     setError(false);
     // Auto-open native Street View when location has coordinates
+    // Wrapped in setTimeout to avoid blocking render
     if (location.lat && location.lng) {
-      openStreetView(location.lat, location.lng);
+      const timer = setTimeout(() => {
+        try {
+          openStreetView(location.lat!, location.lng!);
+        } catch (e) {
+          console.warn('Auto-open StreetView failed:', e);
+        }
+      }, 500);
+      return () => clearTimeout(timer);
     }
   }, [location]);
 
