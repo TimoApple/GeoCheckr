@@ -37,19 +37,7 @@ jobs:
         run: npx expo prebuild --platform android --clean
       
       - name: Add Street View native files
-        run: |
-          SRC="android/app/src/main/java/com/geocheckr/app"
-          mkdir -p "$SRC"
-          cp native/StreetViewActivity.kt "$SRC/"
-          cp native/StreetViewModule.kt "$SRC/"
-          cp native/StreetViewPackage.kt "$SRC/"
-          mkdir -p android/app/src/main/res/layout
-          cp native/activity_street_view.xml android/app/src/main/res/layout/
-          sed -i '/dependencies {/a\    implementation '\''com.google.android.gms:play-services-maps:19.0.0'\''' android/app/build.gradle
-          sed -i '/<application/a\    <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI"/>' android/app/src/main/AndroidManifest.xml
-          sed -i '/<application/a\    <activity android:name=".StreetViewActivity" android:theme="@style/Theme.AppCompat.NoActionBar" android:exported="false"/>' android/app/src/main/AndroidManifest.xml
-          sed -i '/PackageList(this).packages.apply {/a\              add(StreetViewPackage())' android/app/src/main/java/com/geocheckr/app/MainApplication.kt
-          sed -i '1s/^/import com.geocheckr.app.StreetViewPackage\n/' android/app/src/main/java/com/geocheckr/app/MainApplication.kt
+        run: node scripts/patch-android.js
       
       - name: Build Release APK
         working-directory: ./android
