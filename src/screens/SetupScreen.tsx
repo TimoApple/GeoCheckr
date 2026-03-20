@@ -60,8 +60,8 @@ export default function SetupScreen({ navigation }: any) {
             value={player.name}
             onChangeText={(text) => updatePlayerName(player.id, text)}
             placeholder={`Spieler ${index + 1}`}
-            placeholderTextColor="#555"
-            selectionColor="#e94560"
+            placeholderTextColor="#555577"
+            selectionColor="#ff3333"
           />
           {players.length > 2 && (
             <TouchableOpacity onPress={() => removePlayer(player.id)} style={styles.removeButton}>
@@ -150,7 +150,7 @@ export default function SetupScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#0a0a14',
   },
   contentContainer: {
     padding: 20,
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   },
   
   sectionTitle: { 
-    color: '#e94560', 
+    color: '#ff3333', 
     fontSize: 20, 
     fontWeight: '700', 
     marginTop: 25, 
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#e94560',
+    backgroundColor: '#ff3333',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
@@ -187,40 +187,40 @@ const styles = StyleSheet.create({
   },
   playerInput: { 
     flex: 1, 
-    backgroundColor: '#0f3460', 
+    backgroundColor: '#0f0f1a', 
     color: '#ffffff', 
     padding: 14, 
     borderRadius: 10, 
     fontSize: 16, 
     borderWidth: 2, 
-    borderColor: '#2a2a4a',
+    borderColor: '#1e1e30',
   },
   removeButton: { 
     marginLeft: 10, 
     width: 36, 
     height: 36, 
-    backgroundColor: '#2a2a4a', 
+    backgroundColor: '#1e1e30', 
     borderRadius: 18, 
     justifyContent: 'center', 
     alignItems: 'center' 
   },
   removeButtonText: { 
-    color: '#e94560', 
+    color: '#ff3333', 
     fontSize: 18,
     fontWeight: 'bold',
   },
   addButton: { 
-    backgroundColor: '#16213e', 
+    backgroundColor: '#12121f', 
     padding: 14, 
     borderRadius: 10, 
     alignItems: 'center', 
     marginTop: 5,
     borderWidth: 2,
-    borderColor: '#2a2a4a',
+    borderColor: '#1e1e30',
     borderStyle: 'dashed',
   },
   addButtonText: { 
-    color: '#aaa', 
+    color: '#8888aa', 
     fontSize: 16 
   },
   
@@ -232,13 +232,13 @@ const styles = StyleSheet.create({
   },
   diffButton: { 
     flex: 1, 
-    backgroundColor: '#16213e', 
+    backgroundColor: '#12121f', 
     paddingVertical: 16,
     paddingHorizontal: 8,
     borderRadius: 12, 
     alignItems: 'center', 
     borderWidth: 2, 
-    borderColor: '#2a2a4a' 
+    borderColor: '#1e1e30' 
   },
   diffLeicht: { 
     backgroundColor: '#1b4332', 
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     borderColor: '#f44336' 
   },
   diffText: { 
-    color: '#888', 
+    color: '#8888aa', 
     fontSize: 15,
     fontWeight: '600',
   },
@@ -269,20 +269,20 @@ const styles = StyleSheet.create({
   },
   scoreButton: { 
     flex: 1, 
-    backgroundColor: '#16213e', 
+    backgroundColor: '#12121f', 
     paddingVertical: 18,
     borderRadius: 12, 
     alignItems: 'center', 
     borderWidth: 2, 
-    borderColor: '#2a2a4a' 
+    borderColor: '#1e1e30' 
   },
   scoreActive: { 
-    backgroundColor: '#0f3460', 
-    borderColor: '#e94560',
+    backgroundColor: '#0f0f1a', 
+    borderColor: '#ff3333',
     borderWidth: 2,
   },
   scoreText: { 
-    color: '#888', 
+    color: '#8888aa', 
     fontSize: 20,
     fontWeight: 'bold',
   },
@@ -292,28 +292,28 @@ const styles = StyleSheet.create({
   
   // Info
   infoBox: { 
-    backgroundColor: '#16213e', 
+    backgroundColor: '#12121f', 
     borderRadius: 12, 
     padding: 16, 
     marginTop: 25, 
     borderWidth: 1, 
-    borderColor: '#2a2a4a' 
+    borderColor: '#1e1e30' 
   },
   infoText: { 
-    color: '#888', 
+    color: '#8888aa', 
     fontSize: 14, 
     marginBottom: 4 
   },
   
   // Start
   startButton: { 
-    backgroundColor: '#e94560', 
+    backgroundColor: '#ff3333', 
     paddingVertical: 18, 
     borderRadius: 14, 
     marginHorizontal: 20,
     marginBottom: 40,
     alignItems: 'center',
-    shadowColor: '#e94560',
+    shadowColor: '#ff3333',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

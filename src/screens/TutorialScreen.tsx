@@ -194,7 +194,7 @@ export default function TutorialScreen({ navigation, onComplete }: any) {
                 value={userName}
                 onChangeText={saveUserName}
                 placeholder="Dein Name"
-                placeholderTextColor="#555"
+                placeholderTextColor="#555577"
                 autoCapitalize="words"
                 returnKeyType="done"
                 selectionColor="#4CAF50"
@@ -243,7 +243,7 @@ export default function TutorialScreen({ navigation, onComplete }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#0a0a14',
     paddingTop: 50,
   },
   progressContainer: {
@@ -252,17 +252,17 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 4,
-    backgroundColor: '#2a2a4a',
+    backgroundColor: '#1e1e30',
     borderRadius: 2,
     marginBottom: 8,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#e94560',
+    backgroundColor: '#ff3333',
     borderRadius: 2,
   },
   progressText: {
-    color: '#888',
+    color: '#8888aa',
     fontSize: 12,
     textAlign: 'center',
   },
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   skipButtonText: {
-    color: '#666',
+    color: '#555577577',
     fontSize: 14,
     textDecorationLine: 'underline',
   },
@@ -305,12 +305,12 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   tipContainer: {
-    backgroundColor: '#16213e',
+    backgroundColor: '#12121f',
     padding: 15,
     borderRadius: 12,
     width: '100%',
     borderWidth: 1,
-    borderColor: '#2a2a4a',
+    borderColor: '#1e1e30',
   },
   tipText: {
     color: '#FFD700',
@@ -328,14 +328,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   nameInput: {
-    backgroundColor: '#0f3460',
+    backgroundColor: '#0f0f1a',
     borderRadius: 12,
     padding: 16,
     fontSize: 18,
     color: '#fff',
     textAlign: 'center',
     borderWidth: 2,
-    borderColor: '#2a2a4a',
+    borderColor: '#1e1e30',
   },
   stepIndicators: {
     flexDirection: 'row',
@@ -347,10 +347,10 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#2a2a4a',
+    backgroundColor: '#1e1e30',
   },
   stepIndicatorActive: {
-    backgroundColor: '#e94560',
+    backgroundColor: '#ff3333',
     width: 24,
   },
   stepIndicatorCompleted: {
@@ -366,21 +366,21 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 14,
-    backgroundColor: '#16213e',
+    backgroundColor: '#12121f',
     borderWidth: 1,
-    borderColor: '#2a2a4a',
+    borderColor: '#1e1e30',
   },
   prevButtonText: {
-    color: '#888',
+    color: '#8888aa',
     fontSize: 16,
   },
   nextButton: {
     flex: 1,
-    backgroundColor: '#e94560',
+    backgroundColor: '#ff3333',
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
-    shadowColor: '#e94560',
+    shadowColor: '#ff3333',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

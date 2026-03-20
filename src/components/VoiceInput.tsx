@@ -32,13 +32,13 @@ div[style] {
 }
 #mic-btn {
   width: 60px; height: 60px; border-radius: 30px;
-  background: #16213e; border: 2px solid #e94560;
+  background: #12121f; border: 2px solid #ff3333;
   color: #fff; font-size: 28px; cursor: pointer;
   text-align: center; line-height: 60px;
   padding: 0; outline: none;
   transition: all 0.2s;
 }
-#mic-btn.listening { background: #e94560; animation: pulse 1s infinite; }
+#mic-btn.listening { background: #ff3333; animation: pulse 1s infinite; }
 @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
 #status { color: #aaa; font-size: 12px; margin-top: 6px; text-align: center; }
 </style>
@@ -143,7 +143,7 @@ export default function VoiceInput({ onSubmit, placeholder = "Stadtname eingeben
         placeholderTextColor="#666"
         returnKeyType="send"
         onSubmitEditing={handleSubmit}
-        selectionColor="#e94560"
+        selectionColor="#ff3333"
         autoCorrect={false}
         autoCapitalize="words"
       />
@@ -196,10 +196,10 @@ export default function VoiceInput({ onSubmit, placeholder = "Stadtname eingeben
 
 const styles = StyleSheet.create({
   container: { padding: 10, paddingBottom: 10, alignItems: 'center', width: '100%' },
-  title: { color: '#e94560', fontSize: 20, fontWeight: '600', marginBottom: 15, textAlign: 'center' },
+  title: { color: '#ff3333', fontSize: 20, fontWeight: '600', marginBottom: 15, textAlign: 'center' },
   textInput: { 
     backgroundColor: '#0f3460', color: '#fff', padding: 16, borderRadius: 12, 
-    fontSize: 20, borderWidth: 2, borderColor: '#2a2a4a', textAlign: 'center',
+    fontSize: 20, borderWidth: 2, borderColor: '#1e1e30', textAlign: 'center',
     width: '100%', marginBottom: 12,
   },
   voiceRow: { 
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
   webview: { backgroundColor: 'transparent', width: 70, height: 70 },
   voiceHint: { color: '#aaa', fontSize: 14, marginLeft: 10, flex: 1 },
   submitButton: { 
-    width: '100%', backgroundColor: '#e94560', paddingVertical: 16, borderRadius: 12, alignItems: 'center',
+    width: '100%', backgroundColor: '#ff3333', paddingVertical: 16, borderRadius: 12, alignItems: 'center',
   },
   submitButtonDisabled: { backgroundColor: '#333' },
   submitButtonText: { color: '#fff', fontSize: 18, fontWeight: '600' },

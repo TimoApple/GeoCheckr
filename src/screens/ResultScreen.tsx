@@ -137,7 +137,7 @@ export default function ResultScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1a1a2e', padding: 20 },
+  container: { flex: 1, backgroundColor: '#0a0a14', padding: 20 },
   
   trophyContainer: { 
     flex: 1, 
@@ -175,12 +175,12 @@ const styles = StyleSheet.create({
   },
   
   leaderboard: { 
-    backgroundColor: '#16213e', 
+    backgroundColor: '#12121f', 
     borderRadius: 15, 
     padding: 20, 
     marginBottom: 25,
     borderWidth: 1,
-    borderColor: '#2a2a4a',
+    borderColor: '#1e1e30',
   },
   leaderboardTitle: { 
     fontSize: 20, 
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     paddingVertical: 12, 
     borderBottomWidth: 1, 
-    borderBottomColor: '#2a2a4a' 
+    borderBottomColor: '#1e1e30' 
   },
   winnerRow: {
     backgroundColor: 'rgba(255, 215, 0, 0.1)',
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   },
   playerScore: { 
     fontSize: 20, 
-    color: '#e94560', 
+    color: '#ff3333', 
     fontWeight: 'bold',
     minWidth: 50,
     textAlign: 'right',
@@ -231,12 +231,12 @@ const styles = StyleSheet.create({
     marginBottom: 20 
   },
   primaryButton: { 
-    backgroundColor: '#e94560', 
+    backgroundColor: '#ff3333', 
     paddingVertical: 18, 
     borderRadius: 12, 
     marginBottom: 12, 
     alignItems: 'center',
-    shadowColor: '#e94560',
+    shadowColor: '#ff3333',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -248,15 +248,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold' 
   },
   secondaryButton: { 
-    backgroundColor: '#16213e', 
+    backgroundColor: '#12121f', 
     paddingVertical: 15, 
     borderRadius: 12, 
     alignItems: 'center', 
     borderWidth: 1, 
-    borderColor: '#2a2a4a' 
+    borderColor: '#1e1e30' 
   },
   secondaryButtonText: { 
-    color: '#ccc', 
+    color: '#8888aa', 
     fontSize: 16 
   },
 });

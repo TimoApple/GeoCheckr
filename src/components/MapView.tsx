@@ -49,20 +49,20 @@ export default function MapView({ lat, lng, onCitySelect }: MapViewProps) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 15 },
-  title: { color: '#e94560', fontSize: 20, fontWeight: '600', marginBottom: 15, textAlign: 'center' },
+  title: { color: '#ff3333', fontSize: 20, fontWeight: '600', marginBottom: 15, textAlign: 'center' },
   mapPlaceholder: { 
     height: 200, 
-    backgroundColor: '#16213e', 
+    backgroundColor: '#12121f', 
     borderRadius: 15, 
     justifyContent: 'center', 
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#2a2a4a'
+    borderColor: '#1e1e30'
   },
   mapEmoji: { fontSize: 50, marginBottom: 10 },
   mapText: { color: '#888', fontSize: 16 },
-  coords: { color: '#e94560', fontSize: 14, marginTop: 5 },
+  coords: { color: '#ff3333', fontSize: 14, marginTop: 5 },
   cityButtons: { marginBottom: 20 },
   cityTitle: { color: '#fff', fontSize: 16, marginBottom: 10, textAlign: 'center' },
   cityGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
@@ -75,6 +75,6 @@ const styles = StyleSheet.create({
     alignItems: 'center' 
   },
   cityText: { color: '#fff', fontSize: 14 },
-  browserButton: { backgroundColor: '#16213e', padding: 15, borderRadius: 10, alignItems: 'center' },
+  browserButton: { backgroundColor: '#12121f', padding: 15, borderRadius: 10, alignItems: 'center' },
   browserButtonText: { color: '#ccc', fontSize: 16 },
 });

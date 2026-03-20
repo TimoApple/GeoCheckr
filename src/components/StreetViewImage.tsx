@@ -144,7 +144,7 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
         startInLoadingState={true}
         renderLoading={() => (
           <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color="#e94560" />
+            <ActivityIndicator size="large" color="#ff3333" />
             <Text style={styles.loadingText}>Lade Street View...</Text>
           </View>
         )}
@@ -153,7 +153,7 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
       {/* Loading overlay */}
       {loading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#e94560" />
+          <ActivityIndicator size="large" color="#ff3333" />
           <Text style={styles.loadingText}>Lade Street View...</Text>
         </View>
       )}
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   errorOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center', alignItems: 'center',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#0a0a14',
   },
   errorEmoji: { fontSize: 60, marginBottom: 15 },
   errorText: { color: '#fff', fontSize: 22, fontWeight: 'bold' },

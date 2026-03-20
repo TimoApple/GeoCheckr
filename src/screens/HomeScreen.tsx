@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated, StatusBar } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 export default function HomeScreen({ navigation }: any) {
   const [userName, setUserName] = useState<string | null>(null);
@@ -11,18 +11,9 @@ export default function HomeScreen({ navigation }: any) {
 
   useEffect(() => {
     loadUserName();
-    // Entry animation
     Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 600,
-        useNativeDriver: true,
-      }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 800, useNativeDriver: true }),
     ]).start();
   }, []);
 
@@ -43,54 +34,56 @@ export default function HomeScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <Animated.View 
-        style={[
-          styles.logoContainer, 
-          { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
-        ]}
-      >
-        <Text style={styles.logo}>🌍</Text>
-        <Text style={styles.title}>GeoCheckr</Text>
-        <Text style={styles.subtitle}>Finde den Ort. Gewinne das Spiel.</Text>
-        {userName && (
-          <Text style={styles.greeting}>Willkommen zurück, {userName}! 👋</Text>
-        )}
-      </Animated.View>
+      <StatusBar barStyle="light-content" />
       
       <Animated.View 
-        style={[
-          styles.buttonContainer, 
-          { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
-        ]}
+        style={[styles.topSection, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
       >
+        <View style={styles.globeContainer}>
+          <Text style={styles.globe}>🌍</Text>
+        </View>
+        <Text style={styles.title}>GeoCheckr</Text>
+        <Text style={styles.subtitle}>Finde den Ort.{'\n'}Gewinne das Spiel.</Text>
+      </Animated.View>
+
+      <Animated.View 
+        style={[styles.bottomSection, { opacity: fadeAnim }]}
+      >
+        {userName && (
+          <Text style={styles.greeting}>Willkommen zurück, {userName}</Text>
+        )}
+
         <TouchableOpacity 
           style={styles.primaryButton} 
           onPress={() => navigation.navigate('Setup')}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
         >
-          <Text style={styles.primaryButtonText}>🎮 Neues Spiel</Text>
+          <Text style={styles.primaryButtonText}>Neues Spiel</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity 
-          style={styles.secondaryButton}
-          onPress={() => navigation.navigate('Tutorial')}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.secondaryButtonText}>📖 Anleitung</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.secondaryButton}
-          onPress={resetTutorial}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.secondaryButtonText}>🔄 Tutorial neu anzeigen</Text>
-        </TouchableOpacity>
+        <View style={styles.secondaryRow}>
+          <TouchableOpacity 
+            style={styles.secondaryButton}
+            onPress={() => navigation.navigate('Tutorial')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.secondaryButtonText}>Anleitung</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.secondaryButton}
+            onPress={resetTutorial}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.secondaryButtonText}>Tutorial</Text>
+          </TouchableOpacity>
+        </View>
       </Animated.View>
-      
+
       <View style={styles.footer}>
-        <Text style={styles.footerText}>Basis-Edition • 200 Locations</Text>
-        <Text style={styles.footerVersion}>v1.0.0</Text>
+        <Text style={styles.footerText}>Basis-Edition</Text>
+        <View style={styles.footerDot} />
+        <Text style={styles.footerText}>200 Locations</Text>
       </View>
     </View>
   );
@@ -99,81 +92,95 @@ export default function HomeScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#1a1a2e', 
-    padding: 20,
+    backgroundColor: '#0a0a14',
+    paddingHorizontal: 24,
+    paddingTop: height * 0.08,
+    paddingBottom: 30,
     justifyContent: 'space-between',
   },
-  logoContainer: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center' 
+  topSection: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
   },
-  logo: { 
-    fontSize: 80, 
-    marginBottom: 15 
+  globeContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#12121f',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#1e1e30',
   },
+  globe: { fontSize: 48 },
   title: { 
-    fontSize: 42, 
-    fontWeight: 'bold', 
-    color: '#e94560', 
-    marginBottom: 8 
+    fontSize: 36, 
+    fontWeight: '700', 
+    color: '#ffffff',
+    letterSpacing: -0.5,
+    marginBottom: 12,
   },
   subtitle: { 
-    fontSize: 16, 
-    color: '#a0a0b0', 
+    fontSize: 17, 
+    color: '#8888aa', 
     textAlign: 'center',
-    marginBottom: 10,
+    lineHeight: 24,
   },
   greeting: {
-    fontSize: 18,
-    color: '#4CAF50',
-    marginTop: 10,
+    fontSize: 14,
+    color: '#6666aa',
+    textAlign: 'center',
+    marginBottom: 20,
   },
-  buttonContainer: { 
-    width: '100%', 
-    marginBottom: 30 
-  },
+  bottomSection: { width: '100%' },
   primaryButton: { 
-    backgroundColor: '#e94560', 
-    paddingVertical: 18, 
-    borderRadius: 12, 
-    marginBottom: 12,
+    backgroundColor: '#ff3333', 
+    paddingVertical: 16, 
+    borderRadius: 14, 
+    marginBottom: 14,
     alignItems: 'center',
-    shadowColor: '#e94560',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
   },
   primaryButtonText: { 
     color: '#fff', 
-    fontSize: 20, 
-    fontWeight: 'bold' 
+    fontSize: 17, 
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  secondaryRow: {
+    flexDirection: 'row',
+    gap: 10,
   },
   secondaryButton: { 
-    backgroundColor: '#16213e', 
-    paddingVertical: 15, 
-    borderRadius: 12, 
-    marginBottom: 10,
+    flex: 1,
+    backgroundColor: '#12121f', 
+    paddingVertical: 14, 
+    borderRadius: 14,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#2a2a4a',
+    borderColor: '#1e1e30',
   },
   secondaryButtonText: { 
-    color: '#ccc', 
-    fontSize: 16 
+    color: '#8888aa', 
+    fontSize: 15,
+    fontWeight: '500',
   },
   footer: { 
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingBottom: 10,
+    gap: 8,
+    paddingTop: 16,
   },
   footerText: { 
-    color: '#555', 
-    fontSize: 12 
+    color: '#444466', 
+    fontSize: 12,
   },
-  footerVersion: {
-    color: '#444',
-    fontSize: 10,
-    marginTop: 4,
+  footerDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: '#444466',
   },
 });
