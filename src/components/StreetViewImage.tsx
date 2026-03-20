@@ -22,9 +22,10 @@ interface StreetViewProps {
 }
 
 // --- STATIC API: Returns a JPEG image, no consent/UI needed ---
-function getStaticUrl(lat: number, lng: number, heading?: number, size: number = 640): string {
+// Max 640x640 without enterprise, source=outdoor for outdoor-only
+function getStaticUrl(lat: number, lng: number, heading?: number): string {
   const h = heading !== undefined ? heading : Math.floor(Math.random() * 360);
-  return `https://maps.googleapis.com/maps/api/streetview?size=${size}x${size}&location=${lat},${lng}&heading=${h}&pitch=0&fov=90&source=outdoor&key=${API_KEY}`;
+  return `https://maps.googleapis.com/maps/api/streetview?size=640x640&location=${lat},${lng}&heading=${h}&pitch=0&fov=90&source=outdoor&key=${API_KEY}`;
 }
 
 // --- EMBED API: Interactive panorama in iframe ---

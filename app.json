@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#282828"
+      "backgroundColor": "#0a0a14"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -39,11 +39,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png",
-      "name": "GeoCheckr \u2014 Geografie Party-Spiel",
+      "name": "GeoCheckr — Geografie Party-Spiel",
       "shortName": "GeoCheckr",
-      "description": "Finde den Ort! Ein Geografie-Party-Spiel f\u00fcr 2-8 Spieler.",
-      "backgroundColor": "#1a1a2e",
-      "themeColor": "#e94560",
+      "description": "Finde den Ort! Ein Geografie-Party-Spiel für 2-8 Spieler.",
+      "backgroundColor": "#0a0a14",
+      "themeColor": "#ff3333",
       "display": "standalone",
       "orientation": "portrait"
     },
