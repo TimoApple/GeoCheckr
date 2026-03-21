@@ -1,5 +1,5 @@
-// GeoCheckr — Clean Game App
-// 10 Timo Locations, Working Street View, 30s Timer, Map + Text Input
+// GeoCheckr — Polished Game App
+// 10 Timo Locations, Working Street View, 30s Timer, Sound Effects, Tutorial
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Animated,
@@ -36,24 +36,36 @@ const LOCS = [
 ];
 
 // ═══ UTILS ═══
-function haversine(lat1, lon1, lat2, lon2) {
-  const R = 6371;
-  const dLat = (lat2-lat1)*Math.PI/180;
-  const dLon = (lon2-lon1)*Math.PI/180;
-  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-  return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
-function calcPoints(d) { if(d<100)return 3; if(d<500)return 2; if(d<2000)return 1; return 0; }
-function fmtDist(km) { return km<1 ? Math.round(km*1000)+'m' : km.toFixed(0)+' km'; }
-function shuffle(a){ const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; }
+function haversine(a,b,c,d){const R=6371,dLat=(c-a)*Math.PI/180,dLon=(d-b)*Math.PI/180,v=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLon/2)**2;return R*2*Math.atan2(Math.sqrt(v),Math.sqrt(1-v));}
+function calcPoints(d){if(d<100)return 3;if(d<500)return 2;if(d<2000)return 1;return 0;}
+function fmtDist(km){return km<1?Math.round(km*1000)+'m':km.toFixed(0)+' km';}
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
 
-// ═══ HTML ═══
+// ═══ SOUND EFFECTS ═══
+const SOUND_HTML = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>*{margin:0;padding:0;overflow:hidden}body{background:transparent}</style></head>
+<body><script>
+var ctx=new(window.AudioContext||window.webkitAudioContext)();
+function beep(freq,dur,type){var o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type=type||'sine';o.frequency.value=freq;g.gain.value=0.15;g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);o.start();o.stop(ctx.currentTime+dur);}
+document.addEventListener('message',function(e){var d=e.data;if(d==='tick')beep(800,0.08,'square');if(d==='final')beep(1200,0.15,'square');if(d==='success'){beep(523,0.15);setTimeout(function(){beep(659,0.15)},150);setTimeout(function(){beep(784,0.2)},300);}if(d==='fail')beep(200,0.4,'sawtooth');if(d==='click')beep(1000,0.05,'square');});
+<\/script></body></html>`;
+
+// ═══ HTML TEMPLATES ═══
 function svHtml(lat,lng) {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <style>*{margin:0;padding:0}html,body,#p{width:100%;height:100%;overflow:hidden;background:#0e0e0e}
 #s{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#c6c5d7;text-align:center;font-family:Inter,sans-serif}
-#s .e{font-size:48px;margin-bottom:16px}#s.hide{display:none}</style></head>
+#s .e{font-size:48px;margin-bottom:16px;animation:pulse 2s ease-in-out infinite}
+#s.hide{display:none}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+#overlay{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:5}
+#overlay .corner{position:absolute;width:40px;height:40px;border:2px solid rgba(189,194,255,.3)}
+#overlay .tl{top:0;left:0;border-right:none;border-bottom:none}
+#overlay .tr{top:0;right:0;border-left:none;border-bottom:none}
+#overlay .bl{bottom:0;left:0;border-right:none;border-top:none}
+#overlay .br{bottom:0;right:0;border-left:none;border-top:none}</style></head>
 <body><div id="p"></div><div id="s"><div class="e">🔍</div><div>Suche Street View...</div></div>
+<div id="overlay"><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div></div>
 <script>function init(){var sv=new google.maps.StreetViewService();
 sv.getPanorama({location:{lat:${lat},lng:${lng}},radius:50000,
 preference:google.maps.StreetViewPreference.NEAREST,
@@ -65,7 +77,7 @@ addressControl:false,showRoadLabels:false,linksControl:true,
 panControl:false,zoomControl:true,fullscreenControl:false,
 motionTracking:false,motionTrackingControl:false,
 enableCloseButton:false,scrollwheel:true,clickToGo:true});}
-else{document.getElementById('s').innerHTML='<div class="e">📷</div><div>Kein Street View</div>';}});}
+else{document.getElementById('s').innerHTML='<div class="e">📷</div><div>Kein Street View hier</div><div style="color:#8f8fa0;margin-top:8px;font-size:12px">Tipp: Versuche eine andere Karte</div>';}});}
 window.gm_authFailure=function(){};</script>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init"></script></body></html>`;
 }
@@ -74,8 +86,8 @@ function mapHtml() {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <style>*{margin:0;padding:0}html,body,#m{width:100%;height:100%}
 #c{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#bdc2ff,#3340ca);color:#000fa3;
-border:none;padding:16px 36px;border-radius:9999px;font-size:16px;font-weight:900;z-index:10;display:none;font-family:Space Grotesk;text-transform:uppercase;cursor:pointer}
-#h{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:rgba(14,14,14,.95);color:#e5e2e1;padding:10px 20px;border-radius:1rem;font-size:14px;z-index:10;font-family:Inter;backdrop-filter:blur(20px)}</style>
+border:none;padding:16px 36px;border-radius:9999px;font-size:16px;font-weight:900;z-index:10;display:none;font-family:Space Grotesk;text-transform:uppercase;cursor:pointer;box-shadow:0 4px 20px rgba(51,64,202,.4)}
+#h{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:rgba(14,14,14,.95);color:#e5e2e1;padding:10px 20px;border-radius:1rem;font-size:14px;z-index:10;font-family:Inter;backdrop-filter:blur(20px);border:1px solid rgba(189,194,255,.15)}</style>
 </head><body><div id="m"></div><div id="h">📍 Setze deinen Marker!</div><button id="c" onclick="submit()">✓ Bestätigen</button>
 <script>var marker,cLat,cLng;function init(){var map=new google.maps.Map(document.getElementById('m'),{
 center:{lat:20,lng:0},zoom:2,mapTypeId:'roadmap',streetViewControl:false,mapTypeControl:false,fullscreenControl:false,
@@ -105,23 +117,39 @@ export default function App() {
   const [history, setHistory] = useState([]);
   const [lastResult, setLastResult] = useState(null);
   const [targetScore] = useState(10);
+  const [showTutorial, setShowTutorial] = useState(true);
 
   const timerRef = useRef(null);
   const popAnim = useRef(new Animated.Value(0)).current;
+  const soundRef = useRef(null);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  // Sound player via hidden WebView
+  const playSound = (type) => {
+    try { soundRef.current?.postMessage(type); } catch {}
+  };
 
   useEffect(() => {
     if(screen==='streetview' && timer>0) {
-      timerRef.current = setInterval(()=>setTimer(t=>t-1),1000);
-      return ()=>clearInterval(timerRef.current);
+      timerRef.current = setInterval(() => {
+        setTimer(t => {
+          const next = t - 1;
+          if(next <= 5 && next > 0) playSound('tick');
+          if(next === 0) { playSound('final'); Vibration.vibrate(500); }
+          return next;
+        });
+      }, 1000);
+      return () => clearInterval(timerRef.current);
     }
     if(timer===0 && screen==='streetview') {
-      Vibration.vibrate(500);
       if(mode==='map') setScreen('map');
       else setScreen('input');
     }
-  },[screen,timer]);
+  },[screen,timer,mode]);
 
   const startGame = (m) => {
+    playSound('click');
+    setShowTutorial(false);
     setMode(m); setRound(1); setScore(0); setHistory([]);
     popAnim.setValue(0);
     const loc = order[0];
@@ -135,21 +163,98 @@ export default function App() {
       dist = haversine(currentLoc.lat, currentLoc.lng, answer.lat, answer.lng);
     }
     const pts = calcPoints(dist);
-    setScore(s=>s+pts);
+    setScore(s => s + pts);
     const result = { city:currentLoc.city, country:currentLoc.country, dist, pts };
     setLastResult(result);
-    setHistory(h=>[...h,result]);
+    setHistory(h => [...h, result]);
     setScreen('result');
-    Animated.spring(popAnim,{toValue:1,friction:5,useNativeDriver:true}).start();
-    Vibration.vibrate(pts>=3?[100,50,100]:pts>0?100:500);
-  },[currentLoc,popAnim]);
+    Animated.spring(popAnim, { toValue:1, friction:5, useNativeDriver:true }).start();
+    if(pts >= 2) playSound('success'); else playSound('fail');
+    Vibration.vibrate(pts >= 3 ? [100,50,100] : pts > 0 ? 100 : 500);
+  },[currentLoc, popAnim]);
 
   const nextRound = () => {
+    playSound('click');
     popAnim.setValue(0);
-    if(round>=maxRounds || score>=targetScore) { setScreen('summary'); return; }
+    if(round >= maxRounds || score >= targetScore) { setScreen('summary'); return; }
     const next = order[round];
-    setCurrentLoc(next); setTimer(30); setRound(r=>r+1); setScreen('streetview');
+    setCurrentLoc(next); setTimer(30); setRound(r => r + 1); setScreen('streetview');
   };
+
+  // ─── TUTORIAL ───
+  if(screen==='home' && showTutorial) return (
+    <View style={s.container}>
+      <StatusBar hidden />
+      <View style={s.bgOrbs}>
+        <View style={[s.orb,{top:'10%',right:-80,width:350,height:350,backgroundColor:C.primaryContainer}]}/>
+        <View style={[s.orb,{bottom:'15%',left:-100,width:400,height:400,backgroundColor:C.secondary}]}/>
+      </View>
+      <View style={s.homeWrap}>
+        <Text style={s.brand}>⬡</Text>
+        <Text style={s.title}>GEOCHECKR</Text>
+        <Text style={s.tagline}>THE CARTOGRAPHIC EXPLORER</Text>
+        <Text style={s.locInfo}>10 Locations · 5 Runden · 30s Timer</Text>
+
+        <View style={s.tutorialCard}>
+          <Text style={s.tutorialTitle}>SPIELREGELN</Text>
+          <View style={s.tutorialStep}>
+            <Text style={s.tutorialNum}>1</Text>
+            <Text style={s.tutorialText}>Schau dir das Street View Bild an</Text>
+          </View>
+          <View style={s.tutorialStep}>
+            <Text style={s.tutorialNum}>2</Text>
+            <Text style={s.tutorialText}>Du hast 30 Sekunden zu erraten</Text>
+          </View>
+          <View style={s.tutorialStep}>
+            <Text style={s.tutorialNum}>3</Text>
+            <Text style={s.tutorialText}>Setze einen Marker oder tippe den Namen</Text>
+          </View>
+          <View style={s.tutorialStep}>
+            <Text style={s.tutorialNum}>4</Text>
+            <Text style={s.tutorialText}>Je näher, desto mehr Punkte!</Text>
+          </View>
+
+          <View style={s.pointsCard}>
+            <View style={s.pointRow}>
+              <Text style={[s.pointVal,{color:C.secondary}]}>3</Text>
+              <Text style={s.pointLabel}>unter 100km</Text>
+            </View>
+            <View style={s.pointRow}>
+              <Text style={[s.pointVal,{color:C.primary}]}>2</Text>
+              <Text style={s.pointLabel}>unter 500km</Text>
+            </View>
+            <View style={s.pointRow}>
+              <Text style={[s.pointVal,{color:C.tertiary}]}>1</Text>
+              <Text style={s.pointLabel}>unter 2000km</Text>
+            </View>
+            <View style={s.pointRow}>
+              <Text style={[s.pointVal,{color:C.error}]}>0</Text>
+              <Text style={s.pointLabel}>über 2000km</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={s.modeRow}>
+          <TouchableOpacity style={s.modeBtn} onPress={() => startGame('map')}>
+            <Text style={s.modeEmoji}>📍</Text>
+            <Text style={s.modeTitle}>MAP MODE</Text>
+            <Text style={s.modeDesc}>Marker auf Karte setzen</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.modeBtnOutline} onPress={() => startGame('input')}>
+            <Text style={s.modeEmoji}>⌨️</Text>
+            <Text style={s.modeTitle}>TIPPEN</Text>
+            <Text style={s.modeDesc}>Stadt eingeben</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={s.statsRow}>
+          <View style={s.statBadge}><Text style={s.statNum}>10</Text><Text style={s.statLabel}>KARTEN</Text></View>
+          <View style={s.statBadge}><Text style={s.statNum}>5</Text><Text style={s.statLabel}>RUNDEN</Text></View>
+          <View style={s.statBadge}><Text style={s.statNum}>10</Text><Text style={s.statLabel}>ZIEL</Text></View>
+        </View>
+      </View>
+    </View>
+  );
 
   // ─── HOME ───
   if(screen==='home') return (
@@ -166,12 +271,12 @@ export default function App() {
         <Text style={s.locInfo}>10 Locations · 5 Runden</Text>
 
         <View style={s.modeRow}>
-          <TouchableOpacity style={s.modeBtn} onPress={()=>startGame('map')}>
+          <TouchableOpacity style={s.modeBtn} onPress={() => startGame('map')}>
             <Text style={s.modeEmoji}>📍</Text>
             <Text style={s.modeTitle}>MAP MODE</Text>
             <Text style={s.modeDesc}>Marker auf Karte setzen</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={s.modeBtnOutline} onPress={()=>startGame('input')}>
+          <TouchableOpacity style={s.modeBtnOutline} onPress={() => startGame('input')}>
             <Text style={s.modeEmoji}>⌨️</Text>
             <Text style={s.modeTitle}>TIPPEN</Text>
             <Text style={s.modeDesc}>Stadt eingeben</Text>
@@ -184,8 +289,12 @@ export default function App() {
           <View style={s.statBadge}><Text style={s.statNum}>10</Text><Text style={s.statLabel}>ZIEL</Text></View>
         </View>
 
+        <TouchableOpacity style={s.helpBtn} onPress={() => setShowTutorial(true)}>
+          <Text style={s.helpBtnText}>? Spielregeln</Text>
+        </TouchableOpacity>
+
         <View style={s.locList}>
-          {LOCS.map(l=>(
+          {LOCS.map(l => (
             <View key={l.id} style={s.locRow}>
               <Text style={s.locQR}>{String(l.id).padStart(2,'0')}</Text>
               <Text style={s.locCity}>{l.city}</Text>
@@ -214,7 +323,8 @@ export default function App() {
       <View style={s.roundBadge}>
         <Text style={s.roundText}>Runde {round}/{maxRounds}</Text>
       </View>
-      <TouchableOpacity style={s.actionBtn} onPress={()=>{
+      <TouchableOpacity style={s.actionBtn} onPress={() => {
+        playSound('click');
         if(mode==='map') setScreen('map');
         else setScreen('input');
       }}>
@@ -231,7 +341,7 @@ export default function App() {
         source={{html:mapHtml()}}
         style={StyleSheet.absoluteFill}
         javaScriptEnabled domStorageEnabled
-        onMessage={(e)=>{try{handleAnswer(JSON.parse(e.nativeEvent.data))}catch{}}}
+        onMessage={(e) => { try { handleAnswer(JSON.parse(e.nativeEvent.data)); } catch {} }}
       />
     </View>
   );
@@ -242,22 +352,37 @@ export default function App() {
     return (
       <View style={s.container}>
         <StatusBar hidden />
+        <View style={s.bgOrbs}>
+          <View style={[s.orb,{top:'30%',right:-100,width:300,height:300,backgroundColor:C.primaryContainer}]}/>
+        </View>
         <View style={s.inputWrap}>
           <Text style={s.inputTitle}>WELCHE STADT?</Text>
+          <Text style={s.inputHint}>Tippe den Namen der Stadt</Text>
           <TextInput
             style={s.textInput}
-            placeholder="Stadtname eingeben..."
+            placeholder="z.B. Seoul, Tokyo, New York..."
             placeholderTextColor={C.outline}
             value={input} onChangeText={setInput}
             autoFocus autoCorrect={false}
+            returnKeyType="done"
+            onSubmitEditing={() => {
+              const norm = input.toLowerCase().trim()
+                .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
+              const match = LOCS.find(l =>
+                l.city.toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue') === norm
+              );
+              if(match) handleAnswer({lat:match.lat, lng:match.lng});
+              else handleAnswer(null);
+            }}
           />
-          <TouchableOpacity style={s.gradientBtn} onPress={()=>{
+          <TouchableOpacity style={s.gradientBtn} onPress={() => {
+            playSound('click');
             const norm = input.toLowerCase().trim()
               .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
-            const match = LOCS.find(l=>
-              l.city.toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue')===norm
+            const match = LOCS.find(l =>
+              l.city.toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue') === norm
             );
-            if(match) handleAnswer({lat:match.lat,lng:match.lng});
+            if(match) handleAnswer({lat:match.lat, lng:match.lng});
             else handleAnswer(null);
           }}>
             <Text style={s.gradientBtnText}>BESTÄTIGEN</Text>
@@ -269,7 +394,7 @@ export default function App() {
 
   // ─── RESULT ───
   if(screen==='result' && lastResult) {
-    const perf = lastResult.pts>=3, nah = lastResult.pts>=1;
+    const perf = lastResult.pts >= 3, nah = lastResult.pts >= 1;
     return (
       <View style={s.container}>
         <StatusBar hidden />
@@ -313,7 +438,7 @@ export default function App() {
 
   // ─── SUMMARY ───
   if(screen==='summary') {
-    const won = score>=targetScore;
+    const won = score >= targetScore;
     return (
       <View style={s.container}>
         <StatusBar hidden />
@@ -336,7 +461,7 @@ export default function App() {
           </View>
           <View style={s.lbCard}>
             <Text style={s.lbTitle}>STANDINGS</Text>
-            {history.map((h,i)=>(
+            {history.map((h,i) => (
               <View key={i} style={s.lbRow}>
                 <Text style={[s.lbRank,{color:i===0?C.primary:C.outline}]}>#{i+1}</Text>
                 <Text style={s.lbCity}>{h.city}</Text>
@@ -345,7 +470,7 @@ export default function App() {
               </View>
             ))}
           </View>
-          <TouchableOpacity style={s.gradientBtn} onPress={()=>setScreen('home')}>
+          <TouchableOpacity style={s.gradientBtn} onPress={() => { playSound('click'); setScreen('home'); }}>
             <Text style={s.gradientBtnText}>PLAY AGAIN</Text>
           </TouchableOpacity>
         </View>
@@ -369,17 +494,31 @@ const s = StyleSheet.create({
   tagline:{fontSize:10,color:C.onSurfaceVariant,letterSpacing:4,textTransform:'uppercase',fontFamily:'Inter',fontWeight:'600',marginBottom:8},
   locInfo:{fontSize:12,color:C.onSurfaceVariant,fontFamily:'Inter',marginBottom:20},
 
-  modeRow:{flexDirection:'row',gap:12,marginBottom:20,width:'100%'},
+  tutorialCard:{backgroundColor:C.surfaceContainer,borderRadius:16,padding:20,marginBottom:20,width:'100%',borderWidth:1,borderColor:C.outlineVariant},
+  tutorialTitle:{color:C.primary,fontSize:16,fontWeight:'900',fontFamily:'Space Grotesk',letterSpacing:1,textTransform:'uppercase',marginBottom:16,textAlign:'center'},
+  tutorialStep:{flexDirection:'row',alignItems:'center',marginBottom:10},
+  tutorialNum:{width:28,height:28,borderRadius:14,backgroundColor:C.primaryContainer,justifyContent:'center',alignItems:'center',marginRight:12},
+  tutorialNum:{color:C.primary,fontSize:14,fontWeight:'900',fontFamily:'Space Grotesk',width:28,height:28,borderRadius:14,backgroundColor:C.primaryContainer,justifyContent:'center',alignItems:'center',textAlign:'center',lineHeight:28,marginRight:12},
+  tutorialText:{color:C.onSurface,fontSize:14,fontFamily:'Inter',flex:1},
+  pointsCard:{flexDirection:'row',justifyContent:'space-around',marginTop:12,paddingTop:12,borderTopWidth:1,borderTopColor:C.outlineVariant+'40'},
+  pointRow:{alignItems:'center'},
+  pointVal:{fontSize:20,fontWeight:'900',fontFamily:'Space Grotesk'},
+  pointLabel:{color:C.onSurfaceVariant,fontSize:10,fontFamily:'Inter',marginTop:2},
+
+  modeRow:{flexDirection:'row',gap:12,marginBottom:16,width:'100%'},
   modeBtn:{flex:1,backgroundColor:C.primaryContainer,borderRadius:16,padding:20,alignItems:'center'},
   modeBtnOutline:{flex:1,backgroundColor:C.surfaceContainer,borderRadius:16,padding:20,alignItems:'center',borderWidth:1,borderColor:C.outlineVariant},
   modeEmoji:{fontSize:32,marginBottom:8},
   modeTitle:{color:C.onSurface,fontSize:14,fontWeight:'900',fontFamily:'Space Grotesk',letterSpacing:-.5,textTransform:'uppercase',marginBottom:2},
   modeDesc:{color:C.onSurfaceVariant,fontSize:10,fontFamily:'Inter',textAlign:'center'},
 
-  statsRow:{flexDirection:'row',gap:10,marginBottom:16},
+  statsRow:{flexDirection:'row',gap:10,marginBottom:12},
   statBadge:{backgroundColor:C.surfaceContainer,borderRadius:12,paddingVertical:10,paddingHorizontal:14,alignItems:'center',borderWidth:1,borderColor:C.outlineVariant},
   statNum:{color:C.primary,fontSize:18,fontWeight:'900',fontFamily:'Space Grotesk'},
   statLabel:{color:C.onSurfaceVariant,fontSize:8,fontFamily:'Inter',letterSpacing:2,textTransform:'uppercase',marginTop:2},
+
+  helpBtn:{backgroundColor:'transparent',paddingVertical:8,paddingHorizontal:16,borderRadius:9999,borderWidth:1,borderColor:C.outlineVariant,marginBottom:12},
+  helpBtnText:{color:C.onSurfaceVariant,fontSize:12,fontFamily:'Inter'},
 
   locList:{width:'100%',backgroundColor:C.surfaceContainer,borderRadius:16,padding:8,borderWidth:1,borderColor:C.outlineVariant},
   locRow:{flexDirection:'row',alignItems:'center',paddingVertical:8,paddingHorizontal:12,borderBottomWidth:.5,borderBottomColor:C.outlineVariant+'40'},
@@ -394,8 +533,9 @@ const s = StyleSheet.create({
   actionBtn:{position:'absolute',bottom:28,alignSelf:'center',backgroundColor:C.surfaceBright,paddingHorizontal:28,paddingVertical:14,borderRadius:9999,borderWidth:1,borderColor:C.secondary,zIndex:10},
   actionBtnText:{color:C.secondary,fontSize:15,fontWeight:'900',fontFamily:'Space Grotesk',letterSpacing:-.5},
 
-  inputWrap:{flex:1,justifyContent:'center',alignItems:'center',padding:24,width:'100%'},
-  inputTitle:{color:C.primary,fontSize:28,fontWeight:'900',fontFamily:'Space Grotesk',letterSpacing:-1,marginBottom:20,textTransform:'uppercase'},
+  inputWrap:{flex:1,justifyContent:'center',alignItems:'center',padding:24,width:'100%',zIndex:1},
+  inputTitle:{color:C.primary,fontSize:28,fontWeight:'900',fontFamily:'Space Grotesk',letterSpacing:-1,marginBottom:8,textTransform:'uppercase'},
+  inputHint:{color:C.onSurfaceVariant,fontSize:14,fontFamily:'Inter',marginBottom:20},
   textInput:{backgroundColor:C.surfaceContainer,color:C.onSurface,fontSize:18,fontFamily:'Inter',padding:16,borderRadius:12,width:'100%',borderWidth:1,borderColor:C.outlineVariant,marginBottom:16,textAlign:'center'},
   gradientBtn:{backgroundColor:C.primaryContainer,paddingVertical:16,borderRadius:9999,width:'100%',alignItems:'center'},
   gradientBtnText:{color:C.primary,fontSize:16,fontWeight:'900',fontFamily:'Space Grotesk',letterSpacing:-1,textTransform:'uppercase'},
