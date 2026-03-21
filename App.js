@@ -271,7 +271,6 @@ export default function App() {
       </View>
     );
   }
-  );
 
   // ─── MAP (APK: just show text input) ───
   // In APK, WebView with Maps API crashes. Always use text input.
