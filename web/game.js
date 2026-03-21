@@ -1,5 +1,5 @@
-// GeoCheckr — Clean Web Version
-// Timo's 10 Locations, Working Street View, 30s Timer, Map + Text Input
+// GeoCheckr — Polished Web Version
+// Timo's 10 Locations, Sound Effects, Tutorial, Better UI
 const API_KEY='AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
 const TARGET=10, MAX_ROUNDS=5;
 
@@ -18,6 +18,16 @@ const LOCS = [
 
 let mode='map',round=1,score=0,history=[],currentLoc=null,timer=30,timerInt=null;
 let order=shuffle([...LOCS]);
+let ctx;
+
+// Sound
+function initAudio(){try{ctx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+function beep(freq,dur,type){if(!ctx)return;try{var o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type=type||'sine';o.frequency.value=freq;g.gain.value=0.15;g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);o.start();o.stop(ctx.currentTime+dur);}catch(e){}}
+function playTick(){beep(800,0.08,'square');}
+function playFinal(){beep(1200,0.15,'square');}
+function playSuccess(){beep(523,0.15);setTimeout(()=>beep(659,0.15),150);setTimeout(()=>beep(784,0.2),300);}
+function playFail(){beep(200,0.4,'sawtooth');}
+function playClick(){beep(1000,0.05,'square');}
 
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
@@ -27,6 +37,8 @@ function showScreen(id){
 }
 
 function startGame(m){
+  initAudio();playClick();
+  document.getElementById('tutorial').style.display='none';
   mode=m;round=1;score=0;history=[];
   order=shuffle([...LOCS]);
   pickCard();
@@ -40,14 +52,29 @@ function pickCard(){
   clearInterval(timerInt);
   timerInt=setInterval(()=>{
     timer--;
-    document.getElementById('sv-timer').textContent=timer;
-    if(timer<=5)document.getElementById('sv-timer').style.color='var(--error)';
-    if(timer<=0){clearInterval(timerInt);showAnswer();}
+    const el=document.getElementById('sv-timer');
+    el.textContent=timer;
+    if(timer<=5){el.style.color='var(--error)';playTick();}
+    if(timer<=0){clearInterval(timerInt);playFinal();showAnswer();}
   },1000);
 }
 
 function getSvHtml(lat,lng){
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{margin:0;padding:0}html,body,#p{width:100%;height:100%;overflow:hidden;background:#0e0e0e}#s{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#c6c5d7;text-align:center;font-family:sans-serif}#s .e{font-size:48px;margin-bottom:16px}#s.hide{display:none}</style></head><body><div id="p"></div><div id="s"><div class="e">🔍</div><div>Lade...</div></div><script>function init(){var sv=new google.maps.StreetViewService();sv.getPanorama({location:{lat:${lat},lng:${lng}},radius:50000,preference:google.maps.StreetViewPreference.NEAREST,source:google.maps.StreetViewSource.OUTDOOR},function(d,s){if(s===google.maps.StreetViewStatus.OK){document.getElementById('s').className='hide';new google.maps.StreetViewPanorama(document.getElementById('p'),{pano:d.location.pano,pov:{heading:Math.random()*360,pitch:0},zoom:1,addressControl:false,showRoadLabels:false,linksControl:true,panControl:false,zoomControl:true,fullscreenControl:false,motionTracking:false,motionTrackingControl:false,enableCloseButton:false,scrollwheel:true,clickToGo:true});}else{document.getElementById('s').innerHTML='<div class="e">📷</div><div>Kein Street View</div>';}});}window.gm_authFailure=function(){};<\/script><script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init"></script></body></html>`;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>*{margin:0;padding:0}html,body,#p{width:100%;height:100%;overflow:hidden;background:#0e0e0e}
+#s{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#c6c5d7;text-align:center;font-family:sans-serif}
+#s .e{font-size:48px;margin-bottom:16px;animation:pulse 2s ease-in-out infinite}
+#s.hide{display:none}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+#overlay{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:5}
+#overlay .corner{position:absolute;width:40px;height:40px;border:2px solid rgba(189,194,255,.3)}
+#overlay .tl{top:0;left:0;border-right:none;border-bottom:none}
+#overlay .tr{top:0;right:0;border-left:none;border-bottom:none}
+#overlay .bl{bottom:0;left:0;border-right:none;border-top:none}
+#overlay .br{bottom:0;right:0;border-left:none;border-top:none}</style></head>
+<body><div id="p"></div><div id="s"><div class="e">🔍</div><div>Lade...</div></div>
+<div id="overlay"><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div></div>
+<script>function init(){var sv=new google.maps.StreetViewService();sv.getPanorama({location:{lat:${lat},lng:${lng}},radius:50000,preference:google.maps.StreetViewPreference.NEAREST,source:google.maps.StreetViewSource.OUTDOOR},function(d,s){if(s===google.maps.StreetViewStatus.OK){document.getElementById('s').className='hide';new google.maps.StreetViewPanorama(document.getElementById('p'),{pano:d.location.pano,pov:{heading:Math.random()*360,pitch:0},zoom:1,addressControl:false,showRoadLabels:false,linksControl:true,panControl:false,zoomControl:true,fullscreenControl:false,motionTracking:false,motionTrackingControl:false,enableCloseButton:false,scrollwheel:true,clickToGo:true});}else{document.getElementById('s').innerHTML='<div class="e">📷</div><div>Kein Street View hier</div>';}});}window.gm_authFailure=function(){};<\/script><script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init"></script></body></html>`;
 }
 
 function showAnswer(){
@@ -63,10 +90,11 @@ function showAnswer(){
 }
 
 function getMapHtml(){
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{margin:0;padding:0}html,body,#m{width:100%;height:100%}#c{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#bdc2ff,#3340ca);color:#000fa3;border:none;padding:16px 36px;border-radius:9999px;font-size:16px;font-weight:900;z-index:10;display:none;font-family:Space Grotesk;text-transform:uppercase;cursor:pointer}#h{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:rgba(14,14,14,.95);color:#e5e2e1;padding:10px 20px;border-radius:1rem;font-size:14px;z-index:10;font-family:Inter;backdrop-filter:blur(20px)}</style></head><body><div id="m"></div><div id="h">📍 Setze deinen Marker!</div><button id="c" onclick="submit()">✓ Bestätigen</button><script>var marker,cLat,cLng;function init(){var map=new google.maps.Map(document.getElementById('m'),{center:{lat:20,lng:0},zoom:2,mapTypeId:'roadmap',streetViewControl:false,mapTypeControl:false,fullscreenControl:false,zoomControl:true,styles:[{featureType:'all',elementType:'geometry',stylers:[{color:'#1b1b1c'}]},{featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#c6c5d7'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#235684'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#454654'}]},{featureType:'landscape',elementType:'geometry',stylers:[{color:'#202020'}]}]});map.addListener('click',function(e){cLat=e.latLng.lat();cLng=e.latLng.lng();if(marker)marker.setMap(null);marker=new google.maps.Marker({position:e.latLng,map:map,animation:google.maps.Animation.DROP});document.getElementById('c').style.display='block';});}function submit(){if(cLat!==undefined){window.parent.postMessage({lat:cLat,lng:cLng},'*');}}window.gm_authFailure=function(){};<\/script><script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init"></script></body></html>`;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{margin:0;padding:0}html,body,#m{width:100%;height:100%}#c{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#bdc2ff,#3340ca);color:#000fa3;border:none;padding:16px 36px;border-radius:9999px;font-size:16px;font-weight:900;z-index:10;display:none;font-family:Space Grotesk;text-transform:uppercase;cursor:pointer;box-shadow:0 4px 20px rgba(51,64,202,.4)}#h{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:rgba(14,14,14,.95);color:#e5e2e1;padding:10px 20px;border-radius:1rem;font-size:14px;z-index:10;font-family:Inter;backdrop-filter:blur(20px);border:1px solid rgba(189,194,255,.15)}</style></head><body><div id="m"></div><div id="h">📍 Setze deinen Marker!</div><button id="c" onclick="submit()">✓ Bestätigen</button><script>var marker,cLat,cLng;function init(){var map=new google.maps.Map(document.getElementById('m'),{center:{lat:20,lng:0},zoom:2,mapTypeId:'roadmap',streetViewControl:false,mapTypeControl:false,fullscreenControl:false,zoomControl:true,styles:[{featureType:'all',elementType:'geometry',stylers:[{color:'#1b1b1c'}]},{featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#c6c5d7'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#235684'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#454654'}]},{featureType:'landscape',elementType:'geometry',stylers:[{color:'#202020'}]}]});map.addListener('click',function(e){cLat=e.latLng.lat();cLng=e.latLng.lng();if(marker)marker.setMap(null);marker=new google.maps.Marker({position:e.latLng,map:map,animation:google.maps.Animation.DROP});document.getElementById('c').style.display='block';});}function submit(){if(cLat!==undefined){window.parent.postMessage({lat:cLat,lng:cLng},'*');}}window.gm_authFailure=function(){};<\/script><script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init"></script></body></html>`;
 }
 
 function submitInput(){
+  playClick();
   const val=document.getElementById('city-input').value.toLowerCase().trim()
     .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
   const match=LOCS.find(l=>l.city.toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue')===val);
@@ -85,14 +113,11 @@ function processResult(answer){
   const pts=dist<100?3:dist<500?2:dist<2000?1:0;
   score+=pts;
   history.push({city:currentLoc.city,country:currentLoc.country,dist,pts});
+  if(pts>=2)playSuccess();else playFail();
   showResult(dist,pts);
 }
 
-function haversine(lat1,lon1,lat2,lon2){
-  const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
-  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-}
+function haversine(a,b,c,d){const R=6371,dLat=(c-a)*Math.PI/180,dLon=(d-b)*Math.PI/180;const v=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLon/2)**2;return R*2*Math.atan2(Math.sqrt(v),Math.sqrt(1-v));}
 function fmtDist(km){return km<1?Math.round(km*1000)+'m':km.toFixed(0)+' km'}
 
 function showResult(dist,pts){
@@ -111,6 +136,7 @@ function showResult(dist,pts){
 }
 
 function nextRound(){
+  playClick();
   if(round>=MAX_ROUNDS||score>=TARGET)showSummary();
   else{round++;pickCard();}
 }
