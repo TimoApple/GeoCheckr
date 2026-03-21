@@ -1,18 +1,48 @@
-// GeoCheckr — Game App with Street View
-// Two modes: Audio (speak city) or Map (place marker like GeoGuessr)
-// Working Street View via WebView + Maps JS API
+// GeoCheckr — Game App v2
+// Design: The Cartographic Explorer
+// Fonts: Space Grotesk (headlines) + Inter (body)
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Animated,
   Vibration, StatusBar, Dimensions
 } from 'react-native';
 import { WebView } from 'react-native-webview';
-import * as Speech from 'expo-speech';
 
 const API_KEY = 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
-// 50 verified locations with exact Street View coordinates
+// ═══ DESIGN TOKENS ═══
+const C = {
+  primary: '#bdc2ff',
+  primaryContainer: '#3340ca',
+  secondary: '#88da7d',
+  tertiary: '#9dcaff',
+  surface: '#131313',
+  surfaceContainer: '#202020',
+  surfaceContainerLow: '#1b1b1c',
+  surfaceContainerLowest: '#0e0e0e',
+  surfaceContainerHigh: '#2a2a2a',
+  surfaceContainerHighest: '#353535',
+  surfaceBright: '#393939',
+  onSurface: '#e5e2e1',
+  onSurfaceVariant: '#c6c5d7',
+  onPrimary: '#000fa3',
+  onPrimaryContainer: '#bec3ff',
+  tertiaryContainer: '#235684',
+  onTertiary: '#003257',
+  error: '#ffb4ab',
+  errorContainer: '#93000a',
+  outline: '#8f8fa0',
+  outlineVariant: '#454654',
+  inverseSurface: '#e5e2e1',
+  inverseOnSurface: '#303030',
+  inversePrimary: '#404dd6',
+  tertiaryFixed: '#d1e4ff',
+  secondaryFixed: '#a3f796',
+  secondaryContainer: '#015b0d',
+  onSecondaryFixedVariant: '#00530b',
+};
+
 const LOCATIONS = [
   { id:1, city:'Paris', country:'Frankreich', lat:48.8584, lng:2.2945 },
   { id:2, city:'Tokyo', country:'Japan', lat:35.6595, lng:139.7004 },
@@ -66,7 +96,7 @@ const LOCATIONS = [
   { id:50, city:'Rio de Janeiro', country:'Brasilien', lat:-22.9705, lng:-43.1829 },
 ];
 
-// Haversine distance
+// ═══ UTILS ═══
 function haversine(lat1, lon1, lat2, lon2) {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -89,14 +119,14 @@ function fmtDist(km) {
   return km.toFixed(1) + ' km';
 }
 
-// ─── Street View HTML ───
+// ═══ HTML TEMPLATES ═══
 function streetViewHtml(lat, lng) {
   return `<!DOCTYPE html><html><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<style>*{margin:0;padding:0}html,body,#p{width:100%;height:100%;overflow:hidden;background:#0a0a14}
-#s{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#888;text-align:center;font-family:sans-serif}
+<style>*{margin:0;padding:0}html,body,#p{width:100%;height:100%;overflow:hidden;background:#0e0e0e}
+#s{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#c6c5d7;text-align:center;font-family:Inter,sans-serif}
 #s .e{font-size:48px;margin-bottom:16px}#s.hide{display:none}</style></head><body>
-<div id="p"></div><div id="s"><div class="e">🔍</div><div>Lade...</div></div>
+<div id="p"></div><div id="s"><div class="e">🔍</div><div>Lade Street View...</div></div>
 <script>function init(){var sv=new google.maps.StreetViewService();
 sv.getPanorama({location:{lat:${lat},lng:${lng}},radius:50000,
 preference:google.maps.StreetViewPreference.NEAREST,
@@ -109,39 +139,43 @@ panControl:false,zoomControl:true,fullscreenControl:false,
 motionTracking:false,motionTrackingControl:false,
 enableCloseButton:false,scrollwheel:true,clickToGo:true});}
 else{document.getElementById('s').innerHTML='<div class="e">📷</div><div>Kein Street View</div>';}});
-}window.gm_authFailure=function(){document.getElementById('s').innerHTML='<div class="e" style="color:red">⚠️</div><div>API Key Fehler</div>';};</script>
+}window.gm_authFailure=function(){document.getElementById('s').innerHTML='<div class="e" style="color:#ffb4ab">⚠️</div><div>API Key Fehler</div>';};</script>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init"></script>
 </body></html>`;
 }
 
-// ─── Map HTML (for marker placement) ───
-function mapHtml(targetLat, targetLng) {
+function mapHtml() {
   return `<!DOCTYPE html><html><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <style>*{margin:0;padding:0}html,body,#m{width:100%;height:100%}
-#confirm{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#ff3333;color:#fff;
-border:none;padding:14px 32px;border-radius:12px;font-size:16px;font-weight:bold;z-index:10;display:none}
-#hint{position:fixed;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#fff;
-padding:8px 16px;border-radius:8px;font-size:14px;z-index:10;font-family:sans-serif}</style></head>
+#confirm{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#bdc2ff,#3340ca);color:#000fa3;
+border:none;padding:16px 36px;border-radius:9999px;font-size:16px;font-weight:900;z-index:10;display:none;
+font-family:Space Grotesk,sans-serif;text-transform:uppercase;letter-spacing:-0.02em;cursor:pointer}
+#hint{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:rgba(14,14,14,0.9);color:#e5e2e1;
+padding:10px 20px;border-radius:1rem;font-size:14px;z-index:10;font-family:Inter,sans-serif;backdrop-filter:blur(20px)}</style></head>
 <body><div id="m"></div><div id="hint">📍 Setze deinen Marker!</div><button id="confirm" onclick="submit()">✓ Bestätigen</button>
 <script>var marker,chosenLat,chosenLng;
 function init(){var map=new google.maps.Map(document.getElementById('m'),{
 center:{lat:20,lng:0},zoom:2,mapTypeId:'roadmap',streetViewControl:false,
-mapTypeControl:false,fullscreenControl:false,zoomControl:true});
+mapTypeControl:false,fullscreenControl:false,zoomControl:true,styles:[
+{featureType:'all',elementType:'geometry',stylers:[{color:'#1b1b1c'}]},
+{featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#c6c5d7'}]},
+{featureType:'water',elementType:'geometry',stylers:[{color:'#235684'}]},
+{featureType:'road',elementType:'geometry',stylers:[{color:'#454654'}]},
+{featureType:'landscape',elementType:'geometry',stylers:[{color:'#202020'}]}
+]});
 map.addListener('click',function(e){chosenLat=e.latLng.lat();chosenLng=e.latLng.lng();
 if(marker)marker.setMap(null);marker=new google.maps.Marker({position:e.latLng,map:map,animation:google.maps.Animation.DROP});
 document.getElementById('confirm').style.display='block';});}
 function submit(){if(chosenLat!==undefined){window.ReactNativeWebView.postMessage(JSON.stringify({lat:chosenLat,lng:chosenLng}));}}
-window.gm_authFailure=function(){document.getElementById('hint').innerHTML='⚠️ API Key Fehler';document.getElementById('hint').style.color='red';};
+window.gm_authFailure=function(){document.getElementById('hint').innerHTML='⚠️ API Key Fehler';document.getElementById('hint').style.color='#ffb4ab';};
 </script><script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init"></script></body></html>`;
 }
 
-// ═══════════════════════════════════════════
-// APP
-// ═══════════════════════════════════════════
+// ═══ APP ═══
 export default function App() {
-  const [screen, setScreen] = useState('home'); // home, streetview, map, result, summary
-  const [gameMode, setGameMode] = useState('map'); // 'audio' or 'map'
+  const [screen, setScreen] = useState('home');
+  const [gameMode, setGameMode] = useState('map');
   const [round, setRound] = useState(1);
   const [maxRounds] = useState(5);
   const [currentLoc, setCurrentLoc] = useState(null);
@@ -150,12 +184,11 @@ export default function App() {
   const [timer, setTimer] = useState(30);
   const [history, setHistory] = useState([]);
   const [lastResult, setLastResult] = useState(null);
-  const [mapVisible, setMapVisible] = useState(false);
 
   const timerRef = useRef(null);
   const scaleAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  // Timer
   useEffect(() => {
     if (screen === 'streetview' && timer > 0) {
       timerRef.current = setInterval(() => setTimer(t => t - 1), 1000);
@@ -163,10 +196,14 @@ export default function App() {
     }
     if (timer === 0 && screen === 'streetview') {
       Vibration.vibrate(500);
-      if (gameMode === 'map') { setMapVisible(true); setScreen('map'); }
-      else { handleAnswer(''); }
+      if (gameMode === 'map') setScreen('map');
+      else handleAnswer('');
     }
   }, [screen, timer]);
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }).start();
+  }, [screen]);
 
   const pickLocation = useCallback(() => {
     const available = LOCATIONS.filter(l => !usedIds.includes(l.id));
@@ -181,10 +218,8 @@ export default function App() {
 
   const startGame = (mode) => {
     setGameMode(mode);
-    setRound(1);
-    setScore(0);
-    setUsedIds([]);
-    setHistory([]);
+    setRound(1); setScore(0); setUsedIds([]); setHistory([]);
+    fadeAnim.setValue(0);
     pickLocation();
   };
 
@@ -194,156 +229,147 @@ export default function App() {
     let matched = null;
 
     if (typeof answer === 'object' && answer.lat !== undefined) {
-      // Map marker answer
       dist = haversine(currentLoc.lat, currentLoc.lng, answer.lat, answer.lng);
       matched = LOCATIONS.reduce((closest, loc) => {
         const d = haversine(answer.lat, answer.lng, loc.lat, loc.lng);
         return d < (closest.dist || Infinity) ? { city: loc.city, dist: d } : closest;
       }, { city: '?', dist: Infinity });
-    } else if (typeof answer === 'string' && answer.trim()) {
-      // Audio text answer
-      const norm = answer.toLowerCase().trim()
-        .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
-      matched = LOCATIONS.find(l =>
-        l.city.toLowerCase() === norm ||
-        l.city.toLowerCase().includes(norm) ||
-        norm.includes(l.city.toLowerCase())
-      );
-      if (matched) dist = haversine(currentLoc.lat, currentLoc.lng, matched.lat, matched.lng);
     }
 
     const pts = calcPoints(dist);
     setScore(s => s + pts);
-    const result = {
-      city: currentLoc.city,
-      answer: typeof answer === 'object' ? (matched?.city || '?') : (answer || '—'),
-      dist, pts
-    };
-    setLastResult(result);
-    setHistory(h => [...h, result]);
+    setLastResult({ city: currentLoc.city, answer: matched?.city || '—', dist, pts });
+    setHistory(h => [...h, { city: currentLoc.city, answer: matched?.city || '—', dist, pts }]);
     setScreen('result');
 
     Animated.spring(scaleAnim, { toValue: 1, friction: 5, useNativeDriver: true }).start();
-
-    if (pts >= 4) { Vibration.vibrate([100,50,100]); }
-    else if (pts > 0) { Vibration.vibrate(100); }
-    else { Vibration.vibrate(500); }
+    if (pts >= 4) Vibration.vibrate([100,50,100]);
+    else if (pts > 0) Vibration.vibrate(100);
+    else Vibration.vibrate(500);
   };
 
   const nextRound = () => {
     scaleAnim.setValue(0);
-    setMapVisible(false);
-    if (round >= maxRounds) {
-      setScreen('summary');
-    } else {
-      setRound(r => r + 1);
-      pickLocation();
-    }
+    if (round >= maxRounds) setScreen('summary');
+    else { setRound(r => r + 1); pickLocation(); }
   };
 
-  // ─── HOME SCREEN ───
+  // ─── HOME ───
   if (screen === 'home') {
     return (
-      <View style={styles.container}>
+      <View style={s.container}>
         <StatusBar hidden />
-        <Text style={styles.title}>🌍 GeoCheckr</Text>
-        <Text style={styles.subtitle}>Wie gut kennst du die Welt?</Text>
-        <View style={styles.modeContainer}>
-          <TouchableOpacity style={styles.modeBtn} onPress={() => startGame('map')}>
-            <Text style={styles.modeEmoji}>📍</Text>
-            <Text style={styles.modeTitle}>Map Mode</Text>
-            <Text style={styles.modeDesc}>Marker auf Google Maps setzen</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.modeBtn} onPress={() => startGame('audio')}>
-            <Text style={styles.modeEmoji}>🎤</Text>
-            <Text style={styles.modeTitle}>Audio Mode</Text>
-            <Text style={styles.modeDesc}>Stadt per Stimme nennen</Text>
-          </TouchableOpacity>
+        <View style={s.homeBg}>
+          <View style={[s.glowOrb, { top: '15%', right: -60, width: 300, height: 300, backgroundColor: C.primaryContainer }]} />
+          <View style={[s.glowOrb, { bottom: '20%', left: -80, width: 350, height: 350, backgroundColor: C.secondary }]} />
         </View>
+        <Animated.View style={[s.homeContent, { opacity: fadeAnim }]}>
+          <Text style={s.explore}>⬡</Text>
+          <Text style={s.homeTitle}>GEOCHECKR</Text>
+          <Text style={s.homeSubtitle}>The Cartographic Explorer</Text>
+          <View style={s.modeRow}>
+            <TouchableOpacity style={s.modeBtn} onPress={() => startGame('map')}>
+              <Text style={s.modeEmoji}>📍</Text>
+              <Text style={s.modeTitle}>MAP MODE</Text>
+              <Text style={s.modeDesc}>Marker auf Google Maps setzen</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[s.modeBtn, { borderColor: C.secondary }]} onPress={() => startGame('audio')}>
+              <Text style={s.modeEmoji}>🎤</Text>
+              <Text style={s.modeTitle}>AUDIO MODE</Text>
+              <Text style={s.modeDesc}>Stadt per Stimme nennen</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={s.statsRow}>
+            <View style={s.statBadge}>
+              <Text style={s.statNum}>50</Text>
+              <Text style={s.statLabel}>LOCATIONS</Text>
+            </View>
+            <View style={s.statBadge}>
+              <Text style={s.statNum}>5</Text>
+              <Text style={s.statLabel}>ROUNDS</Text>
+            </View>
+            <View style={s.statBadge}>
+              <Text style={s.statNum}>25</Text>
+              <Text style={s.statLabel}>MAX PTS</Text>
+            </View>
+          </View>
+        </Animated.View>
       </View>
     );
   }
 
-  // ─── STREET VIEW SCREEN ───
+  // ─── STREET VIEW ───
   if (screen === 'streetview' && currentLoc) {
     return (
-      <View style={styles.container}>
+      <View style={s.container}>
         <StatusBar hidden />
         <WebView
           key={currentLoc.id}
           source={{ html: streetViewHtml(currentLoc.lat, currentLoc.lng) }}
           style={StyleSheet.absoluteFill}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          sharedCookiesEnabled={true}
+          javaScriptEnabled domStorageEnabled sharedCookiesEnabled
           userAgent="Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/122.0.0.0 Mobile Safari/537.36"
         />
-        {/* Timer */}
-        <View style={styles.timerBadge}>
-          <Text style={[styles.timerText, timer <= 5 && { color: '#ff4444' }]}>{timer}</Text>
+        <View style={s.timerBadge}>
+          <Text style={[s.timerText, timer <= 5 && { color: C.error }]}>{timer}</Text>
         </View>
-        {/* Round info */}
-        <View style={styles.roundBadge}>
-          <Text style={styles.roundText}>{round}/{maxRounds}</Text>
+        <View style={s.roundBadge}>
+          <Text style={s.roundText}>Runde {round}/{maxRounds}</Text>
         </View>
-        {/* Skip button */}
-        <TouchableOpacity style={styles.skipBtn} onPress={() => {
-          setTimer(0);
-          if (gameMode === 'map') { setMapVisible(true); setScreen('map'); }
-          else { handleAnswer(''); }
+        <TouchableOpacity style={s.actionBtn} onPress={() => {
+          if (gameMode === 'map') setScreen('map');
+          else handleAnswer('');
         }}>
-          <Text style={styles.skipText}>Ich weiß es! →</Text>
+          <Text style={s.actionBtnText}>ICH WEIẞ ES →</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  // ─── MAP SCREEN (marker placement) ───
+  // ─── MAP ───
   if (screen === 'map' && currentLoc) {
     return (
-      <View style={styles.container}>
+      <View style={s.container}>
         <StatusBar hidden />
         <WebView
-          source={{ html: mapHtml(currentLoc.lat, currentLoc.lng) }}
+          source={{ html: mapHtml() }}
           style={StyleSheet.absoluteFill}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          onMessage={(e) => {
-            try {
-              const data = JSON.parse(e.nativeEvent.data);
-              handleAnswer(data);
-            } catch {}
-          }}
+          javaScriptEnabled domStorageEnabled
+          onMessage={(e) => { try { handleAnswer(JSON.parse(e.nativeEvent.data)); } catch {} }}
         />
       </View>
     );
   }
 
-  // ─── AUDIO SCREEN (voice input) ───
-  // (simplified: text input for now, voice would need expo-speech-recognition)
-  // For audio mode, we go directly to result with empty answer or a text prompt
-
-  // ─── RESULT SCREEN ───
+  // ─── RESULT ───
   if (screen === 'result' && lastResult) {
+    const isGood = lastResult.pts >= 4;
     return (
-      <View style={styles.container}>
+      <View style={s.container}>
         <StatusBar hidden />
-        <Animated.View style={[styles.resultContainer, { transform: [{ scale: scaleAnim }] }]}>
-          <Text style={styles.resultEmoji}>
-            {lastResult.pts >= 4 ? '🎯' : lastResult.pts > 0 ? '👍' : '😅'}
+        <View style={s.glowOrbLg} />
+        <Animated.View style={[s.resultWrap, { transform: [{ scale: scaleAnim }] }]}>
+          <Text style={s.resultEmoji}>{isGood ? '🎯' : lastResult.pts > 0 ? '👍' : '😅'}</Text>
+          <Text style={[s.resultTitle, { color: isGood ? C.primary : C.error }]}>
+            {isGood ? 'PERFEKT' : lastResult.pts >= 2 ? 'GUT' : lastResult.pts > 0 ? 'OK' : 'DANEBEN'}
           </Text>
-          <Text style={[styles.resultTitle, lastResult.pts > 0 ? { color: '#4CAF50' } : { color: '#ff4444' }]}>
-            {lastResult.pts >= 4 ? 'Perfekt!' : lastResult.pts >= 2 ? 'Gut!' : lastResult.pts > 0 ? 'OK!' : 'Daneben!'}
-          </Text>
-          <View style={styles.resultCard}>
-            <Text style={styles.resultRow}>📍 Ort: <Text style={styles.resultVal}>{lastResult.city}</Text></Text>
-            <Text style={styles.resultRow}>📝 Antwort: <Text style={styles.resultVal}>{lastResult.answer}</Text></Text>
-            <Text style={styles.resultRow}>📏 Distanz: <Text style={styles.resultVal}>{fmtDist(lastResult.dist)}</Text></Text>
-            <Text style={styles.resultRow}>⭐ Punkte: <Text style={[styles.resultVal, { color: '#4CAF50', fontSize: 22 }]}>+{lastResult.pts}</Text></Text>
+          <View style={s.resultCard}>
+            <View style={s.resultRow}>
+              <Text style={s.resultLabel}>ORT</Text>
+              <Text style={s.resultValue}>{lastResult.city}</Text>
+            </View>
+            <View style={s.resultRow}>
+              <Text style={s.resultLabel}>DISTANZ</Text>
+              <Text style={s.resultValue}>{fmtDist(lastResult.dist)}</Text>
+            </View>
+            <View style={s.resultRow}>
+              <Text style={s.resultLabel}>PUNKTE</Text>
+              <Text style={[s.resultValue, { color: C.secondary, fontSize: 28 }]}>+{lastResult.pts}</Text>
+            </View>
           </View>
-          <TouchableOpacity style={styles.nextBtn} onPress={nextRound}>
-            <Text style={styles.nextBtnText}>
-              {round >= maxRounds ? '🏆 Ergebnis' : `Runde ${round + 1}/${maxRounds} →`}
+          <TouchableOpacity style={s.gradientBtn} onPress={nextRound}>
+            <Text style={s.gradientBtnText}>
+              {round >= maxRounds ? '🏆 ERGEBNIS' : `RUNDE ${round + 1}/${maxRounds} →`}
             </Text>
           </TouchableOpacity>
         </Animated.View>
@@ -351,24 +377,68 @@ export default function App() {
     );
   }
 
-  // ─── SUMMARY SCREEN ───
+  // ─── SUMMARY ───
   if (screen === 'summary') {
+    const total = maxRounds * 5;
     return (
-      <View style={styles.container}>
+      <View style={s.container}>
         <StatusBar hidden />
-        <Text style={styles.summaryTitle}>🏆 Spiel beendet!</Text>
-        <Text style={styles.summaryScore}>{score} / {maxRounds * 5} Punkte</Text>
-        {history.map((h, i) => (
-          <View key={i} style={styles.historyRow}>
-            <Text style={styles.historyNum}>{i + 1}.</Text>
-            <Text style={styles.historyCity}>{h.city}</Text>
-            <Text style={styles.historyDist}>{fmtDist(h.dist)}</Text>
-            <Text style={styles.historyPts}>+{h.pts}</Text>
+        <View style={s.glowOrbLg} />
+        <View style={s.summaryWrap}>
+          <Text style={s.summaryTitle}>SIEG!</Text>
+          <Text style={s.summarySubtitle}>Match Summary</Text>
+
+          <View style={s.summaryCard}>
+            <View style={s.scoreDisplay}>
+              <Text style={s.scoreNum}>{score}</Text>
+              <Text style={s.scoreDenom}>/ {total}</Text>
+            </View>
+            <View style={s.xpBar}>
+              <View style={[s.xpFill, { width: `${(score/total)*100}%` }]} />
+            </View>
+            <Text style={s.xpLabel}>+{score * 100} XP earned</Text>
           </View>
-        ))}
-        <TouchableOpacity style={styles.restartBtn} onPress={() => { setScreen('home'); setMapVisible(false); }}>
-          <Text style={styles.restartBtnText}>🔄 Nochmal spielen</Text>
-        </TouchableOpacity>
+
+          {/* Leaderboard style history */}
+          <View style={s.lbCard}>
+            <Text style={s.lbTitle}>FINAL STANDINGS</Text>
+            {history.map((h, i) => (
+              <View key={i} style={[s.lbRow, i === 0 && { backgroundColor: C.primary + '10' }]}>
+                <Text style={[s.lbRank, { color: i === 0 ? C.primary : C.outline }]}>#{i+1}</Text>
+                <Text style={[s.lbCity, { color: i === 0 ? C.primary : C.onSurface }]}>{h.city}</Text>
+                <Text style={[s.lbDist, { color: C.onSurfaceVariant }]}>{fmtDist(h.dist)}</Text>
+                <Text style={[s.lbPts, { color: C.secondary }]}>+{h.pts}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Rewards */}
+          <View style={s.rewardsCard}>
+            <View style={s.rewardRow}>
+              <Text style={s.rewardEmoji}>⭐</Text>
+              <View>
+                <Text style={s.rewardValue}>+{score * 100} XP</Text>
+                <Text style={s.rewardLabel}>EXPERIENCE</Text>
+              </View>
+            </View>
+            <View style={s.rewardRow}>
+              <Text style={s.rewardEmoji}>🪙</Text>
+              <View>
+                <Text style={s.rewardValue}>+{score * 10} Map Coins</Text>
+                <Text style={s.rewardLabel}>CURRENCY</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={s.btnCol}>
+            <TouchableOpacity style={s.gradientBtn} onPress={() => { setScreen('home'); }}>
+              <Text style={s.gradientBtnText}>PLAY AGAIN</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.outlineBtn} onPress={() => setScreen('home')}>
+              <Text style={s.outlineBtnText}>BACK TO HUB</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
     );
   }
@@ -376,44 +446,77 @@ export default function App() {
   return null;
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0a14', justifyContent: 'center', alignItems: 'center' },
+// ═══ STYLES ═══
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: C.surfaceContainerLowest, justifyContent: 'center', alignItems: 'center' },
 
   // Home
-  title: { color: '#fff', fontSize: 36, fontWeight: 'bold', marginBottom: 8 },
-  subtitle: { color: '#888', fontSize: 16, marginBottom: 40 },
-  modeContainer: { flexDirection: 'row', gap: 16 },
-  modeBtn: { backgroundColor: '#12121f', borderRadius: 16, padding: 24, alignItems: 'center', width: 160, borderWidth: 1, borderColor: '#1e1e30' },
-  modeEmoji: { fontSize: 40, marginBottom: 10 },
-  modeTitle: { color: '#fff', fontSize: 18, fontWeight: 'bold', marginBottom: 4 },
-  modeDesc: { color: '#888', fontSize: 12, textAlign: 'center' },
+  homeBg: { ...StyleSheet.absoluteFillObject, zIndex: 0 },
+  glowOrb: { position: 'absolute', borderRadius: 9999, opacity: 0.15, backgroundColor: C.primary },
+  glowOrbLg: { position: 'absolute', top: '10%', right: -100, width: 400, height: 400, borderRadius: 9999, backgroundColor: C.primaryContainer, opacity: 0.1, zIndex: 0 },
+  homeContent: { alignItems: 'center', zIndex: 1, paddingHorizontal: 24 },
+  explore: { fontSize: 32, color: C.primary, marginBottom: 12 },
+  homeTitle: { fontSize: 48, fontWeight: '900', letterSpacing: -2, color: C.primary, fontFamily: 'Space Grotesk', textTransform: 'uppercase', marginBottom: 4 },
+  homeSubtitle: { fontSize: 12, color: C.onSurfaceVariant, letterSpacing: 4, textTransform: 'uppercase', fontFamily: 'Inter', fontWeight: '600', marginBottom: 40 },
+  modeRow: { flexDirection: 'row', gap: 16, marginBottom: 32 },
+  modeBtn: { backgroundColor: C.surfaceContainer, borderRadius: 16, padding: 24, alignItems: 'center', width: SCREEN_W * 0.38, borderWidth: 1, borderColor: C.outlineVariant },
+  modeEmoji: { fontSize: 36, marginBottom: 12 },
+  modeTitle: { color: C.onSurface, fontSize: 14, fontWeight: '900', fontFamily: 'Space Grotesk', letterSpacing: -0.5, textTransform: 'uppercase', marginBottom: 4 },
+  modeDesc: { color: C.onSurfaceVariant, fontSize: 11, textAlign: 'center', fontFamily: 'Inter' },
+  statsRow: { flexDirection: 'row', gap: 12 },
+  statBadge: { backgroundColor: C.surfaceContainer, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16, alignItems: 'center', borderWidth: 1, borderColor: C.outlineVariant },
+  statNum: { color: C.primary, fontSize: 20, fontWeight: '900', fontFamily: 'Space Grotesk' },
+  statLabel: { color: C.onSurfaceVariant, fontSize: 9, fontFamily: 'Inter', letterSpacing: 2, textTransform: 'uppercase', marginTop: 2 },
 
   // Timer
-  timerBadge: { position: 'absolute', top: 12, right: 12, backgroundColor: 'rgba(0,0,0,0.85)', borderRadius: 24, width: 48, height: 48, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#ff3333', zIndex: 10 },
-  timerText: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
-  roundBadge: { position: 'absolute', top: 12, left: 12, backgroundColor: 'rgba(0,0,0,0.85)', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, zIndex: 10 },
-  roundText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  skipBtn: { position: 'absolute', bottom: 24, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 25, borderWidth: 1, borderColor: '#4CAF50', zIndex: 10 },
-  skipText: { color: '#4CAF50', fontSize: 16, fontWeight: '600' },
+  timerBadge: { position: 'absolute', top: 12, right: 12, backgroundColor: 'rgba(14,14,14,0.9)', borderRadius: 9999, width: 52, height: 52, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: C.error, zIndex: 10 },
+  timerText: { color: C.onSurface, fontSize: 22, fontWeight: '900', fontFamily: 'Space Grotesk' },
+  roundBadge: { position: 'absolute', top: 12, left: 12, backgroundColor: 'rgba(14,14,14,0.9)', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8, zIndex: 10 },
+  roundText: { color: C.onSurfaceVariant, fontSize: 13, fontWeight: '600', fontFamily: 'Inter' },
+
+  // Action button
+  actionBtn: { position: 'absolute', bottom: 28, alignSelf: 'center', backgroundColor: C.surfaceBright, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 9999, borderWidth: 1, borderColor: C.secondary, zIndex: 10 },
+  actionBtnText: { color: C.secondary, fontSize: 15, fontWeight: '900', fontFamily: 'Space Grotesk', letterSpacing: -0.5 },
 
   // Result
-  resultContainer: { alignItems: 'center', padding: 20, width: '100%' },
-  resultEmoji: { fontSize: 60, marginBottom: 10 },
-  resultTitle: { fontSize: 30, fontWeight: 'bold', marginBottom: 20 },
-  resultCard: { backgroundColor: '#12121f', borderRadius: 15, padding: 20, width: '100%', marginBottom: 20, borderWidth: 1, borderColor: '#1e1e30' },
-  resultRow: { color: '#888', fontSize: 16, paddingVertical: 8 },
-  resultVal: { color: '#fff', fontWeight: '600' },
-  nextBtn: { backgroundColor: '#ff3333', paddingVertical: 16, paddingHorizontal: 30, borderRadius: 14, width: '100%', alignItems: 'center' },
-  nextBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  resultWrap: { alignItems: 'center', padding: 24, width: '100%', zIndex: 1 },
+  resultEmoji: { fontSize: 64, marginBottom: 8 },
+  resultTitle: { fontSize: 40, fontWeight: '900', fontFamily: 'Space Grotesk', letterSpacing: -1, textTransform: 'uppercase', marginBottom: 24 },
+  resultCard: { backgroundColor: C.surfaceContainer, borderRadius: 16, padding: 24, width: '100%', marginBottom: 24, borderWidth: 1, borderColor: C.outlineVariant },
+  resultRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
+  resultLabel: { color: C.onSurfaceVariant, fontSize: 11, fontFamily: 'Inter', letterSpacing: 2, textTransform: 'uppercase', fontWeight: '600' },
+  resultValue: { color: C.onSurface, fontSize: 18, fontWeight: '700', fontFamily: 'Space Grotesk' },
 
   // Summary
-  summaryTitle: { color: '#fff', fontSize: 28, fontWeight: 'bold', marginBottom: 8 },
-  summaryScore: { color: '#FFD700', fontSize: 24, fontWeight: 'bold', marginBottom: 24 },
-  historyRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#1e1e30', width: '100%' },
-  historyNum: { color: '#555', fontSize: 14, width: 30 },
-  historyCity: { color: '#fff', fontSize: 15, flex: 1 },
-  historyDist: { color: '#888', fontSize: 14, width: 80, textAlign: 'right' },
-  historyPts: { color: '#4CAF50', fontSize: 16, fontWeight: 'bold', width: 50, textAlign: 'right' },
-  restartBtn: { backgroundColor: '#ff3333', paddingVertical: 16, paddingHorizontal: 30, borderRadius: 14, marginTop: 24, width: '100%', alignItems: 'center' },
-  restartBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  summaryWrap: { flex: 1, width: '100%', paddingHorizontal: 20, paddingTop: 60, zIndex: 1 },
+  summaryTitle: { fontSize: 56, fontWeight: '900', fontFamily: 'Space Grotesk', color: C.primary, textAlign: 'center', letterSpacing: -2, textTransform: 'uppercase', fontStyle: 'italic' },
+  summarySubtitle: { color: C.onSurfaceVariant, fontSize: 12, letterSpacing: 4, textTransform: 'uppercase', fontFamily: 'Inter', fontWeight: '700', textAlign: 'center', marginBottom: 24 },
+  summaryCard: { backgroundColor: C.surfaceContainer, borderRadius: 16, padding: 24, marginBottom: 16, borderWidth: 1, borderColor: C.outlineVariant },
+  scoreDisplay: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center', marginBottom: 16 },
+  scoreNum: { color: C.onSurface, fontSize: 48, fontWeight: '900', fontFamily: 'Space Grotesk' },
+  scoreDenom: { color: C.onSurfaceVariant, fontSize: 16, fontFamily: 'Inter', marginLeft: 4 },
+  xpBar: { height: 12, backgroundColor: C.surfaceContainerHighest, borderRadius: 9999, overflow: 'hidden', marginBottom: 8 },
+  xpFill: { height: '100%', backgroundColor: C.secondary, borderRadius: 9999, shadowColor: C.secondary, shadowOpacity: 0.4, shadowRadius: 10 },
+  xpLabel: { color: C.secondaryFixed, fontSize: 11, fontFamily: 'Inter', textAlign: 'right', fontStyle: 'italic' },
+
+  lbCard: { backgroundColor: C.surfaceContainerLow, borderRadius: 16, overflow: 'hidden', marginBottom: 16, borderWidth: 1, borderColor: C.outlineVariant },
+  lbTitle: { color: C.onSurface, fontSize: 14, fontWeight: '900', fontFamily: 'Space Grotesk', letterSpacing: 1, textTransform: 'uppercase', padding: 16, borderBottomWidth: 1, borderBottomColor: C.outlineVariant + '20' },
+  lbRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.outlineVariant + '08' },
+  lbRank: { fontSize: 20, fontWeight: '900', fontFamily: 'Space Grotesk', fontStyle: 'italic', width: 36 },
+  lbCity: { fontSize: 16, fontWeight: '700', fontFamily: 'Space Grotesk', flex: 1 },
+  lbDist: { fontSize: 12, fontFamily: 'Inter', width: 80, textAlign: 'right' },
+  lbPts: { fontSize: 16, fontWeight: '900', fontFamily: 'Space Grotesk', width: 50, textAlign: 'right' },
+
+  rewardsCard: { backgroundColor: C.surfaceContainerHigh, borderRadius: 16, padding: 20, marginBottom: 16, gap: 16 },
+  rewardRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  rewardEmoji: { fontSize: 28 },
+  rewardValue: { color: C.onSurface, fontSize: 18, fontWeight: '800', fontFamily: 'Space Grotesk' },
+  rewardLabel: { color: C.onSurfaceVariant, fontSize: 9, fontFamily: 'Inter', letterSpacing: 2, textTransform: 'uppercase' },
+
+  // Buttons
+  gradientBtn: { backgroundColor: C.primaryContainer, paddingVertical: 18, borderRadius: 9999, width: '100%', alignItems: 'center', shadowColor: C.primaryContainer, shadowOpacity: 0.3, shadowRadius: 20 },
+  gradientBtnText: { color: C.primary, fontSize: 18, fontWeight: '900', fontFamily: 'Space Grotesk', letterSpacing: -1, textTransform: 'uppercase' },
+  outlineBtn: { backgroundColor: C.surfaceContainerHighest, paddingVertical: 18, borderRadius: 9999, width: '100%', alignItems: 'center', borderWidth: 1, borderColor: C.outlineVariant },
+  outlineBtnText: { color: C.onSurface, fontSize: 16, fontWeight: '700', fontFamily: 'Space Grotesk', letterSpacing: 2, textTransform: 'uppercase' },
+  btnCol: { gap: 12, marginTop: 8 },
 });
