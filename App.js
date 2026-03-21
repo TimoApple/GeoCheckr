@@ -1,11 +1,12 @@
-// GeoCheckr — Fixed APK Version
-// Uses Static Street View API (images) + WebView with file for map
+// GeoCheckr — Fixed APK Version  
+// Interactive Street View via WebView + Maps JS API
+// Text input for guessing (map WebView crashes in APK)
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, Animated, Image,
+  View, Text, TouchableOpacity, StyleSheet, Animated,
   Vibration, StatusBar, Dimensions, TextInput, ActivityIndicator
 } from 'react-native';
-// WebView only used in web version, not APK
+import { WebView } from 'react-native-webview';
 
 
 const API_KEY = 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
@@ -42,7 +43,40 @@ function calcPoints(d){if(d<100)return 3;if(d<500)return 2;if(d<2000)return 1;re
 function fmtDist(km){return km<1?Math.round(km*1000)+'m':km.toFixed(0)+' km';}
 function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
 
-// Map only available in web version
+// ═══ INTERACTIVE STREET VIEW HTML ═══
+function svHtml(lat, lng) {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<style>*{margin:0;padding:0}html,body,#p{width:100%;height:100%;overflow:hidden;background:#0a0a14}
+#loading{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#888;font-family:sans-serif;font-size:14px;text-align:center}
+#loading.hide{display:none}
+.overlay{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:5}
+.corner{position:absolute;width:40px;height:40px;border:2px solid rgba(189,194,255,.3)}
+.tl{top:0;left:0;border-right:none;border-bottom:none}
+.tr{top:0;right:0;border-left:none;border-bottom:none}
+.bl{bottom:0;left:0;border-right:none;border-top:none}
+.br{bottom:0;right:0;border-left:none;border-top:none}</style></head>
+<body><div id="p"></div>
+<div id="loading"><div style="font-size:32px;margin-bottom:12px">🌍</div><div>Lade Street View...</div></div>
+<div class="overlay"><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div></div>
+<script>
+function init(){try{var sv=new google.maps.StreetViewService();
+sv.getPanorama({location:{lat:${lat},lng:${lng}},radius:100,preference:google.maps.StreetViewPreference.NEAREST,source:google.maps.StreetViewSource.OUTDOOR},function(d,s){
+if(s===google.maps.StreetViewStatus.OK){document.getElementById('loading').className='hide';
+var pano=new google.maps.StreetViewPanorama(document.getElementById('p'),{
+pano:d.location.pano,pov:{heading:Math.random()*360,pitch:0},zoom:1,
+addressControl:false,showRoadLabels:false,linksControl:true,
+panControl:false,zoomControl:true,fullscreenControl:false,
+motionTracking:false,motionTrackingControl:false,
+enableCloseButton:false,scrollwheel:true,clickToGo:true});
+var style=document.createElement('style');
+style.innerHTML='.gm-iv-address,.gm-iv-logo,.gm-iv-show-hide-button,.gmnoprint:not(.gm-svpc),.gm-control-active,[title="Report a problem"],[title="Open in Google Maps"],[title="Fullscreen"]{display:none!important}';
+document.head.appendChild(style);}
+else{document.getElementById('loading').innerHTML='<div style="font-size:32px;margin-bottom:12px">📷</div><div>Street View nicht verfügbar</div>';}
+});}catch(e){document.getElementById('loading').innerHTML='<div style="color:#ff3333;font-size:14px">Error: '+e.message+'</div>';}}
+window.gm_authFailure=function(){document.getElementById('loading').innerHTML='<div style="color:#ff3333;font-size:32px;margin-bottom:12px">⚠️</div><div>API Key Fehler</div>';};
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init"></script></body></html>`;
+}
 
 // ═══ MAIN APP ═══
 export default function App() {
@@ -58,32 +92,9 @@ export default function App() {
   const [lastResult, setLastResult] = useState(null);
   const [targetScore] = useState(10);
   const [showTutorial, setShowTutorial] = useState(true);
-  const [svUrl, setSvUrl] = useState('');
-  const [svLoading, setSvLoading] = useState(false);
 
   const timerRef = useRef(null);
   const popAnim = useRef(new Animated.Value(0)).current;
-
-  // Load Street View image via Static API
-  const loadStreetView = useCallback(async (loc) => {
-    setSvLoading(true);
-    setSvUrl('');
-    const heading = Math.floor(Math.random() * 360);
-    try {
-      // Step 1: Metadata API → exact coords
-      const metaUrl = `https://maps.googleapis.com/maps/api/streetview/metadata?location=${loc.lat},${loc.lng}&source=outdoor&key=${API_KEY}`;
-      const metaRes = await fetch(metaUrl);
-      const meta = await metaRes.json();
-      if (meta.status === 'OK' && meta.location) {
-        // Step 2: Static API → image
-        const url = `https://maps.googleapis.com/maps/api/streetview?size=640x640&location=${meta.location.lat},${meta.location.lng}&heading=${heading}&pitch=0&fov=90&source=outdoor&key=${API_KEY}`;
-        setSvUrl(url);
-      }
-    } catch (err) {
-      console.warn('[GeoCheckr] SV error:', err);
-    }
-    setSvLoading(false);
-  }, []);
 
   useEffect(() => {
     if(screen==='streetview' && timer>0) {
@@ -108,9 +119,7 @@ export default function App() {
     setMode(m); setRound(1); setScore(0); setHistory([]);
     popAnim.setValue(0);
     const loc = order[0];
-    setCurrentLoc(loc); setTimer(30);
-    loadStreetView(loc);
-    setScreen('streetview');
+    setCurrentLoc(loc); setTimer(30); setScreen('streetview');
   };
 
   const handleAnswer = useCallback((answer) => {
@@ -133,9 +142,7 @@ export default function App() {
     popAnim.setValue(0);
     if(round >= maxRounds || score >= targetScore) { setScreen('summary'); return; }
     const next = order[round];
-    setCurrentLoc(next); setTimer(30); setRound(r => r + 1);
-    loadStreetView(next);
-    setScreen('streetview');
+    setCurrentLoc(next); setTimer(30); setRound(r => r + 1); setScreen('streetview');
   };
 
   // ─── TUTORIAL ───
@@ -262,34 +269,19 @@ export default function App() {
     </View>
   );
 
-  // ─── STREET VIEW (Static API Image) ───
+  // ─── STREET VIEW (Interactive WebView Panorama) ───
   if(screen==='streetview' && currentLoc) return (
     <View style={s.container}>
       <StatusBar hidden />
-      <View style={s.svWrap}>
-        {svLoading ? (
-          <View style={s.svLoading}>
-            <ActivityIndicator size="large" color={C.primary} />
-            <Text style={s.svLoadingText}>Suche Street View...</Text>
-          </View>
-        ) : svUrl ? (
-          <Image
-            source={{uri: svUrl}}
-            style={s.svImage}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={s.svError}>
-            <Text style={s.svErrorEmoji}>📷</Text>
-            <Text style={s.svErrorText}>Kein Street View hier</Text>
-          </View>
-        )}
-        {/* Corner overlay */}
-        <View style={[s.corner,{top:0,left:0}]} />
-        <View style={[s.corner,{top:0,right:0,transform:[{scaleX:-1}]}]} />
-        <View style={[s.corner,{bottom:0,left:0,transform:[{scaleY:-1}]}]} />
-        <View style={[s.corner,{bottom:0,right:0,transform:[{scaleX:-1},{scaleY:-1}]}]} />
-      </View>
+      <WebView
+        key={currentLoc.id}
+        source={{html: svHtml(currentLoc.lat, currentLoc.lng)}}
+        style={StyleSheet.absoluteFill}
+        javaScriptEnabled domStorageEnabled
+        originWhitelist={['*']}
+        mixedContentMode="always"
+        onError={(e) => console.warn('[GeoCheckr] SV WebView error:', e.nativeEvent)}
+      />
       <View style={s.timerBadge}>
         <Text style={[s.timerText,timer<=5&&{color:C.error}]}>{timer}</Text>
       </View>
@@ -297,7 +289,6 @@ export default function App() {
         <Text style={s.roundText}>Runde {round}/{maxRounds}</Text>
       </View>
       <TouchableOpacity style={s.actionBtn} onPress={() => {
-        // APK: always go to text input (map crashes)
         setScreen('input');
       }}>
         <Text style={s.actionBtnText}>ICH WEIẞ ES →</Text>
