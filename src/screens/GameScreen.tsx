@@ -322,7 +322,7 @@ export default function GameScreen({ route, navigation }: any) {
         {phase === 'view' && (
           <View style={styles.viewPhaseContainer}>
             <View style={styles.fullscreenImageContainer}>
-              <StreetViewImage location={currentLocation} showInfo={false} mode="image" />
+              <StreetViewImage location={currentLocation} showInfo={false} />
               {/* Timer oben rechts */}
               <View style={styles.countdownOverlay}>
                 <Animated.Text style={[styles.countdownTimer, { color: getTimerColor(), transform: [{ scale: timerPulse }] }]}>
