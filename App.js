@@ -1,11 +1,12 @@
-// GeoCheckr — Polished Game App
-// 10 Timo Locations, Working Street View, 30s Timer, Sound Effects, Tutorial
+// GeoCheckr — Fixed APK Version
+// Uses Static Street View API (images) + WebView with file for map
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, Animated,
-  Vibration, StatusBar, Dimensions, TextInput
+  View, Text, TouchableOpacity, StyleSheet, Animated, Image,
+  Vibration, StatusBar, Dimensions, TextInput, ActivityIndicator
 } from 'react-native';
 import { WebView } from 'react-native-webview';
+import * as FileSystem from 'expo-file-system';
 
 const API_KEY = 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
 const { width: SW, height: SH } = Dimensions.get('window');
@@ -21,7 +22,7 @@ const C = {
   outlineVariant:'#454654', secondaryFixed:'#a3f796', tertiaryFixed:'#d1e4ff',
 };
 
-// ═══ TIMO'S 10 LOCATIONS — VERIFIED ═══
+// ═══ TIMO'S 10 LOCATIONS ═══
 const LOCS = [
   { id:1, city:"Seoul", country:"Südkorea", lat:37.571922, lng:126.976715 },
   { id:2, city:"Tokyo", country:"Japan", lat:35.6595, lng:139.700399 },
@@ -41,68 +42,24 @@ function calcPoints(d){if(d<100)return 3;if(d<500)return 2;if(d<2000)return 1;re
 function fmtDist(km){return km<1?Math.round(km*1000)+'m':km.toFixed(0)+' km';}
 function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
 
-// ═══ SOUND EFFECTS ═══
-const SOUND_HTML = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<style>*{margin:0;padding:0;overflow:hidden}body{background:transparent}</style></head>
-<body><script>
-var ctx=new(window.AudioContext||window.webkitAudioContext)();
-function beep(freq,dur,type){var o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type=type||'sine';o.frequency.value=freq;g.gain.value=0.15;g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);o.start();o.stop(ctx.currentTime+dur);}
-document.addEventListener('message',function(e){var d=e.data;if(d==='tick')beep(800,0.08,'square');if(d==='final')beep(1200,0.15,'square');if(d==='success'){beep(523,0.15);setTimeout(function(){beep(659,0.15)},150);setTimeout(function(){beep(784,0.2)},300);}if(d==='fail')beep(200,0.4,'sawtooth');if(d==='click')beep(1000,0.05,'square');});
-<\/script></body></html>`;
-
-// ═══ HTML TEMPLATES ═══
-function svHtml(lat,lng) {
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<style>*{margin:0;padding:0}html,body,#p{width:100%;height:100%;overflow:hidden;background:#0e0e0e}
-#s{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#c6c5d7;text-align:center;font-family:Inter,sans-serif}
-#s .e{font-size:48px;margin-bottom:16px;animation:pulse 2s ease-in-out infinite}
-#s.hide{display:none}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
-#overlay{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:5}
-#overlay .corner{position:absolute;width:40px;height:40px;border:2px solid rgba(189,194,255,.3)}
-#overlay .tl{top:0;left:0;border-right:none;border-bottom:none}
-#overlay .tr{top:0;right:0;border-left:none;border-bottom:none}
-#overlay .bl{bottom:0;left:0;border-right:none;border-top:none}
-#overlay .br{bottom:0;right:0;border-left:none;border-top:none}</style></head>
-<body><div id="p"></div><div id="s"><div class="e">🔍</div><div>Suche Street View...</div></div>
-<div id="overlay"><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div></div>
-<script>function init(){var sv=new google.maps.StreetViewService();
-sv.getPanorama({location:{lat:${lat},lng:${lng}},radius:50000,
-preference:google.maps.StreetViewPreference.NEAREST,
-source:google.maps.StreetViewSource.OUTDOOR},function(d,s){
-if(s===google.maps.StreetViewStatus.OK){document.getElementById('s').className='hide';
-new google.maps.StreetViewPanorama(document.getElementById('p'),{
-pano:d.location.pano,pov:{heading:Math.random()*360,pitch:0},zoom:1,
-addressControl:false,showRoadLabels:false,linksControl:true,
-panControl:false,zoomControl:true,fullscreenControl:false,
-motionTracking:false,motionTrackingControl:false,
-enableCloseButton:false,scrollwheel:true,clickToGo:true});}
-else{document.getElementById('s').innerHTML='<div class="e">📷</div><div>Kein Street View hier</div><div style="color:#8f8fa0;margin-top:8px;font-size:12px">Tipp: Versuche eine andere Karte</div>';}});}
-window.gm_authFailure=function(){};</script>
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init"></script></body></html>`;
-}
-
-function mapHtml() {
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+// Map HTML
+const MAP_HTML = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <style>*{margin:0;padding:0}html,body,#m{width:100%;height:100%}
 #c{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#bdc2ff,#3340ca);color:#000fa3;
 border:none;padding:16px 36px;border-radius:9999px;font-size:16px;font-weight:900;z-index:10;display:none;font-family:Space Grotesk;text-transform:uppercase;cursor:pointer;box-shadow:0 4px 20px rgba(51,64,202,.4)}
 #h{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:rgba(14,14,14,.95);color:#e5e2e1;padding:10px 20px;border-radius:1rem;font-size:14px;z-index:10;font-family:Inter;backdrop-filter:blur(20px);border:1px solid rgba(189,194,255,.15)}</style>
 </head><body><div id="m"></div><div id="h">📍 Setze deinen Marker!</div><button id="c" onclick="submit()">✓ Bestätigen</button>
-<script>var marker,cLat,cLng;function init(){var map=new google.maps.Map(document.getElementById('m'),{
-center:{lat:20,lng:0},zoom:2,mapTypeId:'roadmap',streetViewControl:false,mapTypeControl:false,fullscreenControl:false,
-zoomControl:true,styles:[{featureType:'all',elementType:'geometry',stylers:[{color:'#1b1b1c'}]},
+<script>var marker,cLat,cLng;
+function init(){var map=new google.maps.Map(document.getElementById('m'),{center:{lat:20,lng:0},zoom:2,mapTypeId:'roadmap',streetViewControl:false,mapTypeControl:false,fullscreenControl:false,zoomControl:true,
+styles:[{featureType:'all',elementType:'geometry',stylers:[{color:'#1b1b1c'}]},
 {featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#c6c5d7'}]},
 {featureType:'water',elementType:'geometry',stylers:[{color:'#235684'}]},
 {featureType:'road',elementType:'geometry',stylers:[{color:'#454654'}]},
 {featureType:'landscape',elementType:'geometry',stylers:[{color:'#202020'}]}]});
-map.addListener('click',function(e){cLat=e.latLng.lat();cLng=e.latLng.lng();
-if(marker)marker.setMap(null);marker=new google.maps.Marker({position:e.latLng,map:map,animation:google.maps.Animation.DROP});
-document.getElementById('c').style.display='block';});}
+map.addListener('click',function(e){cLat=e.latLng.lat();cLng=e.latLng.lng();if(marker)marker.setMap(null);marker=new google.maps.Marker({position:e.latLng,map:map,animation:google.maps.Animation.DROP});document.getElementById('c').style.display='block';});}
 function submit(){if(cLat!==undefined){window.ReactNativeWebView.postMessage(JSON.stringify({lat:cLat,lng:cLng}));}}
 window.gm_authFailure=function(){};</script>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init"></script></body></html>`;
-}
 
 // ═══ MAIN APP ═══
 export default function App() {
@@ -118,24 +75,40 @@ export default function App() {
   const [lastResult, setLastResult] = useState(null);
   const [targetScore] = useState(10);
   const [showTutorial, setShowTutorial] = useState(true);
+  const [svUrl, setSvUrl] = useState('');
+  const [svLoading, setSvLoading] = useState(false);
 
   const timerRef = useRef(null);
   const popAnim = useRef(new Animated.Value(0)).current;
-  const soundRef = useRef(null);
-  const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  // Sound player via hidden WebView
-  const playSound = (type) => {
-    try { soundRef.current?.postMessage(type); } catch {}
-  };
+  // Load Street View image via Static API
+  const loadStreetView = useCallback(async (loc) => {
+    setSvLoading(true);
+    setSvUrl('');
+    const heading = Math.floor(Math.random() * 360);
+    try {
+      // Step 1: Metadata API → exact coords
+      const metaUrl = `https://maps.googleapis.com/maps/api/streetview/metadata?location=${loc.lat},${loc.lng}&source=outdoor&key=${API_KEY}`;
+      const metaRes = await fetch(metaUrl);
+      const meta = await metaRes.json();
+      if (meta.status === 'OK' && meta.location) {
+        // Step 2: Static API → image
+        const url = `https://maps.googleapis.com/maps/api/streetview?size=640x640&location=${meta.location.lat},${meta.location.lng}&heading=${heading}&pitch=0&fov=90&source=outdoor&key=${API_KEY}`;
+        setSvUrl(url);
+      }
+    } catch (err) {
+      console.warn('[GeoCheckr] SV error:', err);
+    }
+    setSvLoading(false);
+  }, []);
 
   useEffect(() => {
     if(screen==='streetview' && timer>0) {
       timerRef.current = setInterval(() => {
         setTimer(t => {
           const next = t - 1;
-          if(next <= 5 && next > 0) playSound('tick');
-          if(next === 0) { playSound('final'); Vibration.vibrate(500); }
+          if(next <= 5 && next > 0) Vibration.vibrate(50);
+          if(next === 0) Vibration.vibrate(500);
           return next;
         });
       }, 1000);
@@ -148,12 +121,13 @@ export default function App() {
   },[screen,timer,mode]);
 
   const startGame = (m) => {
-    playSound('click');
     setShowTutorial(false);
     setMode(m); setRound(1); setScore(0); setHistory([]);
     popAnim.setValue(0);
     const loc = order[0];
-    setCurrentLoc(loc); setTimer(30); setScreen('streetview');
+    setCurrentLoc(loc); setTimer(30);
+    loadStreetView(loc);
+    setScreen('streetview');
   };
 
   const handleAnswer = useCallback((answer) => {
@@ -169,16 +143,16 @@ export default function App() {
     setHistory(h => [...h, result]);
     setScreen('result');
     Animated.spring(popAnim, { toValue:1, friction:5, useNativeDriver:true }).start();
-    if(pts >= 2) playSound('success'); else playSound('fail');
     Vibration.vibrate(pts >= 3 ? [100,50,100] : pts > 0 ? 100 : 500);
   },[currentLoc, popAnim]);
 
   const nextRound = () => {
-    playSound('click');
     popAnim.setValue(0);
     if(round >= maxRounds || score >= targetScore) { setScreen('summary'); return; }
     const next = order[round];
-    setCurrentLoc(next); setTimer(30); setRound(r => r + 1); setScreen('streetview');
+    setCurrentLoc(next); setTimer(30); setRound(r => r + 1);
+    loadStreetView(next);
+    setScreen('streetview');
   };
 
   // ─── TUTORIAL ───
@@ -213,23 +187,22 @@ export default function App() {
             <Text style={s.tutorialNum}>4</Text>
             <Text style={s.tutorialText}>Je näher, desto mehr Punkte!</Text>
           </View>
-
           <View style={s.pointsCard}>
             <View style={s.pointRow}>
               <Text style={[s.pointVal,{color:C.secondary}]}>3</Text>
-              <Text style={s.pointLabel}>unter 100km</Text>
+              <Text style={s.pointLabel}>{"<100km"}</Text>
             </View>
             <View style={s.pointRow}>
               <Text style={[s.pointVal,{color:C.primary}]}>2</Text>
-              <Text style={s.pointLabel}>unter 500km</Text>
+              <Text style={s.pointLabel}>{"<500km"}</Text>
             </View>
             <View style={s.pointRow}>
               <Text style={[s.pointVal,{color:C.tertiary}]}>1</Text>
-              <Text style={s.pointLabel}>unter 2000km</Text>
+              <Text style={s.pointLabel}>{"<2000km"}</Text>
             </View>
             <View style={s.pointRow}>
               <Text style={[s.pointVal,{color:C.error}]}>0</Text>
-              <Text style={s.pointLabel}>über 2000km</Text>
+              <Text style={s.pointLabel}>{">2000km"}</Text>
             </View>
           </View>
         </View>
@@ -306,17 +279,34 @@ export default function App() {
     </View>
   );
 
-  // ─── STREET VIEW ───
+  // ─── STREET VIEW (Static API Image) ───
   if(screen==='streetview' && currentLoc) return (
     <View style={s.container}>
       <StatusBar hidden />
-      <WebView
-        key={currentLoc.id}
-        source={{html:svHtml(currentLoc.lat,currentLoc.lng)}}
-        style={StyleSheet.absoluteFill}
-        javaScriptEnabled domStorageEnabled sharedCookiesEnabled
-        userAgent="Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/122.0.0.0 Mobile Safari/537.36"
-      />
+      <View style={s.svWrap}>
+        {svLoading ? (
+          <View style={s.svLoading}>
+            <ActivityIndicator size="large" color={C.primary} />
+            <Text style={s.svLoadingText}>Suche Street View...</Text>
+          </View>
+        ) : svUrl ? (
+          <Image
+            source={{uri: svUrl}}
+            style={s.svImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={s.svError}>
+            <Text style={s.svErrorEmoji}>📷</Text>
+            <Text style={s.svErrorText}>Kein Street View hier</Text>
+          </View>
+        )}
+        {/* Corner overlay */}
+        <View style={[s.corner,{top:0,left:0}]} />
+        <View style={[s.corner,{top:0,right:0,transform:[{scaleX:-1}]}]} />
+        <View style={[s.corner,{bottom:0,left:0,transform:[{scaleY:-1}]}]} />
+        <View style={[s.corner,{bottom:0,right:0,transform:[{scaleX:-1},{scaleY:-1}]}]} />
+      </View>
       <View style={s.timerBadge}>
         <Text style={[s.timerText,timer<=5&&{color:C.error}]}>{timer}</Text>
       </View>
@@ -324,7 +314,6 @@ export default function App() {
         <Text style={s.roundText}>Runde {round}/{maxRounds}</Text>
       </View>
       <TouchableOpacity style={s.actionBtn} onPress={() => {
-        playSound('click');
         if(mode==='map') setScreen('map');
         else setScreen('input');
       }}>
@@ -333,14 +322,15 @@ export default function App() {
     </View>
   );
 
-  // ─── MAP ───
+  // ─── MAP (WebView with file) ───
   if(screen==='map') return (
     <View style={s.container}>
       <StatusBar hidden />
       <WebView
-        source={{html:mapHtml()}}
+        source={{html: MAP_HTML}}
         style={StyleSheet.absoluteFill}
         javaScriptEnabled domStorageEnabled
+        originWhitelist={['*']}
         onMessage={(e) => { try { handleAnswer(JSON.parse(e.nativeEvent.data)); } catch {} }}
       />
     </View>
@@ -376,7 +366,6 @@ export default function App() {
             }}
           />
           <TouchableOpacity style={s.gradientBtn} onPress={() => {
-            playSound('click');
             const norm = input.toLowerCase().trim()
               .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
             const match = LOCS.find(l =>
@@ -470,7 +459,7 @@ export default function App() {
               </View>
             ))}
           </View>
-          <TouchableOpacity style={s.gradientBtn} onPress={() => { playSound('click'); setScreen('home'); }}>
+          <TouchableOpacity style={s.gradientBtn} onPress={() => setScreen('home')}>
             <Text style={s.gradientBtnText}>PLAY AGAIN</Text>
           </TouchableOpacity>
         </View>
@@ -497,7 +486,6 @@ const s = StyleSheet.create({
   tutorialCard:{backgroundColor:C.surfaceContainer,borderRadius:16,padding:20,marginBottom:20,width:'100%',borderWidth:1,borderColor:C.outlineVariant},
   tutorialTitle:{color:C.primary,fontSize:16,fontWeight:'900',fontFamily:'Space Grotesk',letterSpacing:1,textTransform:'uppercase',marginBottom:16,textAlign:'center'},
   tutorialStep:{flexDirection:'row',alignItems:'center',marginBottom:10},
-  tutorialNum:{width:28,height:28,borderRadius:14,backgroundColor:C.primaryContainer,justifyContent:'center',alignItems:'center',marginRight:12},
   tutorialNum:{color:C.primary,fontSize:14,fontWeight:'900',fontFamily:'Space Grotesk',width:28,height:28,borderRadius:14,backgroundColor:C.primaryContainer,justifyContent:'center',alignItems:'center',textAlign:'center',lineHeight:28,marginRight:12},
   tutorialText:{color:C.onSurface,fontSize:14,fontFamily:'Inter',flex:1},
   pointsCard:{flexDirection:'row',justifyContent:'space-around',marginTop:12,paddingTop:12,borderTopWidth:1,borderTopColor:C.outlineVariant+'40'},
@@ -525,6 +513,16 @@ const s = StyleSheet.create({
   locQR:{color:C.outline,fontSize:11,fontWeight:'700',fontFamily:'Space Grotesk',width:30},
   locCity:{color:C.onSurface,fontSize:14,fontWeight:'700',fontFamily:'Space Grotesk',flex:1},
   locCountry:{color:C.onSurfaceVariant,fontSize:12,fontFamily:'Inter'},
+
+  // Street View (Static API)
+  svWrap:{...StyleSheet.absoluteFillObject,backgroundColor:'#0e0e0e'},
+  svImage:{width:'100%',height:'100%'},
+  svLoading:{...StyleSheet.absoluteFillObject,justifyContent:'center',alignItems:'center'},
+  svLoadingText:{color:C.onSurfaceVariant,fontSize:14,fontFamily:'Inter',marginTop:12},
+  svError:{...StyleSheet.absoluteFillObject,justifyContent:'center',alignItems:'center'},
+  svErrorEmoji:{fontSize:48,marginBottom:16},
+  svErrorText:{color:C.onSurfaceVariant,fontSize:16,fontFamily:'Inter'},
+  corner:{position:'absolute',width:40,height:40,borderWidth:2,borderColor:'rgba(189,194,255,.3)'},
 
   timerBadge:{position:'absolute',top:12,right:12,backgroundColor:'rgba(14,14,14,.9)',borderRadius:9999,width:52,height:52,justifyContent:'center',alignItems:'center',borderWidth:2,borderColor:C.error,zIndex:10},
   timerText:{color:C.onSurface,fontSize:22,fontWeight:'900',fontFamily:'Space Grotesk'},
