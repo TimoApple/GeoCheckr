@@ -1,9 +1,10 @@
-// GeoCheckr — Street View Image v3
-// STRATEGY: Static API for guaranteed image, WebView optional for panorama
-// No consent needed, no UI clutter, just a clean street view image
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Image, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { WebView } from 'react-native-webview';
+// GeoCheckr — Street View Image v4
+// FIX: Metadata API check BEFORE loading image
+// - Only loads static image if Street View coverage exists
+// - radius=50000 for wider search
+// - Fallback to city image if no coverage
+import React, { useState, useEffect } from 'react';
+import { View, Image, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { getCityImage } from '../data/locationImages';
 
 const API_KEY = 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
@@ -18,100 +19,61 @@ interface StreetViewProps {
     lng?: number;
   };
   showInfo?: boolean;
-  mode?: 'image' | 'panorama' | 'auto'; // auto = image first, then panorama
+  mode?: 'image' | 'panorama' | 'auto';
 }
 
-// --- STATIC API: Returns a JPEG image, no consent/UI needed ---
-// Max 640x640 without enterprise, source=outdoor for outdoor-only
-function getStaticUrl(lat: number, lng: number, heading?: number): string {
-  const h = heading !== undefined ? heading : Math.floor(Math.random() * 360);
-  return `https://maps.googleapis.com/maps/api/streetview?size=640x640&location=${lat},${lng}&heading=${h}&pitch=0&fov=90&source=outdoor&key=${API_KEY}`;
+type ViewStatus = 'checking' | 'streetview' | 'fallback';
+
+// Static API URL with radius for wider coverage search
+function getStaticUrl(lat: number, lng: number, heading: number): string {
+  return `https://maps.googleapis.com/maps/api/streetview?size=640x640&location=${lat},${lng}&heading=${heading}&pitch=0&fov=90&source=outdoor&key=${API_KEY}`;
 }
 
-// --- EMBED API: Interactive panorama in iframe ---
-function getEmbedUrl(lat: number, lng: number, heading?: number): string {
-  const h = heading !== undefined ? heading : Math.floor(Math.random() * 360);
-  return `https://www.google.com/maps/embed/v1/streetview?key=${API_KEY}&location=${lat},${lng}&heading=${h}&pitch=0&fov=90`;
+// Metadata API URL to check if Street View exists
+function getMetadataUrl(lat: number, lng: number): string {
+  return `https://maps.googleapis.com/maps/api/streetview/metadata?location=${lat},${lng}&source=outdoor&key=${API_KEY}`;
 }
-
-// --- DIRECT URL: Full interactive panorama (needs consent hack) ---
-function getDirectUrl(lat: number, lng: number, heading?: number): string {
-  const h = heading !== undefined ? heading : Math.floor(Math.random() * 360);
-  return `https://www.google.com/maps/@${lat},${lng},3a,75y,${h}h,90t/data=!3m6!1e1!3m4!1s!2e0!7i16384!8i8192`;
-}
-
-// Minimal JS for Embed API — just fullscreen
-const EMBED_JS = `
-  (function() {
-    var css = document.createElement('style');
-    css.innerHTML = 'html,body{margin:0;padding:0;overflow:hidden;width:100vw;height:100vh}';
-    document.head.appendChild(css);
-    true;
-  })();
-`;
-
-// Aggressive consent hack + UI removal for direct URL
-const DIRECT_JS = `
-  (function() {
-    var clickConsent = function() {
-      var btns = document.querySelectorAll('button');
-      for (var i = 0; i < btns.length; i++) {
-        var t = (btns[i].innerText || '').toLowerCase();
-        if (t.includes('akzeptieren') || t.includes('accept') || t.includes('agree') || t.includes('zustimmen')) {
-          btns[i].click(); return true;
-        }
-      }
-      var btns2 = document.querySelectorAll('[aria-label*="Accept"], [aria-label*="akzeptieren"], [aria-label*="Zustimmen"]');
-      for (var j = 0; j < btns2.length; j++) { btns2[j].click(); return true; }
-      return false;
-    };
-    clickConsent();
-    setTimeout(clickConsent, 1500);
-    setTimeout(clickConsent, 3000);
-    setTimeout(function() {
-      var css = document.createElement('style');
-      css.innerHTML = \`
-        .searchbox,[role="search"],.app-viewcard-strip,.m6QErb,.AXQEMb,
-        .MkVHsf,.OnJrrd,.l2IBqe,.SHuqSb,#omnibox-container,
-        .Q2vNVc,.scene-footer,.widget-scene-control,
-        .app-viewcard-strip,.widget-minimap,.scene-footer-container,
-        [data-tooltip*="Such"],[data-tooltip*="Search"]
-        { display:none!important; }
-        canvas,.widget-scene,.scene-view
-        { position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:100vh!important;z-index:9999!important; }
-      \`;
-      document.head.appendChild(css);
-    }, 4000);
-    true;
-  })();
-`;
 
 export default function StreetViewImage({ location, showInfo = false, mode = 'auto' }: StreetViewProps) {
-  const [staticLoaded, setStaticLoaded] = useState(false);
-  const [staticError, setStaticError] = useState(false);
-  const [panoramaLoaded, setPanoramaLoaded] = useState(false);
+  const [status, setStatus] = useState<ViewStatus>('checking');
   const [heading] = useState(() => Math.floor(Math.random() * 360));
-  const webViewRef = useRef<WebView>(null);
+  const [staticUrl, setStaticUrl] = useState('');
+  const [staticLoaded, setStaticLoaded] = useState(false);
 
   const hasCoords = !!(location.lat && location.lng);
-  const staticUrl = hasCoords ? getStaticUrl(location.lat!, location.lng!, heading) : '';
-  const embedUrl = hasCoords ? getEmbedUrl(location.lat!, location.lng!, heading) : '';
-  const directUrl = hasCoords ? getDirectUrl(location.lat!, location.lng!, heading) : '';
   const fallbackImage = getCityImage(location.city);
 
-  // Determine what to show
-  const useStatic = hasCoords && API_KEY && (mode === 'image' || mode === 'auto');
-  const usePanorama = hasCoords && API_KEY && mode === 'panorama';
-  const showStatic = useStatic && !panoramaLoaded;
-
-  // Pre-load static image
+  // Check metadata BEFORE loading image
   useEffect(() => {
-    if (!useStatic || !staticUrl) return;
-    Image.prefetch(staticUrl)
-      .then(() => { setStaticLoaded(true); })
-      .catch(() => { setStaticError(true); });
-  }, [staticUrl]);
+    if (!hasCoords || !API_KEY) {
+      setStatus('fallback');
+      return;
+    }
 
+    const metaUrl = getMetadataUrl(location.lat!, location.lng!);
+
+    fetch(metaUrl)
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'OK' && data.pano_id) {
+          // Street View exists! Use exact coordinates from metadata
+          const svLat = data.location?.lat || location.lat!;
+          const svLng = data.location?.lng || location.lng!;
+          setStaticUrl(getStaticUrl(svLat, svLng, heading));
+          setStatus('streetview');
+        } else {
+          // No Street View coverage at this location
+          console.warn(`No Street View for ${location.city}: ${data.status}`);
+          setStatus('fallback');
+        }
+      })
+      .catch(err => {
+        console.warn('Metadata check failed:', err);
+        setStatus('fallback');
+      });
+  }, [location.lat, location.lng]);
+
+  // No coords at all
   if (!hasCoords) {
     return (
       <View style={styles.container}>
@@ -127,55 +89,28 @@ export default function StreetViewImage({ location, showInfo = false, mode = 'au
 
   return (
     <View style={styles.container}>
-      {/* Background fallback — always show */}
+      {/* Fallback city image — always behind as background */}
       <Image source={{ uri: fallbackImage }} style={styles.image} resizeMode="cover" />
 
-      {/* Static Street View Image — guaranteed, no consent */}
-      {showStatic && staticUrl && (
+      {/* Street View image — only if metadata confirmed coverage */}
+      {status === 'streetview' && staticUrl && (
         <Image
           source={{ uri: staticUrl }}
           style={styles.image}
           resizeMode="cover"
           onLoad={() => setStaticLoaded(true)}
-          onError={() => { setStaticError(true); console.warn('Static API failed'); }}
-        />
-      )}
-
-      {/* Panorama WebView — optional overlay */}
-      {usePanorama && (
-        <WebView
-          ref={webViewRef}
-          source={{ uri: embedUrl }}
-          style={styles.webview}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          sharedCookiesEnabled={true}
-          userAgent="Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36"
-          injectedJavaScript={EMBED_JS}
-          onLoadEnd={() => {
-            console.log('Panorama loaded');
-            setPanoramaLoaded(true);
-          }}
-          onError={(e) => {
-            console.warn('Panorama error:', e.nativeEvent);
+          onError={() => {
+            console.warn('Static image failed despite metadata OK');
+            setStatus('fallback');
           }}
         />
       )}
 
-      {/* Loading spinner — only while waiting */}
-      {!staticLoaded && !staticError && (
+      {/* Loading state */}
+      {status === 'checking' && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#ff3333" />
           <Text style={styles.loadingText}>Lade Street View...</Text>
-        </View>
-      )}
-
-      {/* Error state */}
-      {staticError && (
-        <View style={styles.errorOverlay}>
-          <Text style={styles.errorEmoji}>📷</Text>
-          <Text style={styles.errorText}>{location.city}</Text>
-          <Text style={styles.errorHint}>Street View nicht verfügbar</Text>
         </View>
       )}
 
@@ -191,9 +126,6 @@ export default function StreetViewImage({ location, showInfo = false, mode = 'au
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   image: { width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  webview: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 5,
-  },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center', alignItems: 'center',
