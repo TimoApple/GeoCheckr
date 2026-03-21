@@ -1,61 +1,21 @@
 {
   "expo": {
     "name": "GeoCheckr",
-    "slug": "geocheckr",
+    "slug": "geocheckr-simple",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./icon.png",
     "userInterfaceStyle": "dark",
     "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
       "backgroundColor": "#0a0a14"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.geocheckr.app"
-    },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png",
-        "backgroundColor": "#282828"
-      },
       "package": "com.geocheckr.app",
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI"
         }
-      },
-      "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
-      ],
-      "softwareKeyboardLayoutMode": "pan"
-    },
-    "web": {
-      "favicon": "./assets/favicon.png",
-      "name": "GeoCheckr — Geografie Party-Spiel",
-      "shortName": "GeoCheckr",
-      "description": "Finde den Ort! Ein Geografie-Party-Spiel für 2-8 Spieler.",
-      "backgroundColor": "#0a0a14",
-      "themeColor": "#ff3333",
-      "display": "standalone",
-      "orientation": "portrait"
-    },
-    "plugins": [
-      "expo-camera",
-      "expo-asset"
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "b47d3e21-7bed-4c8b-bd12-e805eb1380f8"
       }
-    },
-    "owner": "tboese"
+    }
   }
 }
