@@ -1,12 +1,11 @@
 // GeoCheckr — Fixed APK Version  
-// Interactive Street View via WebView + Maps JS API
-// Text input for guessing (map WebView crashes in APK)
+// Interactive Street View via Native Android WebView (Maps Embed API)
+// Text input for guessing
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Animated,
-  Vibration, StatusBar, Dimensions, TextInput, ActivityIndicator
+  Vibration, StatusBar, Dimensions, TextInput, NativeModules, Platform
 } from 'react-native';
-import { WebView } from 'react-native-webview';
 
 
 const API_KEY = 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
@@ -43,35 +42,8 @@ function calcPoints(d){if(d<100)return 3;if(d<500)return 2;if(d<2000)return 1;re
 function fmtDist(km){return km<1?Math.round(km*1000)+'m':km.toFixed(0)+' km';}
 function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
 
-// ═══ INTERACTIVE STREET VIEW — Maps Embed API ═══
-// This is what the old working native code used. Not JS API, EMBED API.
-function svEmbedUrl(lat, lng) {
-  const heading = Math.floor(Math.random() * 360);
-  return `https://www.google.com/maps/embed/v1/streetview?key=${API_KEY}&location=${lat},${lng}&heading=${heading}&pitch=0&fov=90`;
-}
-
-function svHtml(lat, lng) {
-  // Full HTML with cookie consent auto-click for WebView
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<style>*{margin:0;padding:0}html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14}
-#iframe{width:100%;height:100%;border:none}</style></head>
-<body><iframe id="iframe" src="${svEmbedUrl(lat,lng)}" allowfullscreen></iframe>
-<script>
-// Auto-click cookie consent buttons
-setTimeout(function(){
-  try{
-    var frames=document.querySelectorAll('iframe');
-    frames.forEach(function(f){
-      try{
-        var doc=f.contentDocument||f.contentWindow.document;
-        var btns=doc.querySelectorAll('button');
-        btns.forEach(function(b){if(b.innerText.match(/akzept|accept|agree|ok/i))b.click();});
-      }catch(e){}
-    });
-  }catch(e){}
-},3000);
-</script></body></html>`;
-}
+// Native StreetViewModule opens Android WebView with Maps Embed API
+// No HTML needed — the native Activity handles everything
 
 // ═══ MAIN APP ═══
 export default function App() {
@@ -264,31 +236,41 @@ export default function App() {
     </View>
   );
 
-  // ─── STREET VIEW (Interactive WebView Panorama) ───
-  if(screen==='streetview' && currentLoc) return (
-    <View style={s.container}>
-      <StatusBar hidden />
-      <WebView
-        key={currentLoc.id}
-        source={{html: svHtml(currentLoc.lat, currentLoc.lng)}}
-        style={StyleSheet.absoluteFill}
-        javaScriptEnabled domStorageEnabled
-        originWhitelist={['*']}
-        mixedContentMode="always"
-        onError={(e) => console.warn('[GeoCheckr] SV WebView error:', e.nativeEvent)}
-      />
-      <View style={s.timerBadge}>
-        <Text style={[s.timerText,timer<=5&&{color:C.error}]}>{timer}</Text>
+  // ─── STREET VIEW (Native Android WebView via Embed API) ───
+  if(screen==='streetview' && currentLoc) {
+    // Launch native StreetViewActivity on Android
+    useEffect(() => {
+      if(Platform.OS === 'android' && NativeModules.StreetViewModule) {
+        try {
+          NativeModules.StreetViewModule.openStreetView(currentLoc.lat, currentLoc.lng);
+        } catch(e) {
+          console.warn('[GeoCheckr] Native SV error:', e);
+        }
+      }
+    }, [currentLoc.id]);
+
+    return (
+      <View style={s.container}>
+        <StatusBar hidden />
+        <View style={s.svNativeOverlay}>
+          <Text style={s.svNativeTitle}>🌍 Street View</Text>
+          <Text style={s.svNativeCity}>{currentLoc.city}, {currentLoc.country}</Text>
+          <Text style={s.svNativeHint}>Street View öffnet sich separat</Text>
+        </View>
+        <View style={s.timerBadge}>
+          <Text style={[s.timerText,timer<=5&&{color:C.error}]}>{timer}</Text>
+        </View>
+        <View style={s.roundBadge}>
+          <Text style={s.roundText}>Runde {round}/{maxRounds}</Text>
+        </View>
+        <TouchableOpacity style={s.actionBtn} onPress={() => {
+          setScreen('input');
+        }}>
+          <Text style={s.actionBtnText}>ICH WEIẞ ES →</Text>
+        </TouchableOpacity>
       </View>
-      <View style={s.roundBadge}>
-        <Text style={s.roundText}>Runde {round}/{maxRounds}</Text>
-      </View>
-      <TouchableOpacity style={s.actionBtn} onPress={() => {
-        setScreen('input');
-      }}>
-        <Text style={s.actionBtnText}>ICH WEIẞ ES →</Text>
-      </TouchableOpacity>
-    </View>
+    );
+  }
   );
 
   // ─── MAP (APK: just show text input) ───
@@ -481,6 +463,10 @@ const s = StyleSheet.create({
   svError:{...StyleSheet.absoluteFillObject,justifyContent:'center',alignItems:'center'},
   svErrorEmoji:{fontSize:48,marginBottom:16},
   svErrorText:{color:C.onSurfaceVariant,fontSize:16,fontFamily:'Inter'},
+  svNativeOverlay:{...StyleSheet.absoluteFillObject,justifyContent:'center',alignItems:'center',backgroundColor:C.surfaceContainerLowest,zIndex:0},
+  svNativeTitle:{color:C.primary,fontSize:24,fontWeight:'900',fontFamily:'Space Grotesk',marginBottom:8},
+  svNativeCity:{color:C.onSurface,fontSize:18,fontFamily:'Inter',marginBottom:8},
+  svNativeHint:{color:C.onSurfaceVariant,fontSize:14,fontFamily:'Inter'},
   corner:{position:'absolute',width:40,height:40,borderWidth:2,borderColor:'rgba(189,194,255,.3)'},
 
   timerBadge:{position:'absolute',top:12,right:12,backgroundColor:'rgba(14,14,14,.9)',borderRadius:9999,width:52,height:52,justifyContent:'center',alignItems:'center',borderWidth:2,borderColor:C.error,zIndex:10},
