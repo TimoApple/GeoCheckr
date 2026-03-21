@@ -43,7 +43,17 @@ function fmtDist(km){return km<1?Math.round(km*1000)+'m':km.toFixed(0)+' km';}
 function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
 
 // Native StreetViewModule opens Android WebView with Maps Embed API
-// No HTML needed — the native Activity handles everything
+
+// Open native Street View (exact approach from working v10)
+const openNativeStreetView = (loc) => {
+  if (Platform.OS === 'android' && NativeModules.StreetViewModule) {
+    try {
+      NativeModules.StreetViewModule.openStreetView(loc.lat, loc.lng);
+    } catch (e) {
+      console.warn('[GeoCheckr] Native SV error:', e);
+    }
+  }
+};
 
 // ═══ MAIN APP ═══
 export default function App() {
@@ -87,6 +97,7 @@ export default function App() {
     popAnim.setValue(0);
     const loc = order[0];
     setCurrentLoc(loc); setTimer(30); setScreen('streetview');
+    openNativeStreetView(loc);
   };
 
   const handleAnswer = useCallback((answer) => {
@@ -110,6 +121,7 @@ export default function App() {
     if(round >= maxRounds || score >= targetScore) { setScreen('summary'); return; }
     const next = order[round];
     setCurrentLoc(next); setTimer(30); setRound(r => r + 1); setScreen('streetview');
+    openNativeStreetView(next);
   };
 
   // ─── TUTORIAL ───
@@ -238,17 +250,6 @@ export default function App() {
 
   // ─── STREET VIEW (Native Android WebView via Embed API) ───
   if(screen==='streetview' && currentLoc) {
-    // Launch native StreetViewActivity on Android
-    useEffect(() => {
-      if(Platform.OS === 'android' && NativeModules.StreetViewModule) {
-        try {
-          NativeModules.StreetViewModule.openStreetView(currentLoc.lat, currentLoc.lng);
-        } catch(e) {
-          console.warn('[GeoCheckr] Native SV error:', e);
-        }
-      }
-    }, [currentLoc.id]);
-
     return (
       <View style={s.container}>
         <StatusBar hidden />
