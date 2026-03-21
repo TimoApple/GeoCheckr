@@ -5,7 +5,7 @@ import {
   View, Text, TouchableOpacity, StyleSheet, Animated, Image,
   Vibration, StatusBar, Dimensions, TextInput, ActivityIndicator
 } from 'react-native';
-import { WebView } from 'react-native-webview';
+// WebView only used in web version, not APK
 
 
 const API_KEY = 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
@@ -42,24 +42,7 @@ function calcPoints(d){if(d<100)return 3;if(d<500)return 2;if(d<2000)return 1;re
 function fmtDist(km){return km<1?Math.round(km*1000)+'m':km.toFixed(0)+' km';}
 function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
 
-// Map HTML
-const MAP_HTML = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<style>*{margin:0;padding:0}html,body,#m{width:100%;height:100%}
-#c{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#bdc2ff,#3340ca);color:#000fa3;
-border:none;padding:16px 36px;border-radius:9999px;font-size:16px;font-weight:900;z-index:10;display:none;font-family:Space Grotesk;text-transform:uppercase;cursor:pointer;box-shadow:0 4px 20px rgba(51,64,202,.4)}
-#h{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:rgba(14,14,14,.95);color:#e5e2e1;padding:10px 20px;border-radius:1rem;font-size:14px;z-index:10;font-family:Inter;backdrop-filter:blur(20px);border:1px solid rgba(189,194,255,.15)}</style>
-</head><body><div id="m"></div><div id="h">📍 Setze deinen Marker!</div><button id="c" onclick="submit()">✓ Bestätigen</button>
-<script>var marker,cLat,cLng;
-function init(){var map=new google.maps.Map(document.getElementById('m'),{center:{lat:20,lng:0},zoom:2,mapTypeId:'roadmap',streetViewControl:false,mapTypeControl:false,fullscreenControl:false,zoomControl:true,
-styles:[{featureType:'all',elementType:'geometry',stylers:[{color:'#1b1b1c'}]},
-{featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#c6c5d7'}]},
-{featureType:'water',elementType:'geometry',stylers:[{color:'#235684'}]},
-{featureType:'road',elementType:'geometry',stylers:[{color:'#454654'}]},
-{featureType:'landscape',elementType:'geometry',stylers:[{color:'#202020'}]}]});
-map.addListener('click',function(e){cLat=e.latLng.lat();cLng=e.latLng.lng();if(marker)marker.setMap(null);marker=new google.maps.Marker({position:e.latLng,map:map,animation:google.maps.Animation.DROP});document.getElementById('c').style.display='block';});}
-function submit(){if(cLat!==undefined){window.ReactNativeWebView.postMessage(JSON.stringify({lat:cLat,lng:cLng}));}}
-window.gm_authFailure=function(){};</script>
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init"></script></body></html>`;
+// Map only available in web version
 
 // ═══ MAIN APP ═══
 export default function App() {
@@ -322,19 +305,12 @@ export default function App() {
     </View>
   );
 
-  // ─── MAP (WebView with file) ───
-  if(screen==='map') return (
-    <View style={s.container}>
-      <StatusBar hidden />
-      <WebView
-        source={{html: MAP_HTML}}
-        style={StyleSheet.absoluteFill}
-        javaScriptEnabled domStorageEnabled
-        originWhitelist={['*']}
-        onMessage={(e) => { try { handleAnswer(JSON.parse(e.nativeEvent.data)); } catch {} }}
-      />
-    </View>
-  );
+  // ─── MAP (APK: redirect to text input, map only works in web) ───
+  if(screen==='map') {
+    // In APK, map WebView crashes. Redirect to text input.
+    setScreen('input');
+    return null;
+  }
 
   // ─── TEXT INPUT ───
   if(screen==='input') {
