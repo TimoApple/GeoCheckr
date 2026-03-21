@@ -98,10 +98,10 @@ export default function App() {
       return () => clearInterval(timerRef.current);
     }
     if(timer===0 && screen==='streetview') {
-      if(mode==='map') setScreen('map');
-      else setScreen('input');
+      // APK: always go to text input (map crashes in WebView)
+      setScreen('input');
     }
-  },[screen,timer,mode]);
+  },[screen,timer]);
 
   const startGame = (m) => {
     setShowTutorial(false);
@@ -297,20 +297,17 @@ export default function App() {
         <Text style={s.roundText}>Runde {round}/{maxRounds}</Text>
       </View>
       <TouchableOpacity style={s.actionBtn} onPress={() => {
-        if(mode==='map') setScreen('map');
-        else setScreen('input');
+        // APK: always go to text input (map crashes)
+        setScreen('input');
       }}>
         <Text style={s.actionBtnText}>ICH WEIẞ ES →</Text>
       </TouchableOpacity>
     </View>
   );
 
-  // ─── MAP (APK: redirect to text input, map only works in web) ───
-  if(screen==='map') {
-    // In APK, map WebView crashes. Redirect to text input.
-    setScreen('input');
-    return null;
-  }
+  // ─── MAP (APK: just show text input) ───
+  // In APK, WebView with Maps API crashes. Always use text input.
+  // mode 'map' is treated same as 'input' in APK.
 
   // ─── TEXT INPUT ───
   if(screen==='input') {
