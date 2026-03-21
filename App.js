@@ -1,67 +1,59 @@
-// GeoCheckr — Full Game App
-// Design: The Cartographic Explorer
-// Rules: Official Regelwerk v1.0 — 211 locations, QR codes, 30s timer, distance scoring
+// GeoCheckr — Clean Game App
+// 10 Timo Locations, Working Street View, 30s Timer, Map + Text Input
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Animated,
   Vibration, StatusBar, Dimensions, TextInput
 } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { LOCATIONS } from './locations';
 
 const API_KEY = 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
 const { width: SW, height: SH } = Dimensions.get('window');
 
-// ═══ DESIGN TOKENS ═══
+// ═══ DESIGN ═══
 const C = {
-  primary: '#bdc2ff', primaryContainer: '#3340ca', secondary: '#88da7d',
-  tertiary: '#9dcaff', surface: '#131313', surfaceContainer: '#202020',
-  surfaceContainerLow: '#1b1b1c', surfaceContainerLowest: '#0e0e0e',
-  surfaceContainerHigh: '#2a2a2a', surfaceContainerHighest: '#353535',
-  surfaceBright: '#393939', onSurface: '#e5e2e1', onSurfaceVariant: '#c6c5d7',
-  error: '#ffb4ab', errorContainer: '#93000a', outline: '#8f8fa0',
-  outlineVariant: '#454654', secondaryFixed: '#a3f796', tertiaryFixed: '#d1e4ff',
+  primary:'#bdc2ff', primaryContainer:'#3340ca', secondary:'#88da7d',
+  tertiary:'#9dcaff', surface:'#131313', surfaceContainer:'#202020',
+  surfaceContainerLow:'#1b1b1c', surfaceContainerLowest:'#0e0e0e',
+  surfaceContainerHigh:'#2a2a2a', surfaceContainerHighest:'#353535',
+  surfaceBright:'#393939', onSurface:'#e5e2e1', onSurfaceVariant:'#c6c5d7',
+  error:'#ffb4ab', errorContainer:'#93000a', outline:'#8f8fa0',
+  outlineVariant:'#454654', secondaryFixed:'#a3f796', tertiaryFixed:'#d1e4ff',
 };
+
+// ═══ TIMO'S 10 LOCATIONS — VERIFIED ═══
+const LOCS = [
+  { id:1, city:"Seoul", country:"Südkorea", lat:37.571922, lng:126.976715 },
+  { id:2, city:"Tokyo", country:"Japan", lat:35.6595, lng:139.700399 },
+  { id:3, city:"New York", country:"USA", lat:40.758896, lng:-73.985130 },
+  { id:4, city:"Portland", country:"Oregon, USA", lat:45.523062, lng:-122.676482 },
+  { id:5, city:"Delhi", country:"Indien", lat:28.613939, lng:77.209021 },
+  { id:6, city:"Johannesburg", country:"Südafrika", lat:-26.204103, lng:28.047305 },
+  { id:7, city:"Kapstadt", country:"Südafrika", lat:-33.903771, lng:18.421866 },
+  { id:8, city:"Kopenhagen", country:"Dänemark", lat:55.68001, lng:12.590604 },
+  { id:9, city:"Rio de Janeiro", country:"Brasilien", lat:-22.970548, lng:-43.182883 },
+  { id:10, city:"Beijing", country:"China", lat:39.904200, lng:116.407396 },
+];
 
 // ═══ UTILS ═══
 function haversine(lat1, lon1, lat2, lon2) {
   const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const dLat = (lat2-lat1)*Math.PI/180;
+  const dLon = (lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
+function calcPoints(d) { if(d<100)return 3; if(d<500)return 2; if(d<2000)return 1; return 0; }
+function fmtDist(km) { return km<1 ? Math.round(km*1000)+'m' : km.toFixed(0)+' km'; }
+function shuffle(a){ const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; }
 
-// Punktesystem nach Regelwerk v1
-function calcPoints(dist) {
-  if (dist < 100) return 3;  // Sehr nah
-  if (dist < 500) return 2;  // Nah
-  if (dist < 2000) return 1; // Weit
-  return 0;                   // Sehr weit
-}
-
-function fmtDist(km) {
-  if (km < 1) return Math.round(km * 1000) + 'm';
-  return km.toFixed(0) + ' km';
-}
-
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-// ═══ HTML TEMPLATES ═══
-function streetViewHtml(lat, lng) {
-  return `<!DOCTYPE html><html><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+// ═══ HTML ═══
+function svHtml(lat,lng) {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <style>*{margin:0;padding:0}html,body,#p{width:100%;height:100%;overflow:hidden;background:#0e0e0e}
 #s{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#c6c5d7;text-align:center;font-family:Inter,sans-serif}
-#s .e{font-size:48px;margin-bottom:16px}#s.hide{display:none}</style></head><body>
-<div id="p"></div><div id="s"><div class="e">🔍</div><div>Suche Street View...</div></div>
+#s .e{font-size:48px;margin-bottom:16px}#s.hide{display:none}</style></head>
+<body><div id="p"></div><div id="s"><div class="e">🔍</div><div>Suche Street View...</div></div>
 <script>function init(){var sv=new google.maps.StreetViewService();
 sv.getPanorama({location:{lat:${lat},lng:${lng}},radius:50000,
 preference:google.maps.StreetViewPreference.NEAREST,
@@ -73,36 +65,29 @@ addressControl:false,showRoadLabels:false,linksControl:true,
 panControl:false,zoomControl:true,fullscreenControl:false,
 motionTracking:false,motionTrackingControl:false,
 enableCloseButton:false,scrollwheel:true,clickToGo:true});}
-else{document.getElementById('s').innerHTML='<div class="e">📷</div><div>Kein Street View</div>';}});
-}window.gm_authFailure=function(){};</script>
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init"></script>
-</body></html>`;
+else{document.getElementById('s').innerHTML='<div class="e">📷</div><div>Kein Street View</div>';}});}
+window.gm_authFailure=function(){};</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init"></script></body></html>`;
 }
 
 function mapHtml() {
-  return `<!DOCTYPE html><html><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <style>*{margin:0;padding:0}html,body,#m{width:100%;height:100%}
-#confirm{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#bdc2ff,#3340ca);color:#000fa3;
-border:none;padding:16px 36px;border-radius:9999px;font-size:16px;font-weight:900;z-index:10;display:none;
-font-family:Space Grotesk,sans-serif;text-transform:uppercase;letter-spacing:-0.02em;cursor:pointer}
-#hint{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:rgba(14,14,14,0.95);color:#e5e2e1;
-padding:10px 20px;border-radius:1rem;font-size:14px;z-index:10;font-family:Inter,sans-serif;backdrop-filter:blur(20px)}</style></head>
-<body><div id="m"></div><div id="hint">📍 Setze deinen Marker!</div><button id="confirm" onclick="submit()">✓ Bestätigen</button>
-<script>var marker,chosenLat,chosenLng;
-function init(){var map=new google.maps.Map(document.getElementById('m'),{
-center:{lat:20,lng:0},zoom:2,mapTypeId:'roadmap',streetViewControl:false,
-mapTypeControl:false,fullscreenControl:false,zoomControl:true,styles:[
-{featureType:'all',elementType:'geometry',stylers:[{color:'#1b1b1c'}]},
+#c{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#bdc2ff,#3340ca);color:#000fa3;
+border:none;padding:16px 36px;border-radius:9999px;font-size:16px;font-weight:900;z-index:10;display:none;font-family:Space Grotesk;text-transform:uppercase;cursor:pointer}
+#h{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:rgba(14,14,14,.95);color:#e5e2e1;padding:10px 20px;border-radius:1rem;font-size:14px;z-index:10;font-family:Inter;backdrop-filter:blur(20px)}</style>
+</head><body><div id="m"></div><div id="h">📍 Setze deinen Marker!</div><button id="c" onclick="submit()">✓ Bestätigen</button>
+<script>var marker,cLat,cLng;function init(){var map=new google.maps.Map(document.getElementById('m'),{
+center:{lat:20,lng:0},zoom:2,mapTypeId:'roadmap',streetViewControl:false,mapTypeControl:false,fullscreenControl:false,
+zoomControl:true,styles:[{featureType:'all',elementType:'geometry',stylers:[{color:'#1b1b1c'}]},
 {featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#c6c5d7'}]},
 {featureType:'water',elementType:'geometry',stylers:[{color:'#235684'}]},
 {featureType:'road',elementType:'geometry',stylers:[{color:'#454654'}]},
-{featureType:'landscape',elementType:'geometry',stylers:[{color:'#202020'}]}
-]});
-map.addListener('click',function(e){chosenLat=e.latLng.lat();chosenLng=e.latLng.lng();
+{featureType:'landscape',elementType:'geometry',stylers:[{color:'#202020'}]}]});
+map.addListener('click',function(e){cLat=e.latLng.lat();cLng=e.latLng.lng();
 if(marker)marker.setMap(null);marker=new google.maps.Marker({position:e.latLng,map:map,animation:google.maps.Animation.DROP});
-document.getElementById('confirm').style.display='block';});}
-function submit(){if(chosenLat!==undefined){window.ReactNativeWebView.postMessage(JSON.stringify({lat:chosenLat,lng:chosenLng}));}}
+document.getElementById('c').style.display='block';});}
+function submit(){if(cLat!==undefined){window.ReactNativeWebView.postMessage(JSON.stringify({lat:cLat,lng:cLng}));}}
 window.gm_authFailure=function(){};</script>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init"></script></body></html>`;
 }
@@ -111,181 +96,148 @@ window.gm_authFailure=function(){};</script>
 export default function App() {
   const [screen, setScreen] = useState('home');
   const [mode, setMode] = useState('map');
-  const [difficulty, setDifficulty] = useState('alle'); // leicht/mittel/schwer/alle
   const [round, setRound] = useState(1);
   const [maxRounds] = useState(5);
+  const [order] = useState(() => shuffle(LOCS));
   const [currentLoc, setCurrentLoc] = useState(null);
-  const [usedQrs, setUsedQrs] = useState([]);
   const [score, setScore] = useState(0);
   const [timer, setTimer] = useState(30);
   const [history, setHistory] = useState([]);
   const [lastResult, setLastResult] = useState(null);
-  const [targetScore] = useState(10); // Standard mode
+  const [targetScore] = useState(10);
 
   const timerRef = useRef(null);
   const popAnim = useRef(new Animated.Value(0)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (screen === 'streetview' && timer > 0) {
-      timerRef.current = setInterval(() => setTimer(t => t - 1), 1000);
-      return () => clearInterval(timerRef.current);
+    if(screen==='streetview' && timer>0) {
+      timerRef.current = setInterval(()=>setTimer(t=>t-1),1000);
+      return ()=>clearInterval(timerRef.current);
     }
-    if (timer === 0 && screen === 'streetview') {
+    if(timer===0 && screen==='streetview') {
       Vibration.vibrate(500);
-      if (mode === 'map') setScreen('map');
-      else handleAnswer('');
+      if(mode==='map') setScreen('map');
+      else setScreen('input');
     }
-  }, [screen, timer]);
-
-  const pickCard = useCallback(() => {
-    let pool = LOCATIONS;
-    if (difficulty !== 'alle') pool = pool.filter(l => l.diff === difficulty);
-    const available = pool.filter(l => !usedQrs.includes(l.qr));
-    const loc = available.length > 0
-      ? available[Math.floor(Math.random() * available.length)]
-      : pool[Math.floor(Math.random() * pool.length)];
-    setUsedQrs(prev => [...prev, loc.qr]);
-    setCurrentLoc(loc);
-    setTimer(30);
-    setScreen('streetview');
-  }, [usedQrs, difficulty]);
+  },[screen,timer]);
 
   const startGame = (m) => {
-    setMode(m); setRound(1); setScore(0); setUsedQrs([]); setHistory([]);
-    popAnim.setValue(0); fadeAnim.setValue(0);
-    pickCard();
+    setMode(m); setRound(1); setScore(0); setHistory([]);
+    popAnim.setValue(0);
+    const loc = order[0];
+    setCurrentLoc(loc); setTimer(30); setScreen('streetview');
   };
 
-  const handleAnswer = (answer) => {
+  const handleAnswer = useCallback((answer) => {
     clearInterval(timerRef.current);
     let dist = 20000;
-    let matched = null;
-
-    if (typeof answer === 'object' && answer?.lat !== undefined) {
+    if(answer && answer.lat !== undefined) {
       dist = haversine(currentLoc.lat, currentLoc.lng, answer.lat, answer.lng);
-      matched = LOCATIONS.reduce((best, loc) => {
-        const d = haversine(answer.lat, answer.lng, loc.lat, loc.lng);
-        return d < (best.dist || Infinity) ? { city: loc.city, country: loc.country, dist: d } : best;
-      }, { city: '?', country: '', dist: Infinity });
     }
-
     const pts = calcPoints(dist);
-    setScore(s => s + pts);
-    const result = { city: currentLoc.city, country: currentLoc.country, qr: currentLoc.qr, dist, pts, answer: matched?.city || '—' };
+    setScore(s=>s+pts);
+    const result = { city:currentLoc.city, country:currentLoc.country, dist, pts };
     setLastResult(result);
-    setHistory(h => [...h, result]);
+    setHistory(h=>[...h,result]);
     setScreen('result');
-    Animated.spring(popAnim, { toValue: 1, friction: 5, useNativeDriver: true }).start();
-    Vibration.vibrate(pts >= 3 ? [100,50,100] : pts > 0 ? 100 : 500);
-  };
+    Animated.spring(popAnim,{toValue:1,friction:5,useNativeDriver:true}).start();
+    Vibration.vibrate(pts>=3?[100,50,100]:pts>0?100:500);
+  },[currentLoc,popAnim]);
 
   const nextRound = () => {
     popAnim.setValue(0);
-    if (round >= maxRounds || score >= targetScore) setScreen('summary');
-    else { setRound(r => r + 1); pickCard(); }
+    if(round>=maxRounds || score>=targetScore) { setScreen('summary'); return; }
+    const next = order[round];
+    setCurrentLoc(next); setTimer(30); setRound(r=>r+1); setScreen('streetview');
   };
 
   // ─── HOME ───
-  if (screen === 'home') {
-    return (
-      <View style={s.container}>
-        <StatusBar hidden />
-        <View style={s.bgOrbs}>
-          <View style={[s.orb, { top: '10%', right: -80, w: 350, h: 350, bg: C.primaryContainer }]} />
-          <View style={[s.orb, { bottom: '15%', left: -100, w: 400, h: 400, bg: C.secondary }]} />
+  if(screen==='home') return (
+    <View style={s.container}>
+      <StatusBar hidden />
+      <View style={s.bgOrbs}>
+        <View style={[s.orb,{top:'10%',right:-80,width:350,height:350,backgroundColor:C.primaryContainer}]}/>
+        <View style={[s.orb,{bottom:'15%',left:-100,width:400,height:400,backgroundColor:C.secondary}]}/>
+      </View>
+      <View style={s.homeWrap}>
+        <Text style={s.brand}>⬡</Text>
+        <Text style={s.title}>GEOCHECKR</Text>
+        <Text style={s.tagline}>THE CARTOGRAPHIC EXPLORER</Text>
+        <Text style={s.locInfo}>10 Locations · 5 Runden</Text>
+
+        <View style={s.modeRow}>
+          <TouchableOpacity style={s.modeBtn} onPress={()=>startGame('map')}>
+            <Text style={s.modeEmoji}>📍</Text>
+            <Text style={s.modeTitle}>MAP MODE</Text>
+            <Text style={s.modeDesc}>Marker auf Karte setzen</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.modeBtnOutline} onPress={()=>startGame('input')}>
+            <Text style={s.modeEmoji}>⌨️</Text>
+            <Text style={s.modeTitle}>TIPPEN</Text>
+            <Text style={s.modeDesc}>Stadt eingeben</Text>
+          </TouchableOpacity>
         </View>
-        <View style={s.homeWrap}>
-          <Text style={s.brand}>⬡</Text>
-          <Text style={s.title}>GEOCHECKR</Text>
-          <Text style={s.tagline}>THE CARTOGRAPHIC EXPLORER</Text>
 
-          {/* Difficulty */}
-          <View style={s.diffRow}>
-            {['alle','leicht','mittel','schwer'].map(d => (
-              <TouchableOpacity key={d} style={[s.diffBtn, difficulty === d && s.diffBtnActive]} onPress={() => setDifficulty(d)}>
-                <Text style={[s.diffText, difficulty === d && s.diffTextActive]}>
-                  {d === 'alle' ? '🌍' : d === 'leicht' ? '🟢' : d === 'mittel' ? '🟡' : '🔴'} {d.toUpperCase()}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+        <View style={s.statsRow}>
+          <View style={s.statBadge}><Text style={s.statNum}>10</Text><Text style={s.statLabel}>KARTEN</Text></View>
+          <View style={s.statBadge}><Text style={s.statNum}>5</Text><Text style={s.statLabel}>RUNDEN</Text></View>
+          <View style={s.statBadge}><Text style={s.statNum}>10</Text><Text style={s.statLabel}>ZIEL</Text></View>
+        </View>
 
-          {/* Mode buttons */}
-          <View style={s.modeRow}>
-            <TouchableOpacity style={s.modeBtn} onPress={() => startGame('map')}>
-              <Text style={s.modeEmoji}>📍</Text>
-              <Text style={s.modeTitle}>MAP MODE</Text>
-              <Text style={s.modeDesc}>Marker auf Karte setzen</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={s.modeBtnOutline} onPress={() => startGame('input')}>
-              <Text style={s.modeEmoji}>⌨️</Text>
-              <Text style={s.modeTitle}>TIPPEN</Text>
-              <Text style={s.modeDesc}>Stadt eingeben</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Stats */}
-          <View style={s.statsRow}>
-            <View style={s.statBadge}><Text style={s.statNum}>{difficulty === 'alle' ? 211 : LOCATIONS.filter(l => l.diff === difficulty).length}</Text><Text style={s.statLabel}>KARTEN</Text></View>
-            <View style={s.statBadge}><Text style={s.statNum}>5</Text><Text style={s.statLabel}>RUNDEN</Text></View>
-            <View style={s.statBadge}><Text style={s.statNum}>{targetScore}</Text><Text style={s.statLabel}>ZIEL</Text></View>
-          </View>
+        <View style={s.locList}>
+          {LOCS.map(l=>(
+            <View key={l.id} style={s.locRow}>
+              <Text style={s.locQR}>{String(l.id).padStart(2,'0')}</Text>
+              <Text style={s.locCity}>{l.city}</Text>
+              <Text style={s.locCountry}>{l.country}</Text>
+            </View>
+          ))}
         </View>
       </View>
-    );
-  }
+    </View>
+  );
 
   // ─── STREET VIEW ───
-  if (screen === 'streetview' && currentLoc) {
-    return (
-      <View style={s.container}>
-        <StatusBar hidden />
-        <WebView
-          key={currentLoc.id}
-          source={{ html: streetViewHtml(currentLoc.lat, currentLoc.lng) }}
-          style={StyleSheet.absoluteFill}
-          javaScriptEnabled domStorageEnabled sharedCookiesEnabled
-          userAgent="Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/122.0.0.0 Mobile Safari/537.36"
-        />
-        <View style={s.timerBadge}>
-          <Text style={[s.timerText, timer <= 5 && { color: C.error }]}>{timer}</Text>
-        </View>
-        <View style={s.roundBadge}>
-          <Text style={s.roundText}>Karte {currentLoc.qr} · Runde {round}/{maxRounds}</Text>
-        </View>
-        <View style={s.diffBadge}>
-          <Text style={s.diffBadgeText}>
-            {currentLoc.diff === 'leicht' ? '🟢 LEICHT' : currentLoc.diff === 'mittel' ? '🟡 MITTEL' : '🔴 SCHWER'}
-          </Text>
-        </View>
-        <TouchableOpacity style={s.actionBtn} onPress={() => {
-          if (mode === 'map') setScreen('map');
-          else setScreen('input');
-        }}>
-          <Text style={s.actionBtnText}>ICH WEIẞ ES →</Text>
-        </TouchableOpacity>
+  if(screen==='streetview' && currentLoc) return (
+    <View style={s.container}>
+      <StatusBar hidden />
+      <WebView
+        key={currentLoc.id}
+        source={{html:svHtml(currentLoc.lat,currentLoc.lng)}}
+        style={StyleSheet.absoluteFill}
+        javaScriptEnabled domStorageEnabled sharedCookiesEnabled
+        userAgent="Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/122.0.0.0 Mobile Safari/537.36"
+      />
+      <View style={s.timerBadge}>
+        <Text style={[s.timerText,timer<=5&&{color:C.error}]}>{timer}</Text>
       </View>
-    );
-  }
+      <View style={s.roundBadge}>
+        <Text style={s.roundText}>Runde {round}/{maxRounds}</Text>
+      </View>
+      <TouchableOpacity style={s.actionBtn} onPress={()=>{
+        if(mode==='map') setScreen('map');
+        else setScreen('input');
+      }}>
+        <Text style={s.actionBtnText}>ICH WEIẞ ES →</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   // ─── MAP ───
-  if (screen === 'map' && currentLoc) {
-    return (
-      <View style={s.container}>
-        <StatusBar hidden />
-        <WebView
-          source={{ html: mapHtml() }}
-          style={StyleSheet.absoluteFill}
-          javaScriptEnabled domStorageEnabled
-          onMessage={(e) => { try { handleAnswer(JSON.parse(e.nativeEvent.data)); } catch {} }}
-        />
-      </View>
-    );
-  }
+  if(screen==='map') return (
+    <View style={s.container}>
+      <StatusBar hidden />
+      <WebView
+        source={{html:mapHtml()}}
+        style={StyleSheet.absoluteFill}
+        javaScriptEnabled domStorageEnabled
+        onMessage={(e)=>{try{handleAnswer(JSON.parse(e.nativeEvent.data))}catch{}}}
+      />
+    </View>
+  );
 
   // ─── TEXT INPUT ───
-  if (screen === 'input' && currentLoc) {
+  if(screen==='input') {
     const [input, setInput] = useState('');
     return (
       <View style={s.container}>
@@ -296,23 +248,17 @@ export default function App() {
             style={s.textInput}
             placeholder="Stadtname eingeben..."
             placeholderTextColor={C.outline}
-            value={input}
-            onChangeText={setInput}
-            autoFocus
-            autoCorrect={false}
+            value={input} onChangeText={setInput}
+            autoFocus autoCorrect={false}
           />
-          <TouchableOpacity style={s.gradientBtn} onPress={() => {
+          <TouchableOpacity style={s.gradientBtn} onPress={()=>{
             const norm = input.toLowerCase().trim()
               .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
-            const match = LOCATIONS.find(l =>
-              l.city.toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue') === norm
+            const match = LOCS.find(l=>
+              l.city.toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue')===norm
             );
-            if (match) {
-              const dist = haversine(currentLoc.lat, currentLoc.lng, match.lat, match.lng);
-              handleAnswer({ lat: match.lat, lng: match.lng, _city: match.city });
-            } else {
-              handleAnswer('');
-            }
+            if(match) handleAnswer({lat:match.lat,lng:match.lng});
+            else handleAnswer(null);
           }}>
             <Text style={s.gradientBtnText}>BESTÄTIGEN</Text>
           </TouchableOpacity>
@@ -322,17 +268,18 @@ export default function App() {
   }
 
   // ─── RESULT ───
-  if (screen === 'result' && lastResult) {
-    const perf = lastResult.pts >= 3;
-    const nah = lastResult.pts >= 1;
+  if(screen==='result' && lastResult) {
+    const perf = lastResult.pts>=3, nah = lastResult.pts>=1;
     return (
       <View style={s.container}>
         <StatusBar hidden />
-        <View style={s.orbBg}><View style={[s.orb, { top: '5%', right: -60, w: 300, h: 300, bg: perf ? C.secondary : C.primaryContainer }]} /></View>
-        <Animated.View style={[s.resultWrap, { transform: [{ scale: popAnim }] }]}>
-          <Text style={s.resultEmoji}>{perf ? '🎯' : nah ? '👍' : '😅'}</Text>
-          <Text style={[s.resultTitle, { color: perf ? C.secondary : nah ? C.primary : C.error }]}>
-            {perf ? 'SEHR NAH!' : nah ? 'NICHT SCHLECHT!' : 'SEHR WEIT!'}
+        <View style={s.orbBg}>
+          <View style={[s.orb,{top:'5%',right:-60,width:300,height:300,backgroundColor:perf?C.secondary:C.primaryContainer}]}/>
+        </View>
+        <Animated.View style={[s.resultWrap,{transform:[{scale:popAnim}]}]}>
+          <Text style={s.resultEmoji}>{perf?'🎯':nah?'👍':'😅'}</Text>
+          <Text style={[s.resultTitle,{color:perf?C.secondary:nah?C.primary:C.error}]}>
+            {perf?'SEHR NAH!':nah?'NICHT SCHLECHT!':'SEHR WEIT!'}
           </Text>
           <View style={s.resultCard}>
             <View style={s.resultRow}>
@@ -340,27 +287,23 @@ export default function App() {
               <Text style={s.resultVal}>{lastResult.city}, {lastResult.country}</Text>
             </View>
             <View style={s.resultRow}>
-              <Text style={s.resultLabel}>QR</Text>
-              <Text style={s.resultVal}>{lastResult.qr}</Text>
-            </View>
-            <View style={s.resultRow}>
               <Text style={s.resultLabel}>DISTANZ</Text>
               <Text style={s.resultVal}>{fmtDist(lastResult.dist)}</Text>
             </View>
             <View style={s.resultRow}>
               <Text style={s.resultLabel}>PUNKTE</Text>
-              <Text style={[s.resultVal, { color: C.secondary, fontSize: 28 }]}>+{lastResult.pts}</Text>
+              <Text style={[s.resultVal,{color:C.secondary,fontSize:28}]}>+{lastResult.pts}</Text>
             </View>
           </View>
           <View style={s.scoreBar}>
             <Text style={s.scoreBarText}>Score: {score} / {targetScore}</Text>
             <View style={s.scoreBarTrack}>
-              <View style={[s.scoreBarFill, { width: `${Math.min(100, (score/targetScore)*100)}%` }]} />
+              <View style={[s.scoreBarFill,{width:`${Math.min(100,(score/targetScore)*100)}%`}]}/>
             </View>
           </View>
           <TouchableOpacity style={s.gradientBtn} onPress={nextRound}>
             <Text style={s.gradientBtnText}>
-              {round >= maxRounds || score >= targetScore ? '🏆 ERGEBNIS' : `NÄCHSTE KARTE →`}
+              {round>=maxRounds||score>=targetScore?'🏆 ERGEBNIS':'NÄCHSTE RUNDE →'}
             </Text>
           </TouchableOpacity>
         </Animated.View>
@@ -369,61 +312,42 @@ export default function App() {
   }
 
   // ─── SUMMARY ───
-  if (screen === 'summary') {
-    const won = score >= targetScore;
+  if(screen==='summary') {
+    const won = score>=targetScore;
     return (
       <View style={s.container}>
         <StatusBar hidden />
         <View style={s.orbBg}>
-          <View style={[s.orb, { top: '5%', right: -80, w: 350, h: 350, bg: C.primaryContainer }]} />
-          <View style={[s.orb, { bottom: '10%', left: -60, w: 300, h: 300, bg: C.secondary }]} />
+          <View style={[s.orb,{top:'5%',right:-80,width:350,height:350,backgroundColor:C.primaryContainer}]}/>
+          <View style={[s.orb,{bottom:'10%',left:-60,width:300,height:300,backgroundColor:C.secondary}]}/>
         </View>
         <View style={s.summaryWrap}>
-          <Text style={s.summaryTitle}>{won ? 'SIEG!' : 'NICHT GESCHAFFT'}</Text>
+          <Text style={s.summaryTitle}>{won?'SIEG!':'NICHT GESCHAFFT'}</Text>
           <Text style={s.summarySub}>Match Summary</Text>
-
           <View style={s.summaryCard}>
             <View style={s.scoreDisplay}>
               <Text style={s.scoreNum}>{score}</Text>
               <Text style={s.scoreDenom}> / {targetScore}</Text>
             </View>
             <View style={s.xpBar}>
-              <View style={[s.xpFill, { width: `${Math.min(100, (score/targetScore)*100)}%` }]} />
+              <View style={[s.xpFill,{width:`${Math.min(100,(score/targetScore)*100)}%`}]}/>
             </View>
-            <Text style={s.xpLabel}>+{score * 200} XP earned</Text>
+            <Text style={s.xpLabel}>+{score*200} XP earned</Text>
           </View>
-
           <View style={s.lbCard}>
-            <Text style={s.lbTitle}>FINAL STANDINGS</Text>
-            {history.map((h, i) => (
+            <Text style={s.lbTitle}>STANDINGS</Text>
+            {history.map((h,i)=>(
               <View key={i} style={s.lbRow}>
-                <Text style={[s.lbRank, { color: i === 0 ? C.primary : C.outline }]}>#{i+1}</Text>
-                <Text style={[s.lbCity, { color: C.onSurface }]}>{h.city}</Text>
+                <Text style={[s.lbRank,{color:i===0?C.primary:C.outline}]}>#{i+1}</Text>
+                <Text style={s.lbCity}>{h.city}</Text>
                 <Text style={s.lbDist}>{fmtDist(h.dist)}</Text>
-                <Text style={[s.lbPts, { color: C.secondary }]}>+{h.pts}</Text>
+                <Text style={[s.lbPts,{color:C.secondary}]}>+{h.pts}</Text>
               </View>
             ))}
           </View>
-
-          <View style={s.rewardsCard}>
-            <View style={s.rewardRow}>
-              <Text style={s.rewardEmoji}>⭐</Text>
-              <View><Text style={s.rewardVal}>+{score * 200} XP</Text><Text style={s.rewardLabel}>EXPERIENCE</Text></View>
-            </View>
-            <View style={s.rewardRow}>
-              <Text style={s.rewardEmoji}>🪙</Text>
-              <View><Text style={s.rewardVal}>+{score * 20} Coins</Text><Text style={s.rewardLabel}>CURRENCY</Text></View>
-            </View>
-          </View>
-
-          <View style={s.btnCol}>
-            <TouchableOpacity style={s.gradientBtn} onPress={() => setScreen('home')}>
-              <Text style={s.gradientBtnText}>PLAY AGAIN</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={s.outlineBtn} onPress={() => setScreen('home')}>
-              <Text style={s.outlineBtnText}>BACK TO HUB</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity style={s.gradientBtn} onPress={()=>setScreen('home')}>
+            <Text style={s.gradientBtnText}>PLAY AGAIN</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -434,93 +358,75 @@ export default function App() {
 
 // ═══ STYLES ═══
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.surfaceContainerLowest, justifyContent: 'center', alignItems: 'center' },
+  container:{flex:1,backgroundColor:C.surfaceContainerLowest,justifyContent:'center',alignItems:'center'},
+  bgOrbs:{...StyleSheet.absoluteFillObject,zIndex:0},
+  orbBg:{...StyleSheet.absoluteFillObject,zIndex:0},
+  orb:{position:'absolute',borderRadius:9999,opacity:.15},
 
-  // BG orbs
-  bgOrbs: { ...StyleSheet.absoluteFillObject, zIndex: 0 },
-  orbBg: { ...StyleSheet.absoluteFillObject, zIndex: 0 },
-  orb: { position: 'absolute', borderRadius: 9999, opacity: 0.15 },
+  homeWrap:{alignItems:'center',zIndex:1,paddingHorizontal:20,width:'100%'},
+  brand:{fontSize:28,color:C.primary,marginBottom:8},
+  title:{fontSize:44,fontWeight:'900',letterSpacing:-2,color:C.primary,fontFamily:'Space Grotesk',textTransform:'uppercase',marginBottom:2},
+  tagline:{fontSize:10,color:C.onSurfaceVariant,letterSpacing:4,textTransform:'uppercase',fontFamily:'Inter',fontWeight:'600',marginBottom:8},
+  locInfo:{fontSize:12,color:C.onSurfaceVariant,fontFamily:'Inter',marginBottom:20},
 
-  // Home
-  homeWrap: { alignItems: 'center', zIndex: 1, paddingHorizontal: 20, width: '100%' },
-  brand: { fontSize: 28, color: C.primary, marginBottom: 8 },
-  title: { fontSize: 44, fontWeight: '900', letterSpacing: -2, color: C.primary, fontFamily: 'Space Grotesk', textTransform: 'uppercase', marginBottom: 2 },
-  tagline: { fontSize: 10, color: C.onSurfaceVariant, letterSpacing: 4, textTransform: 'uppercase', fontFamily: 'Inter', fontWeight: '600', marginBottom: 24 },
+  modeRow:{flexDirection:'row',gap:12,marginBottom:20,width:'100%'},
+  modeBtn:{flex:1,backgroundColor:C.primaryContainer,borderRadius:16,padding:20,alignItems:'center'},
+  modeBtnOutline:{flex:1,backgroundColor:C.surfaceContainer,borderRadius:16,padding:20,alignItems:'center',borderWidth:1,borderColor:C.outlineVariant},
+  modeEmoji:{fontSize:32,marginBottom:8},
+  modeTitle:{color:C.onSurface,fontSize:14,fontWeight:'900',fontFamily:'Space Grotesk',letterSpacing:-.5,textTransform:'uppercase',marginBottom:2},
+  modeDesc:{color:C.onSurfaceVariant,fontSize:10,fontFamily:'Inter',textAlign:'center'},
 
-  diffRow: { flexDirection: 'row', gap: 6, marginBottom: 20 },
-  diffBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 9999, backgroundColor: C.surfaceContainer, borderWidth: 1, borderColor: C.outlineVariant },
-  diffBtnActive: { borderColor: C.primary, backgroundColor: C.primaryContainer + '30' },
-  diffText: { color: C.onSurfaceVariant, fontSize: 11, fontFamily: 'Inter', fontWeight: '600', letterSpacing: 1 },
-  diffTextActive: { color: C.primary },
+  statsRow:{flexDirection:'row',gap:10,marginBottom:16},
+  statBadge:{backgroundColor:C.surfaceContainer,borderRadius:12,paddingVertical:10,paddingHorizontal:14,alignItems:'center',borderWidth:1,borderColor:C.outlineVariant},
+  statNum:{color:C.primary,fontSize:18,fontWeight:'900',fontFamily:'Space Grotesk'},
+  statLabel:{color:C.onSurfaceVariant,fontSize:8,fontFamily:'Inter',letterSpacing:2,textTransform:'uppercase',marginTop:2},
 
-  modeRow: { flexDirection: 'row', gap: 12, marginBottom: 24, width: '100%' },
-  modeBtn: { flex: 1, backgroundColor: C.primaryContainer, borderRadius: 16, padding: 20, alignItems: 'center' },
-  modeBtnOutline: { flex: 1, backgroundColor: C.surfaceContainer, borderRadius: 16, padding: 20, alignItems: 'center', borderWidth: 1, borderColor: C.outlineVariant },
-  modeEmoji: { fontSize: 32, marginBottom: 8 },
-  modeTitle: { color: C.onSurface, fontSize: 14, fontWeight: '900', fontFamily: 'Space Grotesk', letterSpacing: -0.5, textTransform: 'uppercase', marginBottom: 2 },
-  modeDesc: { color: C.onSurfaceVariant, fontSize: 10, fontFamily: 'Inter', textAlign: 'center' },
+  locList:{width:'100%',backgroundColor:C.surfaceContainer,borderRadius:16,padding:8,borderWidth:1,borderColor:C.outlineVariant},
+  locRow:{flexDirection:'row',alignItems:'center',paddingVertical:8,paddingHorizontal:12,borderBottomWidth:.5,borderBottomColor:C.outlineVariant+'40'},
+  locQR:{color:C.outline,fontSize:11,fontWeight:'700',fontFamily:'Space Grotesk',width:30},
+  locCity:{color:C.onSurface,fontSize:14,fontWeight:'700',fontFamily:'Space Grotesk',flex:1},
+  locCountry:{color:C.onSurfaceVariant,fontSize:12,fontFamily:'Inter'},
 
-  statsRow: { flexDirection: 'row', gap: 10 },
-  statBadge: { backgroundColor: C.surfaceContainer, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, alignItems: 'center', borderWidth: 1, borderColor: C.outlineVariant },
-  statNum: { color: C.primary, fontSize: 18, fontWeight: '900', fontFamily: 'Space Grotesk' },
-  statLabel: { color: C.onSurfaceVariant, fontSize: 8, fontFamily: 'Inter', letterSpacing: 2, textTransform: 'uppercase', marginTop: 2 },
+  timerBadge:{position:'absolute',top:12,right:12,backgroundColor:'rgba(14,14,14,.9)',borderRadius:9999,width:52,height:52,justifyContent:'center',alignItems:'center',borderWidth:2,borderColor:C.error,zIndex:10},
+  timerText:{color:C.onSurface,fontSize:22,fontWeight:'900',fontFamily:'Space Grotesk'},
+  roundBadge:{position:'absolute',top:12,left:12,backgroundColor:'rgba(14,14,14,.9)',borderRadius:12,paddingHorizontal:14,paddingVertical:8,zIndex:10},
+  roundText:{color:C.onSurfaceVariant,fontSize:12,fontWeight:'600',fontFamily:'Inter'},
+  actionBtn:{position:'absolute',bottom:28,alignSelf:'center',backgroundColor:C.surfaceBright,paddingHorizontal:28,paddingVertical:14,borderRadius:9999,borderWidth:1,borderColor:C.secondary,zIndex:10},
+  actionBtnText:{color:C.secondary,fontSize:15,fontWeight:'900',fontFamily:'Space Grotesk',letterSpacing:-.5},
 
-  // Timer / Round
-  timerBadge: { position: 'absolute', top: 12, right: 12, backgroundColor: 'rgba(14,14,14,0.9)', borderRadius: 9999, width: 52, height: 52, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: C.error, zIndex: 10 },
-  timerText: { color: C.onSurface, fontSize: 22, fontWeight: '900', fontFamily: 'Space Grotesk' },
-  roundBadge: { position: 'absolute', top: 12, left: 12, backgroundColor: 'rgba(14,14,14,0.9)', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8, zIndex: 10 },
-  roundText: { color: C.onSurfaceVariant, fontSize: 12, fontWeight: '600', fontFamily: 'Inter' },
-  diffBadge: { position: 'absolute', top: 50, left: 12, backgroundColor: 'rgba(14,14,14,0.8)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, zIndex: 10 },
-  diffBadgeText: { color: C.onSurfaceVariant, fontSize: 10, fontFamily: 'Inter', fontWeight: '600', letterSpacing: 1 },
+  inputWrap:{flex:1,justifyContent:'center',alignItems:'center',padding:24,width:'100%'},
+  inputTitle:{color:C.primary,fontSize:28,fontWeight:'900',fontFamily:'Space Grotesk',letterSpacing:-1,marginBottom:20,textTransform:'uppercase'},
+  textInput:{backgroundColor:C.surfaceContainer,color:C.onSurface,fontSize:18,fontFamily:'Inter',padding:16,borderRadius:12,width:'100%',borderWidth:1,borderColor:C.outlineVariant,marginBottom:16,textAlign:'center'},
+  gradientBtn:{backgroundColor:C.primaryContainer,paddingVertical:16,borderRadius:9999,width:'100%',alignItems:'center'},
+  gradientBtnText:{color:C.primary,fontSize:16,fontWeight:'900',fontFamily:'Space Grotesk',letterSpacing:-1,textTransform:'uppercase'},
 
-  // Action
-  actionBtn: { position: 'absolute', bottom: 28, alignSelf: 'center', backgroundColor: C.surfaceBright, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 9999, borderWidth: 1, borderColor: C.secondary, zIndex: 10 },
-  actionBtnText: { color: C.secondary, fontSize: 15, fontWeight: '900', fontFamily: 'Space Grotesk', letterSpacing: -0.5 },
+  resultWrap:{alignItems:'center',padding:24,width:'100%',zIndex:1},
+  resultEmoji:{fontSize:60,marginBottom:8},
+  resultTitle:{fontSize:32,fontWeight:'900',fontFamily:'Space Grotesk',letterSpacing:-1,textTransform:'uppercase',marginBottom:20},
+  resultCard:{backgroundColor:C.surfaceContainer,borderRadius:16,padding:20,width:'100%',marginBottom:16,borderWidth:1,borderColor:C.outlineVariant},
+  resultRow:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingVertical:6},
+  resultLabel:{color:C.onSurfaceVariant,fontSize:11,fontFamily:'Inter',letterSpacing:2,textTransform:'uppercase',fontWeight:'600'},
+  resultVal:{color:C.onSurface,fontSize:16,fontWeight:'700',fontFamily:'Space Grotesk'},
+  scoreBar:{width:'100%',marginBottom:16},
+  scoreBarText:{color:C.onSurfaceVariant,fontSize:12,fontFamily:'Inter',marginBottom:6,textAlign:'center'},
+  scoreBarTrack:{height:8,backgroundColor:C.surfaceContainerHighest,borderRadius:9999,overflow:'hidden'},
+  scoreBarFill:{height:'100%',backgroundColor:C.secondary,borderRadius:9999},
 
-  // Input
-  inputWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, width: '100%' },
-  inputTitle: { color: C.primary, fontSize: 28, fontWeight: '900', fontFamily: 'Space Grotesk', letterSpacing: -1, marginBottom: 20, textTransform: 'uppercase' },
-  textInput: { backgroundColor: C.surfaceContainer, color: C.onSurface, fontSize: 18, fontFamily: 'Inter', padding: 16, borderRadius: 12, width: '100%', borderWidth: 1, borderColor: C.outlineVariant, marginBottom: 16, textAlign: 'center' },
-
-  // Result
-  resultWrap: { alignItems: 'center', padding: 24, width: '100%', zIndex: 1 },
-  resultEmoji: { fontSize: 60, marginBottom: 8 },
-  resultTitle: { fontSize: 32, fontWeight: '900', fontFamily: 'Space Grotesk', letterSpacing: -1, textTransform: 'uppercase', marginBottom: 20 },
-  resultCard: { backgroundColor: C.surfaceContainer, borderRadius: 16, padding: 20, width: '100%', marginBottom: 16, borderWidth: 1, borderColor: C.outlineVariant },
-  resultRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
-  resultLabel: { color: C.onSurfaceVariant, fontSize: 11, fontFamily: 'Inter', letterSpacing: 2, textTransform: 'uppercase', fontWeight: '600' },
-  resultVal: { color: C.onSurface, fontSize: 16, fontWeight: '700', fontFamily: 'Space Grotesk' },
-  scoreBar: { width: '100%', marginBottom: 16 },
-  scoreBarText: { color: C.onSurfaceVariant, fontSize: 12, fontFamily: 'Inter', marginBottom: 6, textAlign: 'center' },
-  scoreBarTrack: { height: 8, backgroundColor: C.surfaceContainerHighest, borderRadius: 9999, overflow: 'hidden' },
-  scoreBarFill: { height: '100%', backgroundColor: C.secondary, borderRadius: 9999 },
-
-  // Summary
-  summaryWrap: { flex: 1, width: '100%', paddingHorizontal: 20, paddingTop: 50, zIndex: 1 },
-  summaryTitle: { fontSize: 48, fontWeight: '900', fontFamily: 'Space Grotesk', color: C.primary, textAlign: 'center', letterSpacing: -2, textTransform: 'uppercase', fontStyle: 'italic' },
-  summarySub: { color: C.onSurfaceVariant, fontSize: 11, letterSpacing: 4, textTransform: 'uppercase', fontFamily: 'Inter', fontWeight: '700', textAlign: 'center', marginBottom: 20 },
-  summaryCard: { backgroundColor: C.surfaceContainer, borderRadius: 16, padding: 20, marginBottom: 12, borderWidth: 1, borderColor: C.outlineVariant },
-  scoreDisplay: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center', marginBottom: 12 },
-  scoreNum: { color: C.onSurface, fontSize: 44, fontWeight: '900', fontFamily: 'Space Grotesk' },
-  scoreDenom: { color: C.onSurfaceVariant, fontSize: 16, fontFamily: 'Inter' },
-  xpBar: { height: 10, backgroundColor: C.surfaceContainerHighest, borderRadius: 9999, overflow: 'hidden', marginBottom: 6 },
-  xpFill: { height: '100%', backgroundColor: C.secondary, borderRadius: 9999 },
-  xpLabel: { color: C.secondaryFixed, fontSize: 11, fontFamily: 'Inter', textAlign: 'right', fontStyle: 'italic' },
-  lbCard: { backgroundColor: C.surfaceContainerLow, borderRadius: 16, overflow: 'hidden', marginBottom: 12, borderWidth: 1, borderColor: C.outlineVariant },
-  lbTitle: { color: C.onSurface, fontSize: 13, fontWeight: '900', fontFamily: 'Space Grotesk', letterSpacing: 1, textTransform: 'uppercase', padding: 14, borderBottomWidth: 1, borderBottomColor: C.outlineVariant + '20' },
-  lbRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.outlineVariant + '08' },
-  lbRank: { fontSize: 18, fontWeight: '900', fontFamily: 'Space Grotesk', fontStyle: 'italic', width: 32 },
-  lbCity: { fontSize: 15, fontWeight: '700', fontFamily: 'Space Grotesk', flex: 1 },
-  lbDist: { color: C.onSurfaceVariant, fontSize: 11, fontFamily: 'Inter', width: 70, textAlign: 'right' },
-  lbPts: { fontSize: 15, fontWeight: '900', fontFamily: 'Space Grotesk', width: 45, textAlign: 'right' },
-  rewardsCard: { backgroundColor: C.surfaceContainerHigh, borderRadius: 16, padding: 16, marginBottom: 12, gap: 12 },
-  rewardRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  rewardEmoji: { fontSize: 24 },
-  rewardVal: { color: C.onSurface, fontSize: 16, fontWeight: '800', fontFamily: 'Space Grotesk' },
-  rewardLabel: { color: C.onSurfaceVariant, fontSize: 9, fontFamily: 'Inter', letterSpacing: 2, textTransform: 'uppercase' },
-  btnCol: { gap: 10, marginTop: 4 },
-  gradientBtn: { backgroundColor: C.primaryContainer, paddingVertical: 16, borderRadius: 9999, width: '100%', alignItems: 'center' },
-  gradientBtnText: { color: C.primary, fontSize: 16, fontWeight: '900', fontFamily: 'Space Grotesk', letterSpacing: -1, textTransform: 'uppercase' },
-  outlineBtn: { backgroundColor: C.surfaceContainerHighest, paddingVertical: 16, borderRadius: 9999, width: '100%', alignItems: 'center', borderWidth: 1, borderColor: C.outlineVariant },
-  outlineBtnText: { color: C.onSurface, fontSize: 14, fontWeight: '700', fontFamily: 'Space Grotesk', letterSpacing: 2, textTransform: 'uppercase' },
+  summaryWrap:{flex:1,width:'100%',paddingHorizontal:20,paddingTop:50,zIndex:1},
+  summaryTitle:{fontSize:48,fontWeight:'900',fontFamily:'Space Grotesk',color:C.primary,textAlign:'center',letterSpacing:-2,textTransform:'uppercase',fontStyle:'italic'},
+  summarySub:{color:C.onSurfaceVariant,fontSize:11,letterSpacing:4,textTransform:'uppercase',fontFamily:'Inter',fontWeight:'700',textAlign:'center',marginBottom:20},
+  summaryCard:{backgroundColor:C.surfaceContainer,borderRadius:16,padding:20,marginBottom:12,borderWidth:1,borderColor:C.outlineVariant},
+  scoreDisplay:{flexDirection:'row',alignItems:'baseline',justifyContent:'center',marginBottom:12},
+  scoreNum:{color:C.onSurface,fontSize:44,fontWeight:'900',fontFamily:'Space Grotesk'},
+  scoreDenom:{color:C.onSurfaceVariant,fontSize:16,fontFamily:'Inter'},
+  xpBar:{height:10,backgroundColor:C.surfaceContainerHighest,borderRadius:9999,overflow:'hidden',marginBottom:6},
+  xpFill:{height:'100%',backgroundColor:C.secondary,borderRadius:9999},
+  xpLabel:{color:C.secondaryFixed,fontSize:11,fontFamily:'Inter',textAlign:'right',fontStyle:'italic'},
+  lbCard:{backgroundColor:C.surfaceContainerLow,borderRadius:16,overflow:'hidden',marginBottom:12,borderWidth:1,borderColor:C.outlineVariant},
+  lbTitle:{color:C.onSurface,fontSize:13,fontWeight:'900',fontFamily:'Space Grotesk',letterSpacing:1,textTransform:'uppercase',padding:14,borderBottomWidth:1,borderBottomColor:C.outlineVariant+'20'},
+  lbRow:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingHorizontal:14,paddingVertical:12,borderBottomWidth:.5,borderBottomColor:C.outlineVariant+'08'},
+  lbRank:{fontSize:18,fontWeight:'900',fontFamily:'Space Grotesk',fontStyle:'italic',width:32},
+  lbCity:{color:C.onSurface,fontSize:15,fontWeight:'700',fontFamily:'Space Grotesk',flex:1},
+  lbDist:{color:C.onSurfaceVariant,fontSize:11,fontFamily:'Inter',width:70,textAlign:'right'},
+  lbPts:{fontSize:15,fontWeight:'900',fontFamily:'Space Grotesk',width:45,textAlign:'right'},
 });
