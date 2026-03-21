@@ -6,7 +6,7 @@ import {
   Vibration, StatusBar, Dimensions, TextInput, ActivityIndicator
 } from 'react-native';
 import { WebView } from 'react-native-webview';
-import * as FileSystem from 'expo-file-system';
+
 
 const API_KEY = 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
 const { width: SW, height: SH } = Dimensions.get('window');
