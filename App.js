@@ -4,7 +4,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Animated,
-  Vibration, StatusBar, Dimensions, TextInput, NativeModules, Platform
+  Vibration, StatusBar, Dimensions, TextInput, NativeModules, Platform, Image
 } from 'react-native';
 
 
@@ -46,13 +46,19 @@ function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.fl
 
 // Open native Street View (exact approach from working v10)
 const openNativeStreetView = (loc) => {
+  // Try native module first
   if (Platform.OS === 'android' && NativeModules.StreetViewModule) {
     try {
       NativeModules.StreetViewModule.openStreetView(loc.lat, loc.lng);
+      return;
     } catch (e) {
       console.warn('[GeoCheckr] Native SV error:', e);
     }
   }
+  // Fallback: static image (no interactive movement, but guaranteed to work)
+  setSvStaticUrl(
+    `https://maps.googleapis.com/maps/api/streetview?size=640x640&location=${loc.lat},${loc.lng}&heading=${Math.floor(Math.random()*360)}&pitch=0&fov=90&source=outdoor&key=${API_KEY}`
+  );
 };
 
 // ═══ MAIN APP ═══
@@ -69,6 +75,7 @@ export default function App() {
   const [lastResult, setLastResult] = useState(null);
   const [targetScore] = useState(10);
   const [showTutorial, setShowTutorial] = useState(true);
+  const [svStaticUrl, setSvStaticUrl] = useState('');
 
   const timerRef = useRef(null);
   const popAnim = useRef(new Animated.Value(0)).current;
@@ -96,7 +103,7 @@ export default function App() {
     setMode(m); setRound(1); setScore(0); setHistory([]);
     popAnim.setValue(0);
     const loc = order[0];
-    setCurrentLoc(loc); setTimer(30); setScreen('streetview');
+    setCurrentLoc(loc); setTimer(30); setSvStaticUrl(''); setScreen('streetview');
     openNativeStreetView(loc);
   };
 
@@ -120,7 +127,7 @@ export default function App() {
     popAnim.setValue(0);
     if(round >= maxRounds || score >= targetScore) { setScreen('summary'); return; }
     const next = order[round];
-    setCurrentLoc(next); setTimer(30); setRound(r => r + 1); setScreen('streetview');
+    setCurrentLoc(next); setTimer(30); setRound(r => r + 1); setSvStaticUrl(''); setScreen('streetview');
     openNativeStreetView(next);
   };
 
@@ -248,16 +255,24 @@ export default function App() {
     </View>
   );
 
-  // ─── STREET VIEW (Native Android WebView via Embed API) ───
+  // ─── STREET VIEW ───
   if(screen==='streetview' && currentLoc) {
     return (
       <View style={s.container}>
         <StatusBar hidden />
-        <View style={s.svNativeOverlay}>
-          <Text style={s.svNativeTitle}>🌍 Street View</Text>
-          <Text style={s.svNativeCity}>{currentLoc.city}, {currentLoc.country}</Text>
-          <Text style={s.svNativeHint}>Street View öffnet sich separat</Text>
-        </View>
+        {svStaticUrl ? (
+          <Image
+            source={{uri: svStaticUrl}}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={s.svNativeOverlay}>
+            <Text style={s.svNativeTitle}>🌍 Street View</Text>
+            <Text style={s.svNativeCity}>{currentLoc.city}, {currentLoc.country}</Text>
+            <Text style={s.svNativeHint}>Street View öffnet sich separat</Text>
+          </View>
+        )}
         <View style={s.timerBadge}>
           <Text style={[s.timerText,timer<=5&&{color:C.error}]}>{timer}</Text>
         </View>
