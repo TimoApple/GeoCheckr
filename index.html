@@ -37,9 +37,36 @@ button{cursor:pointer;border:none;outline:none;font-family:'Space Grotesk',sans-
     <div style="font-size:28px;color:var(--primary);margin-bottom:8px">⬡</div>
     <div style="font-size:44px;font-weight:900;letter-spacing:-2px;color:var(--primary);font-family:'Space Grotesk';text-transform:uppercase">GEOCHECKR</div>
     <div style="font-size:10px;color:var(--on-surface-variant);letter-spacing:4px;text-transform:uppercase;font-weight:600;margin-bottom:6px">THE CARTOGRAPHIC EXPLORER</div>
-    <div style="font-size:12px;color:var(--on-surface-variant);font-family:'Inter';margin-bottom:20px">10 Locations · 5 Runden</div>
+    <div style="font-size:12px;color:var(--on-surface-variant);font-family:'Inter';margin-bottom:20px">10 Locations · 5 Runden · 30s Timer</div>
 
-    <div style="display:flex;gap:12px;margin-bottom:20px">
+    <!-- TUTORIAL -->
+    <div id="tutorial" style="background:var(--surface-container);border-radius:16px;padding:20px;margin-bottom:20px;width:100%;border:1px solid var(--outline-variant)">
+      <div style="color:var(--primary);font-size:16px;font-weight:900;font-family:'Space Grotesk';letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;text-align:center">SPIELREGELN</div>
+      <div style="display:flex;align-items:center;margin-bottom:10px">
+        <span style="color:var(--primary);font-size:14px;font-weight:900;width:28px;height:28px;border-radius:14px;background:var(--primary-container);display:flex;align-items:center;justify-content:center;margin-right:12px">1</span>
+        <span style="color:var(--on-surface);font-size:14px;flex:1">Schau dir das Street View Bild an</span>
+      </div>
+      <div style="display:flex;align-items:center;margin-bottom:10px">
+        <span style="color:var(--primary);font-size:14px;font-weight:900;width:28px;height:28px;border-radius:14px;background:var(--primary-container);display:flex;align-items:center;justify-content:center;margin-right:12px">2</span>
+        <span style="color:var(--on-surface);font-size:14px;flex:1">Du hast 30 Sekunden zu erraten</span>
+      </div>
+      <div style="display:flex;align-items:center;margin-bottom:10px">
+        <span style="color:var(--primary);font-size:14px;font-weight:900;width:28px;height:28px;border-radius:14px;background:var(--primary-container);display:flex;align-items:center;justify-content:center;margin-right:12px">3</span>
+        <span style="color:var(--on-surface);font-size:14px;flex:1">Setze einen Marker oder tippe den Namen</span>
+      </div>
+      <div style="display:flex;align-items:center;margin-bottom:12px">
+        <span style="color:var(--primary);font-size:14px;font-weight:900;width:28px;height:28px;border-radius:14px;background:var(--primary-container);display:flex;align-items:center;justify-content:center;margin-right:12px">4</span>
+        <span style="color:var(--on-surface);font-size:14px;flex:1">Je näher, desto mehr Punkte!</span>
+      </div>
+      <div style="display:flex;justify-content:space-around;padding-top:12px;border-top:1px solid rgba(69,70,84,.4)">
+        <div style="text-align:center"><div style="color:var(--secondary);font-size:20px;font-weight:900;font-family:'Space Grotesk'">3</div><div style="color:var(--on-surface-variant);font-size:10px">unter 100km</div></div>
+        <div style="text-align:center"><div style="color:var(--primary);font-size:20px;font-weight:900;font-family:'Space Grotesk'">2</div><div style="color:var(--on-surface-variant);font-size:10px">unter 500km</div></div>
+        <div style="text-align:center"><div style="color:var(--tertiary);font-size:20px;font-weight:900;font-family:'Space Grotesk'">1</div><div style="color:var(--on-surface-variant);font-size:10px">unter 2000km</div></div>
+        <div style="text-align:center"><div style="color:var(--error);font-size:20px;font-weight:900;font-family:'Space Grotesk'">0</div><div style="color:var(--on-surface-variant);font-size:10px">über 2000km</div></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-bottom:16px">
       <button onclick="startGame('map')" style="flex:1;background:var(--primary-container);border-radius:16px;padding:20px;text-align:center">
         <div style="font-size:32px;margin-bottom:8px">📍</div>
         <div style="color:var(--on-surface);font-size:14px;font-weight:900;text-transform:uppercase;margin-bottom:2px">MAP MODE</div>
@@ -58,57 +85,17 @@ button{cursor:pointer;border:none;outline:none;font-family:'Space Grotesk',sans-
       <div class="badge"><div class="num">10</div><div class="label">Ziel</div></div>
     </div>
 
-    <div style="width:100%;background:var(--surface-container);border-radius:16px;padding:8px;border:1px solid var(--outline-variant)">
-      <div style="display:flex;align-items:center;padding:8px 12px;border-bottom:.5px solid rgba(69,70,84,.4)">
-        <span style="color:var(--outline);font-size:11px;font-weight:700;font-family:Space Grotesk;width:30">01</span>
-        <span style="color:var(--on-surface);font-size:14px;font-weight:700;font-family:Space Grotesk;flex:1">Seoul</span>
-        <span style="color:var(--on-surface-variant);font-size:12px">Südkorea</span>
-      </div>
-      <div style="display:flex;align-items:center;padding:8px 12px;border-bottom:.5px solid rgba(69,70,84,.4)">
-        <span style="color:var(--outline);font-size:11px;font-weight:700;font-family:Space Grotesk;width:30">02</span>
-        <span style="color:var(--on-surface);font-size:14px;font-weight:700;font-family:Space Grotesk;flex:1">Tokyo</span>
-        <span style="color:var(--on-surface-variant);font-size:12px">Japan</span>
-      </div>
-      <div style="display:flex;align-items:center;padding:8px 12px;border-bottom:.5px solid rgba(69,70,84,.4)">
-        <span style="color:var(--outline);font-size:11px;font-weight:700;font-family:Space Grotesk;width:30">03</span>
-        <span style="color:var(--on-surface);font-size:14px;font-weight:700;font-family:Space Grotesk;flex:1">New York</span>
-        <span style="color:var(--on-surface-variant);font-size:12px">USA</span>
-      </div>
-      <div style="display:flex;align-items:center;padding:8px 12px;border-bottom:.5px solid rgba(69,70,84,.4)">
-        <span style="color:var(--outline);font-size:11px;font-weight:700;font-family:Space Grotesk;width:30">04</span>
-        <span style="color:var(--on-surface);font-size:14px;font-weight:700;font-family:Space Grotesk;flex:1">Portland</span>
-        <span style="color:var(--on-surface-variant);font-size:12px">Oregon, USA</span>
-      </div>
-      <div style="display:flex;align-items:center;padding:8px 12px;border-bottom:.5px solid rgba(69,70,84,.4)">
-        <span style="color:var(--outline);font-size:11px;font-weight:700;font-family:Space Grotesk;width:30">05</span>
-        <span style="color:var(--on-surface);font-size:14px;font-weight:700;font-family:Space Grotesk;flex:1">Delhi</span>
-        <span style="color:var(--on-surface-variant);font-size:12px">Indien</span>
-      </div>
-      <div style="display:flex;align-items:center;padding:8px 12px;border-bottom:.5px solid rgba(69,70,84,.4)">
-        <span style="color:var(--outline);font-size:11px;font-weight:700;font-family:Space Grotesk;width:30">06</span>
-        <span style="color:var(--on-surface);font-size:14px;font-weight:700;font-family:Space Grotesk;flex:1">Johannesburg</span>
-        <span style="color:var(--on-surface-variant);font-size:12px">Südafrika</span>
-      </div>
-      <div style="display:flex;align-items:center;padding:8px 12px;border-bottom:.5px solid rgba(69,70,84,.4)">
-        <span style="color:var(--outline);font-size:11px;font-weight:700;font-family:Space Grotesk;width:30">07</span>
-        <span style="color:var(--on-surface);font-size:14px;font-weight:700;font-family:Space Grotesk;flex:1">Kapstadt</span>
-        <span style="color:var(--on-surface-variant);font-size:12px">Südafrika</span>
-      </div>
-      <div style="display:flex;align-items:center;padding:8px 12px;border-bottom:.5px solid rgba(69,70,84,.4)">
-        <span style="color:var(--outline);font-size:11px;font-weight:700;font-family:Space Grotesk;width:30">08</span>
-        <span style="color:var(--on-surface);font-size:14px;font-weight:700;font-family:Space Grotesk;flex:1">Kopenhagen</span>
-        <span style="color:var(--on-surface-variant);font-size:12px">Dänemark</span>
-      </div>
-      <div style="display:flex;align-items:center;padding:8px 12px;border-bottom:.5px solid rgba(69,70,84,.4)">
-        <span style="color:var(--outline);font-size:11px;font-weight:700;font-family:Space Grotesk;width:30">09</span>
-        <span style="color:var(--on-surface);font-size:14px;font-weight:700;font-family:Space Grotesk;flex:1">Rio de Janeiro</span>
-        <span style="color:var(--on-surface-variant);font-size:12px">Brasilien</span>
-      </div>
-      <div style="display:flex;align-items:center;padding:8px 12px">
-        <span style="color:var(--outline);font-size:11px;font-weight:700;font-family:Space Grotesk;width:30">10</span>
-        <span style="color:var(--on-surface);font-size:14px;font-weight:700;font-family:Space Grotesk;flex:1">Beijing</span>
-        <span style="color:var(--on-surface-variant);font-size:12px">China</span>
-      </div>
+    <div style="width:100%;background:var(--surface-container);border-radius:16px;padding:8px;border:1px solid var(--outline-variant);max-height:200px;overflow-y:auto">
+      <div style="display:flex;align-items:center;padding:8px 12px;border-bottom:.5px solid rgba(69,70,84,.4)"><span style="color:var(--outline);font-size:11px;font-weight:700;font-family:Space Grotesk;width:30">01</span><span style="color:var(--on-surface);font-size:14px;font-weight:700;font-family:Space Grotesk;flex:1">Seoul</span><span style="color:var(--on-surface-variant);font-size:12px">Südkorea</span></div>
+      <div style="display:flex;align-items:center;padding:8px 12px;border-bottom:.5px solid rgba(69,70,84,.4)"><span style="color:var(--outline);font-size:11px;font-weight:700;font-family:Space Grotesk;width:30">02</span><span style="color:var(--on-surface);font-size:14px;font-weight:700;font-family:Space Grotesk;flex:1">Tokyo</span><span style="color:var(--on-surface-variant);font-size:12px">Japan</span></div>
+      <div style="display:flex;align-items:center;padding:8px 12px;border-bottom:.5px solid rgba(69,70,84,.4)"><span style="color:var(--outline);font-size:11px;font-weight:700;font-family:Space Grotesk;width:30">03</span><span style="color:var(--on-surface);font-size:14px;font-weight:700;font-family:Space Grotesk;flex:1">New York</span><span style="color:var(--on-surface-variant);font-size:12px">USA</span></div>
+      <div style="display:flex;align-items:center;padding:8px 12px;border-bottom:.5px solid rgba(69,70,84,.4)"><span style="color:var(--outline);font-size:11px;font-weight:700;font-family:Space Grotesk;width:30">04</span><span style="color:var(--on-surface);font-size:14px;font-weight:700;font-family:Space Grotesk;flex:1">Portland</span><span style="color:var(--on-surface-variant);font-size:12px">Oregon, USA</span></div>
+      <div style="display:flex;align-items:center;padding:8px 12px;border-bottom:.5px solid rgba(69,70,84,.4)"><span style="color:var(--outline);font-size:11px;font-weight:700;font-family:Space Grotesk;width:30">05</span><span style="color:var(--on-surface);font-size:14px;font-weight:700;font-family:Space Grotesk;flex:1">Delhi</span><span style="color:var(--on-surface-variant);font-size:12px">Indien</span></div>
+      <div style="display:flex;align-items:center;padding:8px 12px;border-bottom:.5px solid rgba(69,70,84,.4)"><span style="color:var(--outline);font-size:11px;font-weight:700;font-family:Space Grotesk;width:30">06</span><span style="color:var(--on-surface);font-size:14px;font-weight:700;font-family:Space Grotesk;flex:1">Johannesburg</span><span style="color:var(--on-surface-variant);font-size:12px">Südafrika</span></div>
+      <div style="display:flex;align-items:center;padding:8px 12px;border-bottom:.5px solid rgba(69,70,84,.4)"><span style="color:var(--outline);font-size:11px;font-weight:700;font-family:Space Grotesk;width:30">07</span><span style="color:var(--on-surface);font-size:14px;font-weight:700;font-family:Space Grotesk;flex:1">Kapstadt</span><span style="color:var(--on-surface-variant);font-size:12px">Südafrika</span></div>
+      <div style="display:flex;align-items:center;padding:8px 12px;border-bottom:.5px solid rgba(69,70,84,.4)"><span style="color:var(--outline);font-size:11px;font-weight:700;font-family:Space Grotesk;width:30">08</span><span style="color:var(--on-surface);font-size:14px;font-weight:700;font-family:Space Grotesk;flex:1">Kopenhagen</span><span style="color:var(--on-surface-variant);font-size:12px">Dänemark</span></div>
+      <div style="display:flex;align-items:center;padding:8px 12px;border-bottom:.5px solid rgba(69,70,84,.4)"><span style="color:var(--outline);font-size:11px;font-weight:700;font-family:Space Grotesk;width:30">09</span><span style="color:var(--on-surface);font-size:14px;font-weight:700;font-family:Space Grotesk;flex:1">Rio de Janeiro</span><span style="color:var(--on-surface-variant);font-size:12px">Brasilien</span></div>
+      <div style="display:flex;align-items:center;padding:8px 12px"><span style="color:var(--outline);font-size:11px;font-weight:700;font-family:Space Grotesk;width:30">10</span><span style="color:var(--on-surface);font-size:14px;font-weight:700;font-family:Space Grotesk;flex:1">Beijing</span><span style="color:var(--on-surface-variant);font-size:12px">China</span></div>
     </div>
   </div>
 </div>
@@ -128,9 +115,11 @@ button{cursor:pointer;border:none;outline:none;font-family:'Space Grotesk',sans-
 
 <!-- INPUT -->
 <div id="inputscreen" class="screen">
-  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;width:100%">
-    <div style="color:var(--primary);font-size:28px;font-weight:900;font-family:'Space Grotesk';letter-spacing:-1px;margin-bottom:20px;text-transform:uppercase">WELCHE STADT?</div>
-    <input id="city-input" type="text" placeholder="Stadtname eingeben..." style="background:var(--surface-container);color:var(--on-surface);font-size:18px;font-family:'Inter';padding:16px;border-radius:12px;width:100%;max-width:400px;border:1px solid var(--outline-variant);text-align:center;outline:none;margin-bottom:16px">
+  <div class="orb" style="top:30%;right:-100px;width:300px;height:300px;background:var(--primary-container)"></div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;width:100%;z-index:1">
+    <div style="color:var(--primary);font-size:28px;font-weight:900;font-family:'Space Grotesk';letter-spacing:-1px;margin-bottom:8px;text-transform:uppercase">WELCHE STADT?</div>
+    <div style="color:var(--on-surface-variant);font-size:14px;margin-bottom:20px">Tippe den Namen der Stadt</div>
+    <input id="city-input" type="text" placeholder="z.B. Seoul, Tokyo, New York..." style="background:var(--surface-container);color:var(--on-surface);font-size:18px;font-family:'Inter';padding:16px;border-radius:12px;width:100%;max-width:400px;border:1px solid var(--outline-variant);text-align:center;outline:none;margin-bottom:16px">
     <button onclick="submitInput()" class="gradient-btn" style="max-width:400px">BESTÄTIGEN</button>
   </div>
 </div>
