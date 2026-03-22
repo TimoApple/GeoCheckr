@@ -69,6 +69,7 @@ export default function App() {
   const [lastResult, setLastResult] = useState(null);
   const [targetScore] = useState(10);
   const [showTutorial, setShowTutorial] = useState(true);
+  const [input, setInput] = useState('');
 
   const timerRef = useRef(null);
   const popAnim = useRef(new Animated.Value(0)).current;
@@ -87,6 +88,7 @@ export default function App() {
     }
     if(timer===0 && screen==='streetview') {
       // APK: always go to text input (map crashes in WebView)
+      setInput('');
       setScreen('input');
     }
   },[screen,timer]);
@@ -265,6 +267,7 @@ export default function App() {
           <Text style={s.roundText}>Runde {round}/{maxRounds}</Text>
         </View>
         <TouchableOpacity style={s.actionBtn} onPress={() => {
+          setInput('');
           setScreen('input');
         }}>
           <Text style={s.actionBtnText}>ICH WEIẞ ES →</Text>
@@ -279,7 +282,6 @@ export default function App() {
 
   // ─── TEXT INPUT ───
   if(screen==='input') {
-    const [input, setInput] = useState('');
     return (
       <View style={s.container}>
         <StatusBar hidden />
