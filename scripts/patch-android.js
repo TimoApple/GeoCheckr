@@ -33,14 +33,10 @@ if (!bg.includes('play-services-maps')) {
 const manifest = path.join(androidDir, 'app', 'src', 'main', 'AndroidManifest.xml');
 let mf = fs.readFileSync(manifest, 'utf8');
 if (!mf.includes('com.google.android.geo.API_KEY')) {
-  mf = mf.replace(
-    '<application',
-    '<application\n    <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI"/>\n    <activity android:name=".StreetViewActivity" android:theme="@style/Theme.AppCompat.NoActionBar" android:exported="false"/>'
-  );
-  // Fix: inject after <application ...> tag opening, not before
+  // Inject AFTER <application ... > opening tag (single clean replacement)
   mf = mf.replace(
     /(<application[^>]*>)/,
-    `$1\n    <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI"/>\n    <activity android:name=".StreetViewActivity" android:theme="@style/Theme.AppCompat.NoActionBar" android:exported="false"/>`
+    `$1\n    <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI"/>\n    <activity android:name="com.geocheckr.app.StreetViewActivity" android:theme="@style/Theme.AppCompat.NoActionBar" android:exported="false"/>`
   );
   fs.writeFileSync(manifest, mf);
   console.log('✅ Added API key + Activity to AndroidManifest.xml');
