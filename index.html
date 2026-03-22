@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>GeoCheckr — The Cartographic Explorer</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--primary:#bdc2ff;--primary-container:#3340ca;--secondary:#88da7d;
+--surface:#131313;--surface-container:#202020;--surface-container-low:#1b1b1c;
+--surface-container-lowest:#0e0e0e;--surface-container-high:#2a2a2a;
+--surface-container-highest:#353535;--surface-bright:#393939;
+--on-surface:#e5e2e1;--on-surface-variant:#c6c5d7;--error:#ffb4ab;
+--outline:#8f8fa0;--outline-variant:#454654;--secondary-fixed:#a3f796;
+--tertiary:#9dcaff;--tertiary-fixed:#d1e4ff;
+}
+html,body{width:100%;height:100%;background:var(--surface-container-lowest);color:var(--on-surface);font-family:'Inter',sans-serif;overflow:hidden}
+.screen{display:none;width:100%;height:100%;position:absolute;top:0;left:0}
+.screen.active{display:flex;flex-direction:column;align-items:center;justify-content:center}
+button{cursor:pointer;border:none;outline:none;font-family:'Space Grotesk',sans-serif}
+.gradient-btn{background:var(--primary-container);color:var(--primary);padding:16px 0;border-radius:9999px;width:100%;font-size:16px;font-weight:900;letter-spacing:-1px;text-transform:uppercase}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="home" class="screen active">
+  <div style="z-index:1;text-align:center;padding:20px;width:100%;max-width:420px">
+    <div style="font-size:28px;color:var(--primary);margin-bottom:8px">⬡</div>
+    <div style="font-size:44px;font-weight:900;letter-spacing:-2px;color:var(--primary);font-family:'Space Grotesk';text-transform:uppercase">GEOCHECKR</div>
+    <div style="font-size:10px;color:var(--on-surface-variant);letter-spacing:4px;text-transform:uppercase;font-weight:600;margin-bottom:6px">THE CARTOGRAPHIC EXPLORER</div>
+    <div style="font-size:12px;color:var(--on-surface-variant);margin-bottom:20px">10 Locations · 5 Runden · 30s Timer</div>
+
+    <div id="tutorial" style="background:var(--surface-container);border-radius:16px;padding:20px;margin-bottom:20px;width:100%;border:1px solid var(--outline-variant)">
+      <div style="color:var(--primary);font-size:16px;font-weight:900;font-family:'Space Grotesk';letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;text-align:center">SPIELREGELN</div>
+      <div style="display:flex;align-items:center;margin-bottom:10px">
+        <span style="color:var(--primary);font-size:14px;font-weight:900;width:28px;height:28px;border-radius:14px;background:var(--primary-container);display:flex;align-items:center;justify-content:center;margin-right:12px">1</span>
+        <span style="color:var(--on-surface);font-size:14px;flex:1">Schau dir das Street View Bild an</span>
+      </div>
+      <div style="display:flex;align-items:center;margin-bottom:10px">
+        <span style="color:var(--primary);font-size:14px;font-weight:900;width:28px;height:28px;border-radius:14px;background:var(--primary-container);display:flex;align-items:center;justify-content:center;margin-right:12px">2</span>
+        <span style="color:var(--on-surface);font-size:14px;flex:1">Du hast 30 Sekunden zu erraten</span>
+      </div>
+      <div style="display:flex;align-items:center;margin-bottom:10px">
+        <span style="color:var(--primary);font-size:14px;font-weight:900;width:28px;height:28px;border-radius:14px;background:var(--primary-container);display:flex;align-items:center;justify-content:center;margin-right:12px">3</span>
+        <span style="color:var(--on-surface);font-size:14px;flex:1">Setze einen Marker oder tippe den Namen</span>
+      </div>
+      <div style="display:flex;align-items:center;margin-bottom:12px">
+        <span style="color:var(--primary);font-size:14px;font-weight:900;width:28px;height:28px;border-radius:14px;background:var(--primary-container);display:flex;align-items:center;justify-content:center;margin-right:12px">4</span>
+        <span style="color:var(--on-surface);font-size:14px;flex:1">Je näher, desto mehr Punkte!</span>
+      </div>
+      <div style="display:flex;justify-content:space-around;padding-top:12px;border-top:1px solid rgba(69,70,84,.4)">
+        <div style="text-align:center"><div style="color:var(--secondary);font-size:20px;font-weight:900;font-family:'Space Grotesk'">3</div><div style="color:var(--on-surface-variant);font-size:10px">unter 100km</div></div>
+        <div style="text-align:center"><div style="color:var(--primary);font-size:20px;font-weight:900;font-family:'Space Grotesk'">2</div><div style="color:var(--on-surface-variant);font-size:10px">unter 500km</div></div>
+        <div style="text-align:center"><div style="color:var(--tertiary);font-size:20px;font-weight:900;font-family:'Space Grotesk'">1</div><div style="color:var(--on-surface-variant);font-size:10px">unter 2000km</div></div>
+        <div style="text-align:center"><div style="color:var(--error);font-size:20px;font-weight:900;font-family:'Space Grotesk'">0</div><div style="color:var(--on-surface-variant);font-size:10px">über 2000km</div></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-bottom:16px">
+      <button id="btn-map" style="flex:1;background:var(--primary-container);border-radius:16px;padding:20px;text-align:center">
+        <div style="font-size:32px;margin-bottom:8px">📍</div>
+        <div style="color:var(--on-surface);font-size:14px;font-weight:900;text-transform:uppercase;margin-bottom:2px">MAP MODE</div>
+        <div style="color:var(--on-surface-variant);font-size:10px">Marker setzen</div>
+      </button>
+      <button id="btn-input" style="flex:1;background:var(--surface-container);border-radius:16px;padding:20px;text-align:center;border:1px solid var(--outline-variant)">
+        <div style="font-size:32px;margin-bottom:8px">⌨️</div>
+        <div style="color:var(--on-surface);font-size:14px;font-weight:900;text-transform:uppercase;margin-bottom:2px">TIPPEN</div>
+        <div style="color:var(--on-surface-variant);font-size:10px">Stadt eingeben</div>
+      </button>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:center;margin-bottom:16px">
+      <div style="background:var(--surface-container);border:1px solid var(--outline-variant);border-radius:12px;padding:10px 14px;text-align:center">
+        <div style="color:var(--primary);font-size:18px;font-weight:900;font-family:'Space Grotesk'">10</div>
+        <div style="color:var(--on-surface-variant);font-size:8px;letter-spacing:2px;text-transform:uppercase">KARTEN</div>
+      </div>
+      <div style="background:var(--surface-container);border:1px solid var(--outline-variant);border-radius:12px;padding:10px 14px;text-align:center">
+        <div style="color:var(--primary);font-size:18px;font-weight:900;font-family:'Space Grotesk'">5</div>
+        <div style="color:var(--on-surface-variant);font-size:8px;letter-spacing:2px;text-transform:uppercase">RUNDEN</div>
+      </div>
+      <div style="background:var(--surface-container);border:1px solid var(--outline-variant);border-radius:12px;padding:10px 14px;text-align:center">
+        <div style="color:var(--primary);font-size:18px;font-weight:900;font-family:'Space Grotesk'">10</div>
+        <div style="color:var(--on-surface-variant);font-size:8px;letter-spacing:2px;text-transform:uppercase">ZIEL</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STREET VIEW -->
+<div id="streetview" class="screen" style="position:relative">
+  <div id="sv-pano" style="width:100%;height:100%;position:absolute;top:0;left:0"></div>
+  <div id="sv-timer" style="position:absolute;top:12px;right:12px;background:rgba(14,14,14,.9);border-radius:50%;width:52px;height:52px;display:flex;align-items:center;justify-content:center;border:2px solid var(--error);z-index:10;font-size:22px;font-weight:900;font-family:'Space Grotesk';color:var(--on-surface)">30</div>
+  <div id="sv-round" style="position:absolute;top:12px;left:12px;background:rgba(14,14,14,.9);border-radius:12px;padding:8px 14px;z-index:10;font-size:12px;color:var(--on-surface-variant);font-weight:600"></div>
+  <button id="answer-btn" style="position:absolute;bottom:28px;left:50%;transform:translateX(-50%);background:var(--surface-bright);padding:14px 28px;border-radius:9999px;border:1px solid var(--secondary);z-index:10;font-size:15px;font-weight:900;color:var(--secondary)">ICH WEIẞ ES →</button>
+</div>
+
+<!-- MAP -->
+<div id="mapscreen" class="screen">
+  <iframe id="map-frame" style="width:100%;height:100%;border:none"></iframe>
+</div>
+
+<!-- INPUT -->
+<div id="inputscreen" class="screen">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;width:100%;z-index:1">
+    <div style="color:var(--primary);font-size:28px;font-weight:900;font-family:'Space Grotesk';letter-spacing:-1px;margin-bottom:8px;text-transform:uppercase">WELCHE STADT?</div>
+    <div style="color:var(--on-surface-variant);font-size:14px;margin-bottom:20px">Tippe den Namen der Stadt</div>
+    <input id="city-input" type="text" placeholder="z.B. Seoul, Tokyo, New York..." style="background:var(--surface-container);color:var(--on-surface);font-size:18px;font-family:'Inter';padding:16px;border-radius:12px;width:100%;max-width:400px;border:1px solid var(--outline-variant);text-align:center;outline:none;margin-bottom:16px">
+    <button id="submit-btn" class="gradient-btn" style="max-width:400px">BESTÄTIGEN</button>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="result" class="screen">
+  <div style="z-index:1;text-align:center;padding:24px;width:100%;max-width:420px">
+    <div id="res-emoji" style="font-size:60px;margin-bottom:8px"></div>
+    <div id="res-title" style="font-size:32px;font-weight:900;font-family:'Space Grotesk';letter-spacing:-1px;text-transform:uppercase;margin-bottom:20px"></div>
+    <div style="background:var(--surface-container);border-radius:16px;padding:20px;margin-bottom:16px;border:1px solid var(--outline-variant);text-align:left">
+      <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--on-surface-variant);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:600">ORT</span><span id="res-city" style="color:var(--on-surface);font-size:16px;font-weight:700;font-family:'Space Grotesk'"></span></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:var(--on-surface-variant);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:600">DISTANZ</span><span id="res-dist" style="color:var(--on-surface);font-size:16px;font-weight:700;font-family:'Space Grotesk'"></span></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;align-items:center"><span style="color:var(--on-surface-variant);font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:600">PUNKTE</span><span id="res-pts" style="color:var(--secondary);font-size:28px;font-weight:900;font-family:'Space Grotesk'"></span></div>
+    </div>
+    <div style="width:100%;margin-bottom:16px">
+      <div id="score-text" style="color:var(--on-surface-variant);font-size:12px;margin-bottom:6px;text-align:center"></div>
+      <div style="height:8px;background:var(--surface-container-highest);border-radius:9999px;overflow:hidden">
+        <div id="score-bar" style="height:100%;background:var(--secondary);border-radius:9999px;transition:width .5s;width:0"></div>
+      </div>
+    </div>
+    <button id="next-btn" class="gradient-btn">NÄCHSTE RUNDE →</button>
+  </div>
+</div>
+
+<!-- SUMMARY -->
+<div id="summary" class="screen" style="overflow-y:auto;justify-content:flex-start;padding-top:50px">
+  <div style="z-index:1;text-align:center;padding:20px;width:100%;max-width:500px">
+    <div id="sum-title" style="font-size:48px;font-weight:900;font-family:'Space Grotesk';color:var(--primary);letter-spacing:-2px;text-transform:uppercase;font-style:italic;margin-bottom:2px"></div>
+    <div style="color:var(--on-surface-variant);font-size:11px;letter-spacing:4px;text-transform:uppercase;font-weight:700;margin-bottom:20px">MATCH SUMMARY</div>
+    <div style="background:var(--surface-container);border-radius:16px;padding:20px;margin-bottom:12px;border:1px solid var(--outline-variant)">
+      <div style="display:flex;align-items:baseline;justify-content:center;margin-bottom:12px">
+        <span id="sum-score" style="color:var(--on-surface);font-size:44px;font-weight:900;font-family:'Space Grotesk'"></span>
+        <span style="color:var(--on-surface-variant);font-size:16px;font-family:'Inter'"> / 10</span>
+      </div>
+      <div style="height:10px;background:var(--surface-container-highest);border-radius:9999px;overflow:hidden;margin-bottom:6px">
+        <div id="sum-bar" style="height:100%;background:var(--secondary);border-radius:9999px;transition:width .5s;width:0"></div>
+      </div>
+      <div id="sum-xp" style="color:var(--secondary-fixed);font-size:11px;text-align:right;font-style:italic"></div>
+    </div>
+    <div id="sum-history" style="background:var(--surface-container-low);border-radius:16px;overflow:hidden;margin-bottom:16px;border:1px solid var(--outline-variant)">
+      <div style="color:var(--on-surface);font-size:13px;font-weight:900;font-family:'Space Grotesk';letter-spacing:1px;text-transform:uppercase;padding:14px;border-bottom:1px solid rgba(143,143,160,.2)">STANDINGS</div>
+    </div>
+    <button id="replay-btn" class="gradient-btn">PLAY AGAIN</button>
+  </div>
+</div>
+
+<script src="game.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI" async defer></script>
+</body>
+</html>
