@@ -51,6 +51,7 @@ export default function App() {
   const [order, setOrder] = useState([]);
   const [timer, setTimer] = useState(30);
   const [heading] = useState(() => Math.floor(Math.random()*360));
+  const [input, setInput] = useState('');
   const popAnim = useRef(new Animated.Value(0)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
   const timerRef = useRef(null);
@@ -72,6 +73,7 @@ export default function App() {
     }
     if(timer===0 && screen==='streetview') {
       Vibration.vibrate(200);
+      setInput('');
       setScreen('input');
     }
   }, [screen, timer]);
@@ -187,7 +189,7 @@ export default function App() {
         <View style={ns.roundPill}>
           <Text style={ns.roundText}>⬡ {round}/{maxRounds}</Text>
         </View>
-        <TouchableOpacity style={ns.answerBtn} onPress={() => setScreen('input')}>
+        <TouchableOpacity style={ns.answerBtn} onPress={() => { setInput(''); setScreen('input'); }}>
           <Text style={ns.answerBtnText}>ICH WEIẞ ES →</Text>
         </TouchableOpacity>
       </View>
@@ -196,7 +198,6 @@ export default function App() {
 
   // ─── TEXT INPUT ───
   if(screen==='input') {
-    const [input, setInput] = useState('');
     return (
       <View style={ns.container}>
         <StatusBar barStyle="light-content" backgroundColor={NC.bg} />
