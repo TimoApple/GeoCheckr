@@ -9,7 +9,11 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
 
-// Fallback: Use WebView with working web Street View approach
+/**
+ * APPROACH 3: WebView with Maps JavaScript API (fallback)
+ * Uses the exact same HTML structure as working test-standalone.html
+ * If native doesn't work, this is the guaranteed fallback
+ */
 class StreetViewActivityWebView : AppCompatActivity() {
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -19,13 +23,21 @@ class StreetViewActivityWebView : AppCompatActivity() {
         val lat = intent.getDoubleExtra("latitude", 52.52)
         val lng = intent.getDoubleExtra("longitude", 13.41)
         val heading = (0..359).random()
-        Log.d("GeoCheckr", "StreetViewActivityWebView: lat=$lat, lng=$lng")
+        Log.d("GeoCheckr", "WebView Activity: lat=$lat, lng=$lng, heading=$heading")
 
         val webView = WebView(this).apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
+            settings.allowFileAccess = true
+            settings.allowContentAccess = true
             settings.loadWithOverviewMode = true
             settings.useWideViewPort = true
+            webViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    Log.d("GeoCheckr", "WebView page finished loading")
+                }
+            }
         }
 
         val frame = FrameLayout(this).apply { addView(webView) }
@@ -34,25 +46,32 @@ class StreetViewActivityWebView : AppCompatActivity() {
             setBackgroundColor(0x80000000.toInt())
             setOnClickListener { finish() }
         }
-        val lp = FrameLayout.LayoutParams(144, 144).apply {
+        frame.addView(closeBtn, FrameLayout.LayoutParams(144, 144).apply {
             gravity = android.view.Gravity.TOP or android.view.Gravity.END
             setMargins(0, 48, 48, 0)
-        }
-        frame.addView(closeBtn, lp)
+        })
         setContentView(frame)
 
-        // Same HTML as working test-standalone.html approach
+        // EXACT same HTML as working test-standalone.html
         val apiKey = "AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI"
         val html = """<!DOCTYPE html>
-<html><head><meta charset="utf-8">
+<html>
+<head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<style>*{margin:0;padding:0}html,body,#p{width:100%;height:100%;overflow:hidden;background:#000}</style>
-</head><body>
-<div id="p"></div>
+<style>
+*{margin:0;padding:0}html,body,#pano{height:100%;width:100%;overflow:hidden;background:#000}
+#status{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:18px;z-index:10;font-family:sans-serif}
+</style>
+</head>
+<body>
+<div id="pano"></div>
+<div id="status">Lade...</div>
 <script>
-function initMap(){
+function init(){
+  document.getElementById('status').style.display='none';
   try{
-    new google.maps.StreetViewPanorama(document.getElementById('p'),{
+    new google.maps.StreetViewPanorama(document.getElementById('pano'),{
       position:{lat:$lat,lng:$lng},
       pov:{heading:$heading,pitch:0},
       zoom:1,
@@ -60,13 +79,28 @@ function initMap(){
       linksControl:true,panControl:true,zoomControl:true,
       fullscreenControl:false,scrollwheel:true,clickToGo:true
     });
-  }catch(e){document.body.innerHTML='<div style="color:#fff;text-align:center;padding:40px">Error: '+e.message+'</div>';}
+  }catch(e){
+    document.getElementById('status').textContent='Fehler: '+e.message;
+    document.getElementById('status').style.color='red';
+  }
 }
-window.initMap=initMap;
+window.initMap=init;
+window.gm_authFailure=function(){
+  document.getElementById('status').textContent='API KEY ERROR!';
+  document.getElementById('status').style.color='red';
+};
 </script>
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=$apiKey&callback=initMap"></script>
-</body></html>""".trimIndent()
+<script src="https://maps.googleapis.com/maps/api/js?key=$apiKey&callback=initMap" async defer></script>
+</body>
+</html>""".trimIndent()
 
-        webView.loadDataWithBaseURL("https://timoapple.github.io/", html, "text/html", "UTF-8", null)
+        // Load with base URL to handle relative paths
+        webView.loadDataWithBaseURL(
+            "https://timoapple.github.io/",
+            html,
+            "text/html",
+            "UTF-8",
+            null
+        )
     }
 }
