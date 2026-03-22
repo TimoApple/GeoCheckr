@@ -9,7 +9,7 @@ const srcDir = path.join(androidDir, 'app', 'src', 'main', 'java', 'com', 'geoch
 fs.mkdirSync(srcDir, { recursive: true });
 
 const nativeDir = path.join(__dirname, '..', 'native');
-['StreetViewActivity.kt', 'StreetViewActivityOptions.kt', 'StreetViewActivityWebView.kt', 'StreetViewModule.kt', 'StreetViewPackage.kt'].forEach(file => {
+['StreetViewActivity.kt', 'StreetViewActivityOptions.kt', 'StreetViewActivityWebView.kt', 'StreetViewActivityLocalFile.kt', 'StreetViewModule.kt', 'StreetViewPackage.kt'].forEach(file => {
   fs.copyFileSync(path.join(nativeDir, file), path.join(srcDir, file));
   console.log(`✅ Copied ${file}`);
 });
@@ -36,7 +36,7 @@ if (!mf.includes('com.google.android.geo.API_KEY')) {
   // Inject AFTER <application ... > opening tag (single clean replacement)
   mf = mf.replace(
     /(<application[^>]*>)/,
-    `$1\n    <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI"/>\n    <activity android:name="com.geocheckr.app.StreetViewActivity" android:theme="@style/Theme.AppCompat.NoActionBar" android:exported="false"/>\n    <activity android:name="com.geocheckr.app.StreetViewActivityOptions" android:theme="@style/Theme.AppCompat.NoActionBar" android:exported="false"/>\n    <activity android:name="com.geocheckr.app.StreetViewActivityWebView" android:theme="@style/Theme.AppCompat.NoActionBar" android:exported="false"/>`
+    `$1\n    <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI"/>\n    <activity android:name="com.geocheckr.app.StreetViewActivity" android:theme="@style/Theme.AppCompat.NoActionBar" android:exported="false"/>\n    <activity android:name="com.geocheckr.app.StreetViewActivityOptions" android:theme="@style/Theme.AppCompat.NoActionBar" android:exported="false"/>\n    <activity android:name="com.geocheckr.app.StreetViewActivityWebView" android:theme="@style/Theme.AppCompat.NoActionBar" android:exported="false"/>\n    <activity android:name="com.geocheckr.app.StreetViewActivityLocalFile" android:theme="@style/Theme.AppCompat.NoActionBar" android:exported="false"/>`
   );
   fs.writeFileSync(manifest, mf);
   console.log('✅ Added API key + Activity to AndroidManifest.xml');
