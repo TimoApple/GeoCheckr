@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>GeoCheckr — NEON Design</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#0a0a0f;color:#e8e8f0;font-family:'Space Grotesk',sans-serif;overflow:hidden}
+.screen{display:none;width:100%;height:100%;position:absolute;top:0;left:0}
+.screen.active{display:flex;flex-direction:column;align-items:center;justify-content:center}
+button{cursor:pointer;border:none;outline:none;font-family:'Space Grotesk',sans-serif}
+.neon-btn{background:transparent;color:#00f5ff;padding:16px 0;border-radius:9999px;width:100%;font-size:16px;font-weight:900;letter-spacing:-1px;text-transform:uppercase;border:2px solid #00f5ff;box-shadow:0 0 15px rgba(0,245,255,.3),inset 0 0 15px rgba(0,245,255,.1);transition:all .3s}
+.neon-btn:hover{background:rgba(0,245,255,.1);box-shadow:0 0 30px rgba(0,245,255,.5),inset 0 0 30px rgba(0,245,255,.2)}
+.neon-pink{border-color:#ff00ff;color:#ff00ff;box-shadow:0 0 15px rgba(255,0,255,.3),inset 0 0 15px rgba(255,0,255,.1)}
+.neon-pink:hover{background:rgba(255,0,255,.1);box-shadow:0 0 30px rgba(255,0,255,.5)}
+.glow{animation:glow 2s ease-in-out infinite alternate}
+@keyframes glow{from{box-shadow:0 0 10px rgba(0,245,255,.3)}to{box-shadow:0 0 25px rgba(0,245,255,.6)}}
+</style>
+</head>
+<body>
+<div id="home" class="screen active">
+  <div style="z-index:1;text-align:center;padding:20px;width:100%;max-width:420px">
+    <div style="font-size:60px;margin-bottom:8px;animation:glow 2s ease-in-out infinite alternate">⬡</div>
+    <div style="font-size:48px;font-weight:900;letter-spacing:-2px;color:#00f5ff;text-transform:uppercase;text-shadow:0 0 20px rgba(0,245,255,.5)">GEOCHECKR</div>
+    <div style="font-size:10px;color:#ff00ff;letter-spacing:4px;text-transform:uppercase;font-weight:700;margin-bottom:20px;text-shadow:0 0 10px rgba(255,0,255,.5)">THE CARTOGRAPHIC EXPLORER</div>
+    <div style="display:flex;gap:12px;margin-bottom:16px">
+      <button id="btn-map" class="neon-btn glow" style="flex:1;padding:20px;border-radius:16px">
+        <div style="font-size:32px;margin-bottom:8px">📍</div>
+        <div style="font-size:14px;font-weight:900">MAP MODE</div>
+      </button>
+      <button id="btn-input" class="neon-btn neon-pink" style="flex:1;padding:20px;border-radius:16px">
+        <div style="font-size:32px;margin-bottom:8px">⌨️</div>
+        <div style="font-size:14px;font-weight:900">TIPPEN</div>
+      </button>
+    </div>
+  </div>
+</div>
+<div id="streetview" class="screen" style="position:relative">
+  <div id="sv-pano" style="width:100%;height:100%;position:absolute;top:0;left:0"></div>
+  <div id="sv-timer" style="position:absolute;top:12px;right:12px;background:rgba(10,10,15,.9);border-radius:50%;width:52px;height:52px;display:flex;align-items:center;justify-content:center;border:2px solid #ff00ff;z-index:10;font-size:22px;font-weight:900;color:#e8e8f0;box-shadow:0 0 10px rgba(255,0,255,.3)">30</div>
+  <div id="sv-round" style="position:absolute;top:12px;left:12px;background:rgba(10,10,15,.9);border-radius:12px;padding:8px 14px;z-index:10;font-size:12px;color:#00f5ff;font-weight:600"></div>
+  <button id="answer-btn" class="neon-btn" style="position:absolute;bottom:28px;left:50%;transform:translateX(-50%);width:auto;padding:14px 28px;border-radius:9999px;z-index:10;font-size:15px">ICH WEIẞ ES →</button>
+</div>
+<div id="mapscreen" class="screen"><iframe id="map-frame" style="width:100%;height:100%;border:none"></iframe></div>
+<div id="inputscreen" class="screen">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;width:100%;z-index:1">
+    <div style="color:#00f5ff;font-size:28px;font-weight:900;letter-spacing:-1px;margin-bottom:20px;text-transform:uppercase;text-shadow:0 0 15px rgba(0,245,255,.5)">WELCHE STADT?</div>
+    <input id="city-input" type="text" placeholder="z.B. Seoul" style="background:rgba(0,245,255,.05);color:#e8e8f0;font-size:18px;padding:16px;border-radius:12px;width:100%;max-width:400px;border:1px solid rgba(0,245,255,.3);text-align:center;outline:none;margin-bottom:16px;font-family:'Space Grotesk'">
+    <button id="submit-btn" class="neon-btn" style="max-width:400px">BESTÄTIGEN</button>
+  </div>
+</div>
+<div id="result" class="screen">
+  <div style="z-index:1;text-align:center;padding:24px;width:100%;max-width:420px">
+    <div id="res-emoji" style="font-size:60px;margin-bottom:8px"></div>
+    <div id="res-title" style="font-size:32px;font-weight:900;letter-spacing:-1px;text-transform:uppercase;margin-bottom:20px"></div>
+    <div style="background:rgba(0,245,255,.05);border-radius:16px;padding:20px;margin-bottom:16px;border:1px solid rgba(0,245,255,.2)">
+      <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:rgba(0,245,255,.5);font-size:11px;letter-spacing:2px;text-transform:uppercase">ORT</span><span id="res-city" style="color:#e8e8f0;font-size:16px;font-weight:700"></span></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:rgba(0,245,255,.5);font-size:11px;letter-spacing:2px;text-transform:uppercase">DISTANZ</span><span id="res-dist" style="color:#e8e8f0;font-size:16px;font-weight:700"></span></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:rgba(0,245,255,.5);font-size:11px;letter-spacing:2px;text-transform:uppercase">PUNKTE</span><span id="res-pts" style="color:#00f5ff;font-size:28px;font-weight:900;text-shadow:0 0 10px rgba(0,245,255,.5)"></span></div>
+    </div>
+    <div style="width:100%;margin-bottom:16px">
+      <div id="score-text" style="color:rgba(0,245,255,.5);font-size:12px;margin-bottom:6px;text-align:center"></div>
+      <div style="height:8px;background:rgba(0,245,255,.1);border-radius:9999px;overflow:hidden">
+        <div id="score-bar" style="height:100%;background:linear-gradient(90deg,#00f5ff,#ff00ff);border-radius:9999px;transition:width .5s;width:0"></div>
+      </div>
+    </div>
+    <button id="next-btn" class="neon-btn">NÄCHSTE RUNDE →</button>
+  </div>
+</div>
+<div id="summary" class="screen" style="overflow-y:auto;justify-content:flex-start;padding-top:50px">
+  <div style="z-index:1;text-align:center;padding:20px;width:100%;max-width:500px">
+    <div id="sum-title" style="font-size:48px;font-weight:900;color:#00f5ff;letter-spacing:-2px;text-transform:uppercase;text-shadow:0 0 20px rgba(0,245,255,.5)"></div>
+    <div style="color:#ff00ff;font-size:11px;letter-spacing:4px;text-transform:uppercase;font-weight:700;margin-bottom:20px;text-shadow:0 0 10px rgba(255,0,255,.5)">MATCH SUMMARY</div>
+    <div style="background:rgba(0,245,255,.05);border-radius:16px;padding:20px;margin-bottom:12px;border:1px solid rgba(0,245,255,.2)">
+      <div style="display:flex;align-items:baseline;justify-content:center;margin-bottom:12px">
+        <span id="sum-score" style="color:#e8e8f0;font-size:44px;font-weight:900"></span>
+        <span style="color:rgba(0,245,255,.5);font-size:16px"> / 10</span>
+      </div>
+      <div style="height:10px;background:rgba(0,245,255,.1);border-radius:9999px;overflow:hidden;margin-bottom:6px">
+        <div id="sum-bar" style="height:100%;background:linear-gradient(90deg,#00f5ff,#ff00ff);border-radius:9999px;transition:width .5s;width:0"></div>
+      </div>
+      <div id="sum-xp" style="color:#39ff14;font-size:11px;text-align:right"></div>
+    </div>
+    <div id="sum-history" style="background:rgba(0,0,0,.3);border-radius:16px;overflow:hidden;margin-bottom:16px;border:1px solid rgba(0,245,255,.1)">
+      <div style="color:#00f5ff;font-size:13px;font-weight:900;letter-spacing:1px;text-transform:uppercase;padding:14px;border-bottom:1px solid rgba(0,245,255,.1)">STANDINGS</div>
+    </div>
+    <button id="replay-btn" class="neon-btn neon-pink">PLAY AGAIN</button>
+  </div>
+</div>
+
+<script src="game.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI" async defer></script>
+</body>
+</html>
