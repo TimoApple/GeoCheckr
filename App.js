@@ -49,6 +49,7 @@ export default function App() {
   const [timer, setTimer] = useState(30);
   const [bootLines, setBootLines] = useState([]);
   const [heading] = useState(() => Math.floor(Math.random()*360));
+  const [input, setInput] = useState('');
   const timerRef = useRef(null);
 
   // Boot sequence
@@ -84,6 +85,7 @@ export default function App() {
     }
     if(timer===0 && screen==='streetview') {
       Vibration.vibrate(200);
+      setInput('');
       setScreen('input');
     }
   }, [screen, timer]);
@@ -178,7 +180,7 @@ export default function App() {
         <View style={rs.roundBox}>
           <Text style={rs.roundText}>R{round}/{maxRounds}</Text>
         </View>
-        <TouchableOpacity style={rs.answerBtn} onPress={() => setScreen('input')}>
+        <TouchableOpacity style={rs.answerBtn} onPress={() => { setInput(''); setScreen('input'); }}>
           <Text style={rs.answerBtnText}>{'>'} ANSWER {'<'}</Text>
         </TouchableOpacity>
       </View>
@@ -187,7 +189,6 @@ export default function App() {
 
   // ─── INPUT ───
   if(screen==='input') {
-    const [input, setInput] = useState('');
     return (
       <View style={rs.container}>
         <StatusBar barStyle="light-content" backgroundColor={RC.bg} />
