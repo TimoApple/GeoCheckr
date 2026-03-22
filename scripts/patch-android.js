@@ -9,7 +9,7 @@ const srcDir = path.join(androidDir, 'app', 'src', 'main', 'java', 'com', 'geoch
 fs.mkdirSync(srcDir, { recursive: true });
 
 const nativeDir = path.join(__dirname, '..', 'native');
-['StreetViewActivity.kt', 'StreetViewModule.kt', 'StreetViewPackage.kt'].forEach(file => {
+['StreetViewActivity.kt', 'StreetViewActivityWebView.kt', 'StreetViewModule.kt', 'StreetViewPackage.kt'].forEach(file => {
   fs.copyFileSync(path.join(nativeDir, file), path.join(srcDir, file));
   console.log(`✅ Copied ${file}`);
 });
@@ -24,7 +24,7 @@ console.log('✅ Copied activity_street_view.xml');
 const buildGradle = path.join(androidDir, 'app', 'build.gradle');
 let bg = fs.readFileSync(buildGradle, 'utf8');
 if (!bg.includes('play-services-maps')) {
-  bg = bg.replace(/dependencies\s*{/, `dependencies {\n    implementation 'com.google.android.gms:play-services-maps:19.1.0'`);
+  bg = bg.replace(/dependencies\s*{/, `dependencies {\n    implementation 'com.google.android.gms:play-services-maps:19.2.0'`);
   fs.writeFileSync(buildGradle, bg);
   console.log('✅ Added play-services-maps to build.gradle');
 }
@@ -36,7 +36,7 @@ if (!mf.includes('com.google.android.geo.API_KEY')) {
   // Inject AFTER <application ... > opening tag (single clean replacement)
   mf = mf.replace(
     /(<application[^>]*>)/,
-    `$1\n    <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI"/>\n    <activity android:name="com.geocheckr.app.StreetViewActivity" android:theme="@style/Theme.AppCompat.NoActionBar" android:exported="false"/>`
+    `$1\n    <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI"/>\n    <activity android:name="com.geocheckr.app.StreetViewActivity" android:theme="@style/Theme.AppCompat.NoActionBar" android:exported="false"/>\n    <activity android:name="com.geocheckr.app.StreetViewActivityWebView" android:theme="@style/Theme.AppCompat.NoActionBar" android:exported="false"/>`
   );
   fs.writeFileSync(manifest, mf);
   console.log('✅ Added API key + Activity to AndroidManifest.xml');
