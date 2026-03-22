@@ -72,6 +72,18 @@ window.addEventListener('message',function(e){
   if(e.data&&e.data.lat!==undefined)processResult(e.data);
 });
 
+function showAnswer(){
+  playClick();clearInterval(timerInt);
+  if(mode==='map'){
+    showScreen('map');
+    document.getElementById('map-frame').src='map.html?lat='+currentLoc.lat+'&lng='+currentLoc.lng;
+  }else{
+    showScreen('input');
+    document.getElementById('city-input').value='';
+    document.getElementById('city-input').focus();
+  }
+}
+
 function processResult(answer){
   clearInterval(timerInt);
   let dist=20000;
