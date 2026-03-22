@@ -24,7 +24,7 @@ console.log('✅ Copied activity_street_view.xml');
 const buildGradle = path.join(androidDir, 'app', 'build.gradle');
 let bg = fs.readFileSync(buildGradle, 'utf8');
 if (!bg.includes('play-services-maps')) {
-  bg = bg.replace(/dependencies\s*{/, `dependencies {\n    implementation 'com.google.android.gms:play-services-maps:19.0.0'`);
+  bg = bg.replace(/dependencies\s*{/, `dependencies {\n    implementation 'com.google.android.gms:play-services-maps:19.1.0'`);
   fs.writeFileSync(buildGradle, bg);
   console.log('✅ Added play-services-maps to build.gradle');
 }
