@@ -50,7 +50,7 @@ class StreetViewActivityWebView : AppCompatActivity() {
 </head><body>
 <div id="p"></div>
 <script>
-function init(){
+function initMap(){
   try{
     new google.maps.StreetViewPanorama(document.getElementById('p'),{
       position:{lat:$lat,lng:$lng},
@@ -62,8 +62,9 @@ function init(){
     });
   }catch(e){document.body.innerHTML='<div style="color:#fff;text-align:center;padding:40px">Error: '+e.message+'</div>';}
 }
+window.initMap=initMap;
 </script>
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=$apiKey"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=$apiKey&callback=initMap"></script>
 </body></html>""".trimIndent()
 
         webView.loadDataWithBaseURL("https://timoapple.github.io/", html, "text/html", "UTF-8", null)
