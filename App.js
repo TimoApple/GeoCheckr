@@ -49,6 +49,7 @@ export default function App() {
   const [order, setOrder] = useState([]);
   const [timer, setTimer] = useState(30);
   const [heading] = useState(() => Math.floor(Math.random()*360));
+  const [input, setInput] = useState('');
   const popAnim = useRef(new Animated.Value(0)).current;
   const timerRef = useRef(null);
 
@@ -59,6 +60,7 @@ export default function App() {
     }
     if(timer===0 && screen==='streetview') {
       Vibration.vibrate(200);
+      setInput('');
       setScreen('input');
     }
   }, [screen, timer]);
@@ -144,7 +146,7 @@ export default function App() {
         <View style={ws.roundBadge}>
           <Text style={ws.roundText}>{round} / {maxRounds}</Text>
         </View>
-        <TouchableOpacity style={ws.answerBtn} onPress={() => setScreen('input')}>
+        <TouchableOpacity style={ws.answerBtn} onPress={() => { setInput(''); setScreen('input'); }}>
           <Text style={ws.answerBtnText}>Ich weiß es</Text>
         </TouchableOpacity>
       </View>
@@ -153,7 +155,6 @@ export default function App() {
 
   // ─── INPUT ───
   if(screen==='input') {
-    const [input, setInput] = useState('');
     return (
       <View style={ws.container}>
         <StatusBar barStyle="dark-content" backgroundColor={WC.bg} />
