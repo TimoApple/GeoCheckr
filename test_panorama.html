@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GeoCheckr Panorama Test</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body, #pano { width: 100%; height: 100%; }
+#pano { background: #111; }
+#loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-family: sans-serif; }
+</style>
+</head>
+<body>
+<div id="pano"></div>
+<div id="loading">Lade Street View...</div>
+
+<!-- Maps JS API with API Key -->
+<script>
+function initPano() {
+  var loc = { lat: 48.8584, lng: 2.2945 }; // Eiffel Tower
+  var sv = new google.maps.StreetViewService();
+  sv.getPanorama({ location: loc, radius: 50, preference: google.maps.StreetViewPreference.NEAREST, source: google.maps.StreetViewSource.OUTDOOR }, function(data, status) {
+    if (status === google.maps.StreetViewStatus.OK) {
+      var panorama = new google.maps.StreetViewPanorama(document.getElementById('pano'), {
+        position: data.location.latLng,
+        pov: { heading: Math.random() * 360, pitch: 0 },
+        zoom: 1,
+        addressControl: false,
+        showRoadLabels: false,
+        linksControl: false,
+        panControl: false,
+        zoomControl: false,
+        fullscreenControl: false,
+        motionTracking: false,
+        motionTrackingControl: false,
+        enableCloseButton: false,
+      });
+      panorama.setOptions({
+        scrollwheel: false,
+        disableDefaultUI: true,
+      });
+      document.getElementById('loading').style.display = 'none';
+      console.log('Panorama loaded:', data.location.description);
+    } else {
+      document.getElementById('loading').innerText = 'Street View nicht verfügbar';
+      console.error('StreetView error:', status);
+    }
+  });
+}
+</script>
+
+<!-- Google Maps JS API with YOUR key -->
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI&callback=initPano"></script>
+</body>
+</html>

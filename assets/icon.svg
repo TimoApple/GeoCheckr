@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background -->
+  <rect width="512" height="512" fill="#0a0a14" rx="100"/>
+  
+  <!-- Globe circle -->
+  <circle cx="256" cy="256" r="140" fill="none" stroke="#1e1e30" stroke-width="2"/>
+  
+  <!-- Globe meridian lines -->
+  <ellipse cx="256" cy="256" rx="140" ry="140" fill="none" stroke="#2a2a4a" stroke-width="1.5"/>
+  <ellipse cx="256" cy="256" rx="70" ry="140" fill="none" stroke="#2a2a4a" stroke-width="1.5"/>
+  <line x1="116" y1="256" x2="396" y2="256" stroke="#2a2a4a" stroke-width="1.5"/>
+  
+  <!-- Globe latitude lines -->
+  <ellipse cx="256" cy="190" rx="130" ry="20" fill="none" stroke="#2a2a4a" stroke-width="1"/>
+  <ellipse cx="256" cy="322" rx="130" ry="20" fill="none" stroke="#2a2a4a" stroke-width="1"/>
+  
+  <!-- Location pin -->
+  <g transform="translate(256, 200)">
+    <path d="M0,-60 C-33,-60 -60,-33 -60,0 C-60,33 0,90 0,90 C0,90 60,33 60,0 C60,-33 33,-60 0,-60 Z" 
+          fill="#ff3333"/>
+    <circle cx="0" cy="-5" r="22" fill="#0a0a14"/>
+  </g>
+</svg>

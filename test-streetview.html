@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GeoCheckr — Street View Test</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0a14; font-family: -apple-system, sans-serif; }
+
+#pano {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%; height: 100%;
+}
+
+/* Status overlay */
+#status {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  color: #8888aa; font-size: 14px; text-align: center; z-index: 100;
+  transition: opacity 0.5s;
+}
+#status .emoji { font-size: 48px; margin-bottom: 16px; }
+#status.hidden { opacity: 0; pointer-events: none; }
+
+/* Location info */
+#info {
+  position: fixed; bottom: 20px; left: 20px;
+  background: rgba(0,0,0,0.8); color: #fff;
+  padding: 10px 16px; border-radius: 8px;
+  font-size: 14px; z-index: 100;
+  display: none;
+}
+
+/* Debug */
+#debug {
+  position: fixed; top: 10px; left: 10px;
+  background: rgba(0,0,0,0.8); color: #4CAF50;
+  padding: 8px 12px; border-radius: 6px;
+  font-family: monospace; font-size: 11px; z-index: 100;
+}
+
+/* Controls */
+#controls {
+  position: fixed; top: 10px; right: 10px;
+  display: flex; gap: 8px; z-index: 100;
+}
+#controls button {
+  background: rgba(0,0,0,0.8); color: #fff; border: 1px solid #333;
+  padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px;
+}
+#controls button:hover { border-color: #ff3333; }
+</style>
+</head>
+<body>
+
+<div id="pano"></div>
+
+<div id="status">
+  <div class="emoji">🌍</div>
+  <div>Lade Street View...</div>
+</div>
+
+<div id="debug">init...</div>
+<div id="info"></div>
+
+<div id="controls">
+  <button onclick="loadRandom()">🎲 Random</button>
+  <button onclick="loadLocation(48.8584, 2.2945)">🗼 Paris</button>
+  <button onclick="loadLocation(35.6595, 139.7004)">🗾 Tokyo</button>
+  <button onclick="loadLocation(-33.8568, 151.2153)">🦘 Sydney</button>
+  <button onclick="loadLocation(52.52, 13.405)">🇩🇪 Berlin</button>
+</div>
+
+<script>
+var API_KEY = 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
+var panorama;
+var svService;
+
+// All test locations — EXACT street-level coordinates
+var LOCATIONS = [
+  { city: 'Paris Eiffel', lat: 48.8584, lng: 2.2945 },
+  { city: 'Rome Colosseum', lat: 41.8900, lng: 12.4920 },
+  { city: 'Amsterdam Dam', lat: 52.3727, lng: 4.8926 },
+  { city: 'Prague Old Town', lat: 50.0865, lng: 14.4114 },
+  { city: 'Barcelona Sagrada', lat: 41.4036, lng: 2.1744 },
+  { city: 'Vienna Stephansplatz', lat: 48.2081, lng: 16.3729 },
+  { city: 'Copenhagen Nyhavn', lat: 55.6800, lng: 12.5906 },
+  { city: 'Stockholm Gamla Stan', lat: 59.3254, lng: 18.0712 },
+  { city: 'Budapest Parliament', lat: 47.5070, lng: 19.0459 },
+  { city: 'Tokyo Shibuya', lat: 35.6595, lng: 139.7004 },
+  { city: 'Seoul Gwanghwamun', lat: 37.5719, lng: 126.9767 },
+  { city: 'Bangkok Wat Arun', lat: 13.7436, lng: 100.4886 },
+  { city: 'Dubai Burj Khalifa', lat: 25.1972, lng: 55.2744 },
+  { city: 'Sydney Opera', lat: -33.8568, lng: 151.2154 },
+  { city: 'NYC Times Square', lat: 40.7580, lng: -73.9855 },
+  { city: 'SF Golden Gate', lat: 37.8198, lng: -122.4785 },
+  { city: 'Cape Town Waterfront', lat: -33.9038, lng: 18.4219 },
+  { city: 'Berlin Brandenburg', lat: 52.5163, lng: 13.3777 },
+  { city: 'London Big Ben', lat: 51.5007, lng: -0.1246 },
+  { city: 'Mexico City Zócalo', lat: 19.4326, lng: -99.1332 },
+];
+
+function log(msg) {
+  console.log(msg);
+  document.getElementById('debug').innerText = msg;
+}
+
+function init() {
+  log('API loading...');
+  
+  svService = new google.maps.StreetViewService();
+  
+  panorama = new google.maps.StreetViewPanorama(document.getElementById('pano'), {
+    position: { lat: 48.8584, lng: 2.2945 },
+    pov: { heading: 0, pitch: 0 },
+    zoom: 1,
+    addressControl: false,
+    showRoadLabels: false,
+    linksControl: true,
+    panControl: false,
+    zoomControl: true,
+    fullscreenControl: false,
+    motionTracking: false,
+    motionTrackingControl: false,
+    enableCloseButton: false,
+    scrollwheel: true,
+    clickToGo: true,
+  });
+
+  // Listen for panorama changes
+  panorama.addListener('status_changed', function() {
+    var status = panorama.getStatus();
+    log('Status: ' + status);
+    if (status === 'OK') {
+      document.getElementById('status').classList.add('hidden');
+      document.getElementById('info').style.display = 'block';
+      var loc = panorama.getLocation();
+      document.getElementById('info').innerText = 
+        (loc.description || '') + ' (' + loc.latLng.lat().toFixed(4) + ', ' + loc.latLng.lng().toFixed(4) + ')';
+    }
+  });
+
+  panorama.addListener('pov_changed', function() {
+    var pov = panorama.getPov();
+    log('POV: ' + Math.round(pov.heading) + '° / ' + Math.round(pov.pitch) + '°');
+  });
+
+  // Load first location
+  loadLocation(48.8584, 2.2945);
+  log('Ready! ✅');
+}
+
+function loadLocation(lat, lng) {
+  log('Finding panorama at ' + lat + ',' + lng + '...');
+  document.getElementById('status').classList.remove('hidden');
+  document.getElementById('status').innerHTML = '<div class="emoji">🔍</div><div>Suche Street View...</div>';
+
+  svService.getPanorama({
+    location: { lat: lat, lng: lng },
+    radius: 50000,
+    preference: google.maps.StreetViewPreference.NEAREST,
+    source: google.maps.StreetViewSource.OUTDOOR
+  }, function(data, status) {
+    if (status === google.maps.StreetViewStatus.OK) {
+      var loc = data.location;
+      log('FOUND: ' + (loc.description || 'unknown') + ' @ ' + loc.latLng.lat().toFixed(6) + ',' + loc.latLng.lng().toFixed(6));
+      panorama.setPano(data.location.pano);
+      panorama.setPov({ heading: Math.random() * 360, pitch: 0 });
+      document.getElementById('status').classList.add('hidden');
+      document.getElementById('info').style.display = 'block';
+      document.getElementById('info').innerText = loc.description || 'Street View';
+    } else {
+      log('NOT FOUND: ' + status);
+      document.getElementById('status').innerHTML = '<div class="emoji">📷</div><div>Kein Street View hier</div>';
+    }
+  });
+}
+
+function loadRandom() {
+  var loc = LOCATIONS[Math.floor(Math.random() * LOCATIONS.length)];
+  log('Random: ' + loc.city);
+  loadLocation(loc.lat, loc.lng);
+}
+
+// Auth failure handler
+window.gm_authFailure = function() {
+  log('❌ API KEY ERROR!');
+  document.getElementById('status').innerHTML = 
+    '<div class="emoji" style="color:#ff3333">⚠️</div>' +
+    '<div style="color:#ff3333">API Key ungültig!<br>Key ist evtl. nur für Android Apps beschränkt.</div>';
+};
+</script>
+
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI&callback=init">
+</script>
+
+</body>
+</html>

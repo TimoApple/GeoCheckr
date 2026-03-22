@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>*{margin:0;padding:0}html,body,#p{width:100%;height:100%;overflow:hidden;background:#0e0e0e}
+#s{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#c6c5d7;text-align:center;font-family:sans-serif}
+#s .e{font-size:48px;margin-bottom:16px;animation:pulse 2s ease-in-out infinite}
+#s.hide{display:none}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+#overlay{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:5}
+#overlay .corner{position:absolute;width:40px;height:40px;border:2px solid rgba(189,194,255,.3)}
+#overlay .tl{top:0;left:0;border-right:none;border-bottom:none}
+#overlay .tr{top:0;right:0;border-left:none;border-bottom:none}
+#overlay .bl{bottom:0;left:0;border-right:none;border-top:none}
+#overlay .br{bottom:0;right:0;border-left:none;border-top:none}</style>
+</head>
+<body><div id="p"></div>
+<div id="s"><div class="e">🔍</div><div>Lade...</div></div>
+<div id="overlay"><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div></div>
+<script>
+var params = new URLSearchParams(window.location.search);
+var lat = parseFloat(params.get('lat')) || 52.52;
+var lng = parseFloat(params.get('lng')) || 13.41;
+
+function init() {
+  var sv = new google.maps.StreetViewService();
+  sv.getPanorama({
+    location: {lat: lat, lng: lng},
+    radius: 50000,
+    preference: google.maps.StreetViewPreference.NEAREST,
+    source: google.maps.StreetViewSource.OUTDOOR
+  }, function(d, s) {
+    if (s === google.maps.StreetViewStatus.OK) {
+      document.getElementById('s').className = 'hide';
+      new google.maps.StreetViewPanorama(document.getElementById('p'), {
+        pano: d.location.pano,
+        pov: {heading: Math.random() * 360, pitch: 0},
+        zoom: 1,
+        addressControl: false,
+        showRoadLabels: false,
+        linksControl: true,
+        panControl: false,
+        zoomControl: true,
+        fullscreenControl: false,
+        motionTracking: false,
+        motionTrackingControl: false,
+        enableCloseButton: false,
+        scrollwheel: true,
+        clickToGo: true
+      });
+    } else {
+      document.getElementById('s').innerHTML = '<div class="e">📷</div><div>Kein Street View hier</div>';
+    }
+  });
+}
+
+window.gm_authFailure = function() {
+  document.getElementById('s').innerHTML = '<div class="e" style="color:#ff3333">⚠️</div><div style="color:#ff3333">API Key Fehler</div>';
+};
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI&callback=init"></script>
+</body></html>
