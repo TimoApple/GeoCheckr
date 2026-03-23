@@ -7,7 +7,10 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>GeoCheckr — Find the Place!</title>
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#34C759">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css?v=9">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -18,5 +21,6 @@
 </head>
 <body>
   <div id="app"></div>
+  <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
 </body>
 </html>
