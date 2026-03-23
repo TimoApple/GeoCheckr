@@ -195,8 +195,15 @@ function renderLeafletMap(containerId, realLat, realLng, guessLat, guessLng, rea
 let qrScanner = null;
 
 function getLocationByQR(code) {
-  // QR format: "GEOC-123" where 123 is location ID
-  const id = parseInt(code.replace(/[^0-9]/g, ''));
+  // Support both formats:
+  // "GEOC-123" (legacy)
+  // "https://timoapple.github.io/GeoCheckr/?loc=123" (URL deep link)
+  let id;
+  if (code.includes('loc=')) {
+    id = parseInt(new URL(code).searchParams.get('loc'));
+  } else {
+    id = parseInt(code.replace(/[^0-9]/g, ''));
+  }
   return LOCATIONS.find(l => l.id === id) || null;
 }
 
@@ -800,5 +807,23 @@ function startGame() {
   navigate('setup');
 }
 
-// Init
-render();
+// Init — check for deep link
+(function init() {
+  const params = new URLSearchParams(window.location.search);
+  const locId = parseInt(params.get('loc'));
+  if (locId) {
+    const loc = LOCATIONS.find(l => l.id === locId);
+    if (loc) {
+      state.players = [{ name: 'Player 1' }];
+      state.scores = [0];
+      state.currentLocation = loc;
+      state.usedLocations = [loc.id];
+      state.timer = getTimerForDiff(state.difficulty);
+      state.phase = 'view';
+      state.screen = 'game';
+      render();
+      return;
+    }
+  }
+  render();
+})();

@@ -91,13 +91,14 @@
         const qrDiv = document.createElement('div');
         qrDiv.className = 'card-qr';
         
-        const code = 'GEOC-' + String(loc.id).padStart(3, '0');
+        const code = 'https://timoapple.github.io/GeoCheckr/?loc=' + loc.id;
+        const shortCode = 'GC-' + String(loc.id).padStart(3, '0');
         
         card.innerHTML = `
           <div class="card-city">${loc.city}</div>
           <div class="card-country">${loc.country}</div>
           <div class="card-qr" id="qr-${loc.id}"></div>
-          <div class="card-code">${code}</div>
+          <div class="card-code">${shortCode}</div>
           <span class="card-diff diff-${loc.difficulty}">${loc.difficulty === 'leicht' ? 'Easy' : loc.difficulty === 'mittel' ? 'Medium' : 'Hard'}</span>
         `;
         grid.appendChild(card);
