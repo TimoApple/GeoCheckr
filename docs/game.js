@@ -425,20 +425,33 @@ function skipTimer() {
 function renderAnswer(el) {
   const cp = state.currentPlayer;
   const name = state.players[cp].name;
+  const hasVoice = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
   
   el.innerHTML = `
     <div class="screen screen-game">
       <div class="answer-phase">
-        <div class="answer-icon">📍</div>
-        <h2>${name}, wo bist du?</h2>
+        <div class="answer-title">${name}, wo bist du?</div>
+        
+        <!-- Voice Input Button -->
+        ${hasVoice ? `
+        <button class="voice-btn" id="voice-btn" onclick="startVoiceInput()">
+          <div class="voice-ring" id="voice-ring"></div>
+          <span class="voice-icon">🎤</span>
+        </button>
+        <div class="voice-status" id="voice-status">Tippe zum Sprechen</div>
+        <div class="voice-result" id="voice-result"></div>
+        ` : ''}
+        
+        <!-- Text Input Fallback -->
+        <div class="answer-divider"><span>oder</span></div>
         <div class="answer-input-wrap">
           <input type="text" id="answer-input" class="input input-answer" 
-                 placeholder="Stadtname..." autofocus
+                 placeholder="Stadtname eingeben..." autofocus
                  onkeydown="if(event.key==='Enter')submitAnswer()">
         </div>
         <div class="answer-buttons">
           <button class="btn btn-primary" onclick="submitAnswer()">✓ Antworten</button>
-          <button class="btn btn-skip" onclick="submitAnswer(true)">Überspringen →</button>
+          <button class="btn btn-skip" onclick="submitAnswer(true)">Überspringen</button>
         </div>
       </div>
     </div>
@@ -447,6 +460,57 @@ function renderAnswer(el) {
     const inp = document.getElementById('answer-input');
     if (inp) inp.focus();
   }, 100);
+}
+
+// Voice Input
+let voiceRecognition = null;
+function startVoiceInput() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return;
+  
+  if (voiceRecognition) { voiceRecognition.stop(); voiceRecognition = null; }
+  
+  voiceRecognition = new SR();
+  voiceRecognition.lang = 'de-DE';
+  voiceRecognition.continuous = false;
+  voiceRecognition.interimResults = false;
+  
+  const btn = document.getElementById('voice-btn');
+  const ring = document.getElementById('voice-ring');
+  const status = document.getElementById('voice-status');
+  const result = document.getElementById('voice-result');
+  
+  btn.classList.add('recording');
+  ring.classList.add('blinking');
+  status.textContent = '🔴 Höre zu...';
+  result.textContent = '';
+  
+  voiceRecognition.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    btn.classList.remove('recording');
+    ring.classList.remove('blinking');
+    status.textContent = '';
+    result.textContent = transcript;
+    result.classList.add('show');
+    
+    // Auto-fill input and submit
+    const inp = document.getElementById('answer-input');
+    if (inp) inp.value = transcript;
+    setTimeout(() => submitAnswer(), 1500);
+  };
+  
+  voiceRecognition.onerror = (e) => {
+    btn.classList.remove('recording');
+    ring.classList.remove('blinking');
+    status.textContent = '❌ Nicht verstanden — tippe!';
+  };
+  
+  voiceRecognition.onend = () => {
+    btn.classList.remove('recording');
+    ring.classList.remove('blinking');
+  };
+  
+  voiceRecognition.start();
 }
 
 function submitAnswer(skip) {
@@ -496,7 +560,7 @@ function renderResult(el) {
   const p = state.points;
   const emoji = p >= 3 ? '🎯' : p >= 2 ? '👍' : p >= 1 ? '😐' : '😅';
   const label = p >= 3 ? 'Perfekt!' : p >= 2 ? 'Gut!' : p >= 1 ? 'Nicht schlecht!' : 'Daneben!';
-  const color = p > 0 ? 'var(--success)' : 'var(--danger)';
+  const color = p > 0 ? '#4CAF50' : '#ff4444';
   const cp = state.currentPlayer;
   const nextCp = (cp + 1) % state.players.length;
   const isLastTurn = (state.round >= state.maxRounds) && (nextCp === 0);
@@ -508,7 +572,14 @@ function renderResult(el) {
         <h2 class="result-title" style="color:${color}">${label}</h2>
       </div>
       
-      <div id="result-map" class="result-map"></div>
+      <!-- Big city name overlay on map -->
+      <div class="result-map-wrap">
+        <div id="result-map" class="result-map"></div>
+        <div class="city-overlay">
+          <span class="city-big-name">${loc.city}</span>
+          <span class="city-country">${loc.country}</span>
+        </div>
+      </div>
       
       <div class="result-info-bar">
         <div class="result-info-item">
@@ -535,7 +606,7 @@ function renderResult(el) {
     </div>
   `;
   
-  // Render Leaflet map (NO Google Maps!)
+  // Render Leaflet map
   setTimeout(() => {
     renderLeafletMap('result-map', loc.lat, loc.lng, state.guessLat, state.guessLng, loc.city, state.guessCity);
   }, 200);
