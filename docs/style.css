@@ -28,6 +28,9 @@ html, body {
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  -webkit-text-stroke: 0px !important;
+  text-stroke: 0px !important;
+  text-shadow: none !important;
 }
 
 /* ─── SCREENS ─── */
