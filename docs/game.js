@@ -219,7 +219,7 @@ function renderLeafletMap(containerId, realLat, realLng, guessLat, guessLng, rea
   const center = hasGuess ? [(realLat+guessLat)/2, (realLng+guessLng)/2] : [realLat, realLng];
   
   const map = L.map(el, { attributionControl: false }).setView(center, hasGuess ? 3 : 10);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+  L.tileLayer('https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map);
   
   // Real location (green)
   L.circleMarker([realLat, realLng], { radius: 10, fillColor: '#4CAF50', fillOpacity: 1, color: '#fff', weight: 2 })
