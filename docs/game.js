@@ -198,6 +198,9 @@ let state = {
   distance: 0,
   points: 0,
   streetViewLoaded: false,
+  guessLat: null,
+  guessLng: null,
+  guessCity: null,
 };
 
 function getTimerForDiff(d) {
@@ -427,31 +430,110 @@ function renderResult(el) {
   const isLastTurn = (state.round >= state.maxRounds) && 
                      ((state.currentPlayer + 1) % state.players.length === 0);
 
+  // Guess coordinates (from matched city or null)
+  const guessLat = state.guessLat;
+  const guessLng = state.guessLng;
+  const guessCity = state.guessCity || '?';
+  const hasMap = guessLat != null && guessLng != null;
+
   el.innerHTML = `
-    <div class="screen screen-game">
-      <div class="result-phase">
-        <div class="result-emoji">${emoji}</div>
+    <div class="screen screen-result">
+      <div class="result-header">
+        <span class="result-emoji">${emoji}</span>
         <h2 class="result-title" style="color:${color}">${label}</h2>
-        <div class="result-card">
-          <div class="result-row">
-            <span>📍 Ort</span>
-            <strong>${loc.city}, ${loc.country}</strong>
-          </div>
-          <div class="result-row">
-            <span>📏 Distanz</span>
-            <strong>${state.distance.toLocaleString('de-DE')} km</strong>
-          </div>
-          <div class="result-row">
-            <span>⭐ Punkte</span>
-            <strong class="pts">+${p}</strong>
-          </div>
-        </div>
-        <button class="btn btn-primary" onclick="${isLastTurn ? 'showSummary()' : 'nextTurn()'}">
-          ${isLastTurn ? '🏆 Ergebnis anzeigen' : nextPlayer.name + ' ist dran →'}
-        </button>
       </div>
+
+      <!-- Map showing guess vs real location -->
+      <div id="result-map" class="result-map"></div>
+
+      <div class="result-info-bar">
+        <div class="result-info-item">
+          <span class="ri-label">Dein Tipp</span>
+          <span class="ri-value">${guessCity}</span>
+        </div>
+        <div class="result-arrow">→</div>
+        <div class="result-info-item">
+          <span class="ri-label">Richtiger Ort</span>
+          <span class="ri-value">${loc.city}, ${loc.country}</span>
+        </div>
+      </div>
+
+      <div class="result-distance">
+        <span class="rd-number">${state.distance.toLocaleString('de-DE')}</span>
+        <span class="rd-unit">km entfernt</span>
+      </div>
+
+      <div class="result-points">
+        <span>+${p} ⭐</span>
+      </div>
+
+      <button class="btn btn-primary btn-continue" onclick="${isLastTurn ? 'showSummary()' : 'nextTurn()'}">
+        ${isLastTurn ? '🏆 Ergebnis anzeigen' : 'Weiter →'}
+      </button>
     </div>
   `;
+
+  // Render map with line between guess and real location
+  setTimeout(() => {
+    const mapEl = document.getElementById('result-map');
+    if (!mapEl) return;
+
+    const realPos = { lat: loc.lat, lng: loc.lng };
+    const mapOpts = {
+      center: realPos,
+      zoom: 3,
+      mapTypeId: 'roadmap',
+      disableDefaultUI: true,
+      zoomControl: true,
+      styles: [
+        { elementType: 'geometry', stylers: [{ color: '#1a1a2e' }] },
+        { elementType: 'labels.text.stroke', stylers: [{ color: '#1a1a2e' }] },
+        { elementType: 'labels.text.fill', stylers: [{ color: '#666' }] },
+        { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0f3460' }] },
+        { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2a2a4a' }] },
+        { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1a1a2e' }] },
+        { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+        { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+        { featureType: 'administrative', stylers: [{ visibility: 'simplified' }] },
+      ]
+    };
+
+    const map = new google.maps.Map(mapEl, mapOpts);
+
+    // Real location marker (green)
+    new google.maps.Marker({
+      position: realPos, map,
+      icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: '#4CAF50', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2 },
+      title: loc.city + ', ' + loc.country
+    });
+
+    if (hasMap) {
+      const guessPos = { lat: guessLat, lng: guessLng };
+
+      // Guess marker (red)
+      new google.maps.Marker({
+        position: guessPos, map,
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#e94560', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2 },
+        title: guessCity
+      });
+
+      // Line between them
+      new google.maps.Polyline({
+        path: [guessPos, realPos],
+        geodesic: true,
+        strokeColor: '#FFD700',
+        strokeOpacity: 0.8,
+        strokeWeight: 3,
+        map: map
+      });
+
+      // Fit bounds to show both
+      const bounds = new google.maps.LatLngBounds();
+      bounds.extend(realPos);
+      bounds.extend(guessPos);
+      map.fitBounds(bounds, 50);
+    }
+  }, 200);
 }
 
 function renderSummary(el) {
@@ -611,10 +693,17 @@ function submitAnswer(skip) {
   const loc = state.currentLocation;
   
   let dist = 20000; // default: max
+  let guessLat = null, guessLng = null, guessCity = '?';
+  
   if (input.trim()) {
     const found = findCity(input);
     if (found) {
       dist = calcDistance(loc.lat, loc.lng, found.lat, found.lng);
+      guessLat = found.lat;
+      guessLng = found.lng;
+      guessCity = found.city;
+    } else {
+      guessCity = input.trim();
     }
   }
   
@@ -624,6 +713,9 @@ function submitAnswer(skip) {
   
   state.distance = dist;
   state.points = total;
+  state.guessLat = guessLat;
+  state.guessLng = guessLng;
+  state.guessCity = guessCity;
   state.scores[state.currentPlayer] = (state.scores[state.currentPlayer] || 0) + total;
   
   state.history.push({

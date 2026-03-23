@@ -260,6 +260,85 @@ html, body {
 .result-row strong { color: var(--text); font-size: 16px; }
 .pts { color: var(--success) !important; font-size: 22px !important; }
 
+/* ─── RESULT (Full Page with Map) ─── */
+.screen-result {
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+}
+.result-header {
+  padding: 16px 20px;
+  text-align: center;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.result-emoji { font-size: 36px; }
+.result-title { font-size: 24px; font-weight: 900; margin: 0; }
+.result-map {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  background: var(--bg);
+}
+.result-info-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.result-info-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+.ri-label { color: var(--text3); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+.ri-value { color: var(--text); font-size: 16px; font-weight: 700; margin-top: 2px; }
+.result-arrow { color: var(--accent); font-size: 20px; font-weight: 700; }
+.result-distance {
+  text-align: center;
+  padding: 12px;
+  background: var(--bg2);
+  flex-shrink: 0;
+}
+.rd-number {
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--accent);
+}
+.rd-unit {
+  font-size: 14px;
+  color: var(--text2);
+  margin-left: 6px;
+}
+.result-points {
+  text-align: center;
+  padding: 8px;
+  background: var(--bg2);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--success);
+  flex-shrink: 0;
+}
+.btn-continue {
+  margin: 12px 20px;
+  margin-bottom: max(12px, env(safe-area-inset-bottom));
+  flex-shrink: 0;
+  font-size: 18px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+}
+
 /* ─── SUMMARY ─── */
 .screen-summary {
   align-items: center; gap: 15px; text-align: center;
