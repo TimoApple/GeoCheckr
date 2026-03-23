@@ -213,13 +213,24 @@ function getTimerForDiff(d) {
 let panorama = null;
 let svService = null;
 
-function initStreetView() {
-  svService = new google.maps.StreetViewService();
+function ensureMapReady() {
+  if (typeof google !== 'undefined' && google.maps && google.maps.StreetViewService) {
+    if (!svService) svService = new google.maps.StreetViewService();
+    return true;
+  }
+  return false;
 }
 
 function loadPanorama(lat, lng) {
   const container = document.getElementById('streetview-container');
   if (!container) return;
+
+  if (!ensureMapReady()) {
+    // Maps API not loaded yet, retry
+    container.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#888;font-family:sans-serif;"><div style="text-align:center;"><div style="font-size:24px;">⏳</div><div style="margin-top:10px;">Lade Maps API...</div></div></div>';
+    setTimeout(() => loadPanorama(lat, lng), 1000);
+    return;
+  }
 
   // Try to find a nearby panorama
   svService.getPanorama({ location: { lat, lng }, radius: 50000, preference: 'nearest' }, (data, status) => {
@@ -489,6 +500,10 @@ function renderResult(el) {
         { elementType: 'geometry', stylers: [{ color: '#1a1a2e' }] },
         { elementType: 'labels.text.stroke', stylers: [{ visibility: 'off' }] },
         { elementType: 'labels.text.fill', stylers: [{ color: '#ffffff' }] },
+        { featureType: 'administrative.locality', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+        { featureType: 'administrative.country', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+        { featureType: 'administrative.province', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+        { featureType: 'administrative.neighborhood', elementType: 'labels', stylers: [{ visibility: 'off' }] },
         { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0f3460' }] },
         { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2a2a4a' }] },
         { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1a1a2e' }] },
@@ -707,6 +722,8 @@ function submitAnswer(skip) {
     }
   }
   
+  console.log('SUBMIT:', {input, found: findCity(input), dist, loc: loc.city, lat: loc.lat, lng: loc.lng});
+  
   const pts = calcPoints(dist);
   const timeBonus = (state.difficulty === 'schwer' && state.timer > 10 && pts > 0) ? 1 : 0;
   const total = pts + timeBonus;
@@ -777,7 +794,4 @@ document.addEventListener('DOMContentLoaded', () => {
   render();
 });
 
-// Global callback for Google Maps API
-function initMap() {
-  initStreetView();
-}
+// Map API loaded check via ensureMapReady()
