@@ -24,35 +24,27 @@ console.log('✅ Copied activity_street_view.xml');
 const buildGradle = path.join(androidDir, 'app', 'build.gradle');
 let bg = fs.readFileSync(buildGradle, 'utf8');
 if (!bg.includes('play-services-maps')) {
-  bg = bg.replace(/dependencies\s*\{/, `dependencies {\n    implementation 'com.google.android.gms:play-services-maps:20.0.0'`);
+  bg = bg.replace(/dependencies\s*{/, `dependencies {\n    implementation 'com.google.android.gms:play-services-maps:19.0.0'`);
   fs.writeFileSync(buildGradle, bg);
-  console.log('✅ Added play-services-maps:20.0.0 to build.gradle');
+  console.log('✅ Added play-services-maps to build.gradle');
 }
 
-// 4. Patch AndroidManifest.xml - add API key + Activity + uses-library
+// 4. Patch AndroidManifest.xml - add API key + Activity
 const manifest = path.join(androidDir, 'app', 'src', 'main', 'AndroidManifest.xml');
 let mf = fs.readFileSync(manifest, 'utf8');
-
-// Only patch if not already done
 if (!mf.includes('com.google.android.geo.API_KEY')) {
-  // Add after <application ...> opening tag
+  mf = mf.replace(
+    '<application',
+    '<application\n    <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI"/>\n    <activity android:name=".StreetViewActivity" android:theme="@style/Theme.AppCompat.NoActionBar" android:exported="false"/>'
+  );
+  // Fix: inject after <application ...> tag opening, not before
   mf = mf.replace(
     /(<application[^>]*>)/,
     `$1\n    <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI"/>\n    <activity android:name=".StreetViewActivity" android:theme="@style/Theme.AppCompat.NoActionBar" android:exported="false"/>`
   );
+  fs.writeFileSync(manifest, mf);
   console.log('✅ Added API key + Activity to AndroidManifest.xml');
 }
-
-// Add uses-library for play-services-maps 20.x compatibility
-if (!mf.includes('org.apache.http.legacy')) {
-  mf = mf.replace(
-    '</application>',
-    '    <uses-library android:name="org.apache.http.legacy" android:required="false"/>\n</application>'
-  );
-  console.log('✅ Added uses-library org.apache.http.legacy');
-}
-
-fs.writeFileSync(manifest, mf);
 
 // 5. Patch MainApplication.kt - register package
 const mainApp = path.join(androidDir, 'app', 'src', 'main', 'java', 'com', 'geocheckr', 'app', 'MainApplication.kt');
@@ -67,7 +59,7 @@ if (!ma.includes('StreetViewPackage')) {
   }
   // Add to packages list
   ma = ma.replace(
-    /PackageList\(this\)\.packages\.apply\s*\{/,
+    /PackageList\(this\)\.packages\.apply\s*{/,
     'PackageList(this).packages.apply {\n              add(StreetViewPackage())'
   );
   fs.writeFileSync(mainApp, ma);

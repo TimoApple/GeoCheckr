@@ -4,45 +4,11 @@
     android:layout_height="match_parent"
     android:background="#000000">
 
-    <!-- Street View Panorama Fragment (in XML with android:name) -->
     <fragment
         android:id="@+id/streetviewpanorama"
         android:name="com.google.android.gms.maps.SupportStreetViewPanoramaFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-
-    <!-- Loading overlay -->
-    <FrameLayout
-        android:id="@+id/loadingOverlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#CC000000"
-        android:visibility="visible">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:orientation="vertical"
-            android:gravity="center">
-
-            <ProgressBar
-                android:id="@+id/progressBar"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:indeterminateTint="#e94560" />
-
-            <TextView
-                android:id="@+id/loadingText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Lade Street View..."
-                android:textColor="#AAAAAA"
-                android:textSize="14sp" />
-
-        </LinearLayout>
-    </FrameLayout>
 
     <!-- Close button -->
     <ImageButton
