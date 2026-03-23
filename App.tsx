@@ -1,8 +1,9 @@
-// GeoCheckr — Root App (self-contained, NO navigation crash)
+// GeoCheckr — APK v3 (matches Web App v3)
+// Street View: UNVERÄNDERT (Vorlage 2)
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput, Animated,
-  Vibration, Platform, KeyboardAvoidingView, StatusBar, ScrollView, Dimensions
+  Vibration, Platform, StatusBar, ScrollView, Dimensions
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,105 +15,56 @@ const { width } = Dimensions.get('window');
 const API_KEY = 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
 
 interface Player { id: number; name: string; }
-type Screen = 'tutorial' | 'setup' | 'game' | 'result';
-type AnswerMode = 'text' | 'map';
+type Screen = 'tutorial' | 'setup' | 'game' | 'summary';
 
-// Street View HTML — same as #170
+// Street View HTML — UNVERÄNDERT (Vorlage 2)
 function buildStreetViewHtml(lat: number, lng: number): string {
   return `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body,#pano{width:100%;height:100%;overflow:hidden;background:#000}
-#status{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#888;font-family:sans-serif;text-align:center;font-size:14px;z-index:999}
-#status .spinner{width:32px;height:32px;border:3px solid #333;border-top-color:#e94560;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
-@keyframes spin{to{transform:rotate(360deg)}}
-</style>
-</head>
-<body>
-<div id="pano"></div>
-<div id="status"><div class="spinner"></div>Lade Street View...</div>
-<script>
-function init(){
-  var sv=new google.maps.StreetViewService();
-  sv.getPanorama({location:{lat:${lat},lng:${lng}},radius:50000,
-    preference:google.maps.StreetViewPreference.NEAREST,
-    source:google.maps.StreetViewSource.OUTDOOR},function(data,st){
-    if(st===google.maps.StreetViewStatus.OK){
-      new google.maps.StreetViewPanorama(document.getElementById('pano'),{
-        pano:data.location.pano,pov:{heading:Math.random()*360,pitch:0},zoom:0,
-        addressControl:false,linksControl:true,panControl:true,zoomControl:true,
-        fullscreenControl:false,motionTracking:false,motionTrackingControl:false,
-        enableCloseButton:false,clickToGo:true,scrollwheel:true,disableDefaultUI:false
-      });
-      document.getElementById('status').style.display='none';
-      window.ReactNativeWebView&&window.ReactNativeWebView.postMessage('loaded');
-    }else{
-      document.getElementById('status').innerHTML='❌ Kein Street View';
-      window.ReactNativeWebView&&window.ReactNativeWebView.postMessage('error');
-    }
-  });
-}
-</script>
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init&libraries=streetView"></script>
-</body></html>`;
-}
-
-const MAP_HTML = `<!DOCTYPE html>
 <html><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<style>*{margin:0;padding:0}html,body,#map{width:100%;height:100%}
-#info{position:fixed;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);
-color:#fff;padding:8px 16px;border-radius:20px;font-family:sans-serif;font-size:14px;z-index:999;pointer-events:none}</style>
-</head><body>
-<div id="map"></div>
-<div id="info">Tippe auf die Karte</div>
-<script>
-var map=L.map('map',{attributionControl:false}).setView([20,0],2);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(map);
-var marker=null;
-map.on('click',function(e){
-  if(marker)map.removeLayer(marker);
-  marker=L.marker(e.latlng).addTo(map);
-  window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify({lat:e.latlng.lat,lng:e.latlng.lng}));
-});
-</script></body></html>`;
+<style>*{margin:0;padding:0;box-sizing:border-box}html,body,#pano{width:100%;height:100%;overflow:hidden;background:#000}
+#status{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#888;font-family:sans-serif;text-align:center}
+#status .spinner{width:32px;height:32px;border:3px solid #333;border-top-color:#e94560;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}</style>
+</head><body><div id="pano"></div><div id="status"><div class="spinner"></div>Lade...</div>
+<script>function init(){new google.maps.StreetViewService().getPanorama({location:{lat:${lat},lng:${lng}},radius:50000,preference:google.maps.StreetViewPreference.NEAREST,source:google.maps.StreetViewSource.OUTDOOR},function(d,s){
+if(s===google.maps.StreetViewStatus.OK){new google.maps.StreetViewPanorama(document.getElementById('pano'),{pano:d.location.pano,pov:{heading:Math.random()*360,pitch:0},zoom:0,addressControl:false,linksControl:true,panControl:true,zoomControl:true,fullscreenControl:false,motionTracking:false,enableCloseButton:false,clickToGo:true,scrollwheel:true});
+document.getElementById('status').style.display='none';window.ReactNativeWebView&&window.ReactNativeWebView.postMessage('loaded');}
+else{document.getElementById('status').innerHTML='❌ Kein Street View';window.ReactNativeWebView&&window.ReactNativeWebView.postMessage('error');}});}
+</script><script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init&libraries=streetView"></script></body></html>`;
+}
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('tutorial');
-  const [tutorialPage, setTutorialPage] = useState(0);
-  const [playerName, setPlayerName] = useState('');
-  const [difficulty, setDifficulty] = useState<'leicht' | 'mittel' | 'schwer'>('leicht');
-  const [player, setPlayer] = useState<Player>({ id: 1, name: 'Spieler 1' });
-  const [score, setScore] = useState(0);
+  const [tutStep, setTutStep] = useState(0);
+  const [p1Name, setP1Name] = useState('');
+  const [p2Name, setP2Name] = useState('');
+  const [difficulty, setDifficulty] = useState<'leicht'|'mittel'|'schwer'>('leicht');
+  const [maxRounds, setMaxRounds] = useState(5);
+  const [players, setPlayers] = useState<Player[]>([{id:1,name:'Spieler 1'},{id:2,name:'Spieler 2'}]);
+  const [scores, setScores] = useState([0,0]);
   const [round, setRound] = useState(1);
-  const [maxRounds] = useState(10);
+  const [currentPlayer, setCurrentPlayer] = useState(0);
   const [location, setLocation] = useState<PanoramaLocation>(panoramaLocations[0]);
   const [usedLocations, setUsedLocations] = useState<number[]>([]);
-  const [phase, setPhase] = useState<'view' | 'answer' | 'result'>('view');
+  const [phase, setPhase] = useState<'view'|'answer'|'result'>('view');
   const [timer, setTimer] = useState(30);
   const [timerPaused, setTimerPaused] = useState(false);
   const [svLoaded, setSvLoaded] = useState(false);
   const [svError, setSvError] = useState(false);
-  const [answerMode, setAnswerMode] = useState<AnswerMode>('text');
-  const [showMap, setShowMap] = useState(false);
   const [textInput, setTextInput] = useState('');
   const [distance, setDistance] = useState(0);
   const [points, setPoints] = useState(0);
+  const [guessCity, setGuessCity] = useState('');
+  const [history, setHistory] = useState<Array<{round:number,playerIdx:number,city:string,distance:number,points:number}>>([]);
+
   const timerPulse = useRef(new Animated.Value(1)).current;
   const resultScale = useRef(new Animated.Value(0)).current;
 
-  // Check if tutorial already seen
+  // Check tutorial
   useEffect(() => {
-    AsyncStorage.getItem('geocheckr_tutorial_done').then(v => {
-      if (v === 'true') setScreen('setup');
-    });
+    AsyncStorage.getItem('geocheckr_tut3').then(v => { if (v === 'true') setScreen('setup'); });
   }, []);
 
   // Timer
@@ -124,17 +76,14 @@ export default function App() {
 
   useEffect(() => {
     if (timer <= 5 && timer > 0 && phase === 'view') {
-      playTimerTick();
-      Vibration.vibrate(200);
+      playTimerTick(); Vibration.vibrate(200);
       Animated.sequence([
-        Animated.timing(timerPulse, { toValue: 1.3, duration: 150, useNativeDriver: true }),
-        Animated.timing(timerPulse, { toValue: 1, duration: 150, useNativeDriver: true }),
+        Animated.timing(timerPulse,{toValue:1.3,duration:150,useNativeDriver:true}),
+        Animated.timing(timerPulse,{toValue:1,duration:150,useNativeDriver:true}),
       ]).start();
     }
     if (timer === 0 && phase === 'view') {
-      playTimerWarning();
-      Vibration.vibrate(500);
-      setPhase('answer');
+      playTimerWarning(); Vibration.vibrate(500); setPhase('answer');
       setTimeout(() => playAnswerphoneBeep(), 100);
     }
   }, [timer, phase]);
@@ -147,114 +96,120 @@ export default function App() {
 
   const startGame = () => {
     playClickSound();
-    setPlayer(prev => ({ ...prev, name: playerName.trim() || 'Spieler 1' }));
-    setScore(0);
-    setRound(1);
-    setUsedLocations([]);
-    startRound();
-    setScreen('game');
+    setPlayers([{id:1,name:p1Name.trim()||'Spieler 1'},{id:2,name:p2Name.trim()||'Spieler 2'}]);
+    setScores([0,0]); setRound(1); setCurrentPlayer(0);
+    setUsedLocations([]); setHistory([]);
+    startRound(); setScreen('game');
   };
 
   const startRound = useCallback(() => {
     const loc = getRandomLocation();
     setUsedLocations(prev => [...prev, loc.id]);
     setLocation(loc);
-    setTimer(30);
-    setTimerPaused(false);
-    setPhase('view');
-    setSvLoaded(false);
-    setSvError(false);
-    setTextInput('');
-    setAnswerMode('text');
-    setShowMap(false);
+    setTimer(difficulty==='schwer'?20:30);
+    setTimerPaused(false); setPhase('view');
+    setSvLoaded(false); setSvError(false);
+    setTextInput(''); setGuessCity('');
     resultScale.setValue(0);
-  }, [getRandomLocation, resultScale]);
+  }, [getRandomLocation, difficulty, resultScale]);
 
-  const resolveAnswer = (dist: number) => {
+  const resolveAnswer = (dist: number, city: string) => {
     const pts = calculatePoints(dist);
-    const bonus = (difficulty === 'schwer' && timer > 10 && pts > 0) ? 1 : 0;
-    const total = pts + bonus;
-    if (total >= 3) { playPerfectSound(); Vibration.vibrate([100, 50, 100]); }
-    else if (total > 0) { playSuccessSound(); Vibration.vibrate([100, 50, 100]); }
+    if (pts >= 3) { playPerfectSound(); Vibration.vibrate([100,50,100]); }
+    else if (pts > 0) { playSuccessSound(); Vibration.vibrate([100,50,100]); }
     else { playErrorSound(); Vibration.vibrate(500); }
-    setDistance(dist);
-    setPoints(total);
-    setScore(s => s + total);
-    Animated.spring(resultScale, { toValue: 1, friction: 6, useNativeDriver: true }).start();
+    setDistance(dist); setPoints(pts); setGuessCity(city);
+    setScores(prev => { const n=[...prev]; n[currentPlayer]+=pts; return n; });
+    setHistory(prev => [...prev,{round,playerIdx:currentPlayer,city:location.city,distance:Math.round(dist),points:pts}]);
+    Animated.spring(resultScale,{toValue:1,friction:6,useNativeDriver:true}).start();
     setPhase('result');
   };
 
-  const submitTextAnswer = () => {
-    let dist = 20000;
+  const submitAnswer = () => {
+    let dist = 20000; let city = '';
     if (textInput.trim()) {
       try {
         const allLocs = require('./src/data/locations_complete').default;
         const n = textInput.toLowerCase().trim().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
         let m = allLocs.find((l: any) => l.city.toLowerCase() === n);
         if (!m) m = allLocs.find((l: any) => l.city.toLowerCase().includes(n) || n.includes(l.city.toLowerCase()));
-        if (m) dist = calculateDistance(location.lat, location.lng, m.lat, m.lng);
+        if (m) { dist = calculateDistance(location.lat,location.lng,m.lat,m.lng); city = m.city; }
+        else { city = textInput; }
       } catch {}
     }
-    resolveAnswer(dist);
+    resolveAnswer(dist, city);
   };
 
   const nextTurn = () => {
     playClickSound();
-    if (round >= maxRounds) { setScreen('result'); return; }
-    setRound(r => r + 1);
-    startRound();
+    const next = (currentPlayer + 1) % players.length;
+    if (next === 0 && round >= maxRounds) { setScreen('summary'); return; }
+    if (next === 0) setRound(r => r + 1);
+    setCurrentPlayer(next); startRound();
   };
 
   const completeTutorial = async () => {
-    try { await AsyncStorage.setItem('geocheckr_tutorial_done', 'true'); } catch {}
+    try { await AsyncStorage.setItem('geocheckr_tut3','true'); } catch {}
     setScreen('setup');
   };
 
-  const tc = timer <= 5 ? '#ff4444' : timer <= 10 ? '#ffaa00' : '#e94560';
-  const T = [
-    { icon: '🌍', title: 'GeoCheckr', sub: 'Finde heraus wo du bist!' },
-    { icon: '👆', title: 'Navigiere', sub: 'Bewege dich durch Street View\nKlicke auf Pfeile um zu laufen' },
-    { icon: '📍', title: 'Rate den Ort', sub: 'Tippe den Stadtnamen\noder zeige auf die Karte' },
+  const TUTS = [
+    {icon:'🌍',title:'Willkommen!',text:'Du wirst an einen zufälligen Ort gebracht.\nFinde heraus wo du bist!'},
+    {icon:'👆',title:'Navigiere',text:'Bewege dich durch Street View.\nKlicke auf Pfeile um zu laufen.'},
+    {icon:'📍',title:'Rate den Ort',text:'Gib den Stadtnamen ein.\nPunkte für Nähe!'},
   ];
 
+  const tc = timer<=5?'#ff4444':timer<=10?'#ffaa00':'#e94560';
+
   // ===== TUTORIAL =====
-  if (screen === 'tutorial') return (
-    <View style={s.c}><StatusBar hidden />
-      <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={e => setTutorialPage(Math.round(e.nativeEvent.contentOffset.x / width))}>
-        {T.map((t,i) => <View key={i} style={[s.ts,{width}]}><Text style={s.ti}>{t.icon}</Text><Text style={s.tt}>{t.title}</Text><Text style={s.tsub}>{t.sub}</Text></View>)}
-      </ScrollView>
-      <View style={s.td}>{T.map((_,i)=><View key={i} style={[s.dot,i===tutorialPage&&s.dotA]}/>)}</View>
-      <View style={s.tbr}>
-        <TouchableOpacity style={s.tsk} onPress={completeTutorial}><Text style={s.tskt}>Überspringen</Text></TouchableOpacity>
-        {tutorialPage<2?<TouchableOpacity style={s.tn} onPress={()=>setTutorialPage(tutorialPage+1)}><Text style={s.tnt}>Weiter →</Text></TouchableOpacity>
-        :<TouchableOpacity style={s.tgo} onPress={completeTutorial}><Text style={s.tgot}>Los! 🚀</Text></TouchableOpacity>}
+  if (screen === 'tutorial') {
+    const t = TUTS[tutStep];
+    return (
+      <View style={s.c}><StatusBar hidden />
+        <View style={s.tutContent}>
+          <Text style={s.tutIcon}>{t.icon}</Text>
+          <Text style={s.tutTitle}>{t.title}</Text>
+          <Text style={s.tutText}>{t.text}</Text>
+        </View>
+        <View style={s.tutDots}>{TUTS.map((_,i)=><View key={i} style={[s.dot,i===tutStep&&s.dotA]}/>)}</View>
+        <View style={s.tutBtns}>
+          {tutStep>0?<TouchableOpacity onPress={()=>setTutStep(tutStep-1)}><Text style={s.ghost}>← Zurück</Text></TouchableOpacity>:<View/>}
+          {tutStep<2?<TouchableOpacity style={s.pri} onPress={()=>setTutStep(tutStep+1)}><Text style={s.priT}>Weiter →</Text></TouchableOpacity>
+          :<TouchableOpacity style={s.ok} onPress={completeTutorial}><Text style={s.okT}>Verstanden! 🚀</Text></TouchableOpacity>}
+        </View>
       </View>
-    </View>
-  );
+    );
+  }
 
   // ===== SETUP =====
   if (screen === 'setup') return (
-    <KeyboardAvoidingView style={s.c} behavior={Platform.OS==='ios'?'padding':undefined}><StatusBar hidden />
-      <View style={s.sc}>
-        <Text style={s.sTi}>GeoCheckr</Text><Text style={s.sSu}>Spieler</Text>
-        <Text style={s.sL}>NAME</Text>
-        <TextInput style={s.sIn} placeholder="Dein Name..." placeholderTextColor="#555" value={playerName} onChangeText={setPlayerName} maxLength={20} autoCapitalize="words"/>
-        <Text style={s.sL}>SCHWIERIGKEIT</Text>
-        <View style={s.dr}>{(['leicht','mittel','schwer'] as const).map(d=>
-          <TouchableOpacity key={d} style={[s.db,difficulty===d&&s.dbA]} onPress={()=>setDifficulty(d)}>
-            <Text style={s.di}>{d==='leicht'?'😊':d==='mittel'?'🤔':'🔥'}</Text>
-            <Text style={[s.dt,difficulty===d&&s.dtA]}>{d[0].toUpperCase()+d.slice(1)}</Text>
-          </TouchableOpacity>)}
-        </View>
-        <TouchableOpacity style={s.go} onPress={startGame}><Text style={s.got}>Starten 🚀</Text></TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+    <View style={s.c}><StatusBar hidden />
+      <ScrollView contentContainerStyle={s.setupC}>
+        <Text style={s.setupT}>Spieler einrichten</Text>
+        <Text style={s.label}>SPIELER 1</Text>
+        <TextInput style={s.input} placeholder="Name..." placeholderTextColor="#555" value={p1Name} onChangeText={setP1Name} maxLength={20} autoCapitalize="words"/>
+        <Text style={s.label}>SPIELER 2</Text>
+        <TextInput style={s.input} placeholder="Name..." placeholderTextColor="#555" value={p2Name} onChangeText={setP2Name} maxLength={20} autoCapitalize="words"/>
+        <Text style={s.label}>SCHWIERIGKEIT</Text>
+        <View style={s.row}>{(['leicht','mittel','schwer'] as const).map(d=>
+          <TouchableOpacity key={d} style={[s.diff,difficulty===d&&s.diffA]} onPress={()=>setDifficulty(d)}>
+            <Text style={s.diffI}>{d==='leicht'?'😊':d==='mittel'?'🤔':'🔥'}</Text>
+            <Text style={[s.diffT,difficulty===d&&s.diffTA]}>{d[0].toUpperCase()+d.slice(1)}</Text>
+          </TouchableOpacity>)}</View>
+        <Text style={s.label}>RUNDEN</Text>
+        <View style={s.row}>{[5,10,15].map(r=>
+          <TouchableOpacity key={r} style={[s.diff,maxRounds===r&&s.diffA]} onPress={()=>setMaxRounds(r)}>
+            <Text style={[s.diffT,maxRounds===r&&s.diffTA]}>{r}</Text>
+          </TouchableOpacity>)}</View>
+        <TouchableOpacity style={s.start} onPress={startGame}><Text style={s.startT}>Starten 🚀</Text></TouchableOpacity>
+      </ScrollView>
+    </View>
   );
 
   // ===== GAME =====
   if (screen === 'game') return (
     <View style={s.gc}><StatusBar hidden translucent backgroundColor="transparent" />
+      {/* FULLSCREEN STREET VIEW — UNVERÄNDERT */}
       <WebView key={`${location.lat}-${location.lng}`}
         source={{html:buildStreetViewHtml(location.lat,location.lng)}}
         style={s.sv} javaScriptEnabled domStorageEnabled allowsInlineMediaPlayback
@@ -262,54 +217,80 @@ export default function App() {
         onError={()=>setSvError(true)}
         onMessage={e=>{const m=e.nativeEvent.data;if(m==='loaded')setSvLoaded(true);if(m.startsWith('error'))setSvError(true);}}
         userAgent="Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"/>
-      {!svLoaded&&!svError&&<View style={s.lo}><Text style={s.lot}>🌍 Lade Street View...</Text></View>}
-      {svError&&<View style={s.eo}><Text style={s.ee}>❌</Text><Text style={s.ec}>{location.city}</Text>
-        <TouchableOpacity style={s.rb} onPress={nextTurn}><Text style={s.rbt}>Nächste →</Text></TouchableOpacity></View>}
-      {phase==='view'&&svLoaded&&<Animated.View style={[s.tmr,{borderColor:tc,transform:[{scale:timerPulse}]}]}><Text style={[s.tmt,{color:tc}]}>{timer}</Text></Animated.View>}
+
+      {!svLoaded&&!svError&&<View style={s.lo}><Text style={s.lot}>🌍 Lade...</Text></View>}
+      {svError&&<View style={s.eo}><Text style={s.ee}>❌</Text><TouchableOpacity style={s.rb} onPress={nextTurn}><Text style={s.rbt}>Nächste →</Text></TouchableOpacity></View>}
+
+      {/* Top Bar: 2 Players */}
       {phase==='view'&&svLoaded&&<View style={s.tb}>
-        <Text style={s.tn2}>{player.name}</Text>
-        <Text style={s.tr}>Runde {round}/{maxRounds}</Text>
-        <View style={s.tsc}><Text style={s.tsct}>⭐ {score}</Text></View></View>}
+        <View style={[s.pb,currentPlayer===0&&s.pbA]}>
+          <Text style={s.pn}>{players[0].name}</Text>
+          <Text style={s.ps}>{scores[0]}⭐</Text>
+        </View>
+        <View style={s.rb2}><Text style={s.rb2t}>Runde {round}/{maxRounds}</Text></View>
+        <View style={[s.pb,currentPlayer===1&&s.pbA]}>
+          <Text style={s.pn}>{players[1].name}</Text>
+          <Text style={s.ps}>{scores[1]}⭐</Text>
+        </View>
+      </View>}
+
+      {/* Timer */}
+      {phase==='view'&&svLoaded&&<Animated.View style={[s.tm,{borderColor:tc,transform:[{scale:timerPulse}]}]}>
+        <Text style={[s.tmt,{color:tc}]}>{timer}</Text></Animated.View>}
+
+      {/* Skip */}
       {phase==='view'&&svLoaded&&<TouchableOpacity style={s.sk} onPress={()=>{playClickSound();setTimerPaused(true);setPhase('answer');playAnswerphoneBeep();}}>
         <Text style={s.skt}>Ich weiß es! →</Text></TouchableOpacity>}
+
+      {/* ANSWER */}
       {phase==='answer'&&<View style={s.ao}><View style={s.ac}>
-        <Text style={s.at}>📍 Deine Antwort</Text><Text style={s.asu}>{player.name}, wo bist du?</Text>
-        <View style={s.mt}>
-          <TouchableOpacity style={[s.mtb,answerMode==='text'&&s.mtA]} onPress={()=>{setAnswerMode('text');setShowMap(false);}}><Text style={s.mtt}>⌨️ Tippen</Text></TouchableOpacity>
-          <TouchableOpacity style={[s.mtb,answerMode==='map'&&s.mtA]} onPress={()=>{setAnswerMode('map');setShowMap(true);}}><Text style={s.mtt}>🗺️ Karte</Text></TouchableOpacity>
+        <Text style={s.at}>📍 {players[currentPlayer].name}, wo bist du?</Text>
+        <TextInput style={s.tin} placeholder="Stadtname..." placeholderTextColor="#555" value={textInput} onChangeText={setTextInput} autoFocus returnKeyType="send" onSubmitEditing={submitAnswer}/>
+        <View style={s.abtns}>
+          <TouchableOpacity style={s.pri} onPress={submitAnswer}><Text style={s.priT}>✓ Antworten</Text></TouchableOpacity>
+          <TouchableOpacity style={s.skipB} onPress={()=>resolveAnswer(20000,'')}><Text style={s.skipT}>Überspringen</Text></TouchableOpacity>
         </View>
-        {answerMode==='text'&&<View style={s.tr2}>
-          <TextInput style={s.tin} placeholder="Stadtname..." placeholderTextColor="#555" value={textInput} onChangeText={setTextInput} autoFocus returnKeyType="send" onSubmitEditing={submitTextAnswer}/>
-          <TouchableOpacity style={s.sbtn} onPress={submitTextAnswer}><Text style={s.sbt}>✓</Text></TouchableOpacity></View>}
-        {answerMode==='map'&&!showMap&&<TouchableOpacity style={s.mh} onPress={()=>setShowMap(true)}><Text style={s.mht}>🗺️ Karte öffnen</Text></TouchableOpacity>}
-        <TouchableOpacity style={s.sab} onPress={()=>resolveAnswer(20000)}><Text style={s.sat}>Überspringen →</Text></TouchableOpacity>
       </View></View>}
+
+      {/* RESULT */}
       {phase==='result'&&<View style={s.ro}><Animated.View style={[s.rc,{transform:[{scale:resultScale}]}]}>
-        <Text style={s.re}>{points>=3?'🎯':points>=1?'👍':'😅'}</Text>
-        <Text style={[s.rti,points>0?s.co:s.wr]}>{points>=3?'Perfekt!':points>=2?'Gut!':points>=1?'Nicht schlecht!':'Daneben!'}</Text>
+        <Text style={s.re}>{points>=3?'🎯':points>=2?'👍':points>=1?'😐':'😅'}</Text>
+        <Text style={[s.rti,{color:points>0?'#4CAF50':'#ff4444'}]}>{points>=3?'Perfekt!':points>=2?'Gut!':points>=1?'Nicht schlecht!':'Daneben!'}</Text>
         <View style={s.ri}>
-          <View style={s.rr}><Text style={s.rl}>📍 Ort</Text><Text style={s.rv}>{location.city}</Text></View>
-          <View style={s.rr}><Text style={s.rl}>📏 Distanz</Text><Text style={s.rv}>{formatDistance(distance)}</Text></View>
-          <View style={s.rr}><Text style={s.rl}>⭐ Punkte</Text><Text style={[s.rv,s.ph]}>+{points}</Text></View>
+          <View style={s.rr}><Text style={s.rl}>📍 Tipp</Text><Text style={s.rv}>{guessCity||'?'}</Text></View>
+          <View style={s.rr}><Text style={s.rl}>✅ Ort</Text><Text style={s.rv}>{location.city}</Text></View>
+          <View style={s.rr}><Text style={s.rl}>📏</Text><Text style={s.rv}>{formatDistance(distance)}</Text></View>
         </View>
-        <TouchableOpacity style={s.nb} onPress={nextTurn}><Text style={s.nbt}>{round>=maxRounds?'🏆 Ergebnis':'Nächste Runde →'}</Text></TouchableOpacity>
+        <Text style={s.pts}>+{points} ⭐</Text>
+        <TouchableOpacity style={s.pri} onPress={nextTurn}>
+          <Text style={s.priT}>{(currentPlayer+1)%players.length===0&&round>=maxRounds?'🏆 Ergebnis':players[(currentPlayer+1)%players.length].name+' ist dran →'}</Text>
+        </TouchableOpacity>
       </Animated.View></View>}
-      {showMap&&<View style={s.mm}><View style={s.mh2}>
-        <Text style={s.mt2}>📍 Auf Karte zeigen</Text>
-        <TouchableOpacity style={s.mc} onPress={()=>{setShowMap(false);setAnswerMode('text');}}><Text style={s.mct}>✕</Text></TouchableOpacity></View>
-        <WebView source={{html:MAP_HTML}} style={{flex:1}} javaScriptEnabled
-          onMessage={e=>{try{const{lat,lng}=JSON.parse(e.nativeEvent.data);setShowMap(false);const d=calculateDistance(location.lat,location.lng,lat,lng);resolveAnswer(d);}catch{}}}/></View>}
     </View>
   );
 
-  // ===== RESULT =====
+  // ===== SUMMARY =====
+  const sorted = [...players].map((p,i)=>({...p,score:scores[i]})).sort((a,b)=>b.score-a.score);
   return (
     <View style={s.c}><StatusBar hidden />
-      <ScrollView contentContainerStyle={s.rsc}>
-        <Text style={s.tp}>🏆</Text><Text style={s.rst}>Spiel beendet!</Text><Text style={s.rss}>{maxRounds} Runden</Text>
-        <View style={s.wc}><Text style={s.wn}>{player.name}</Text><Text style={s.ws}>{score} ⭐</Text></View>
-        <TouchableOpacity style={s.ag} onPress={()=>{startRound();setScreen('game');}}><Text style={s.agt}>🔄 Nochmal</Text></TouchableOpacity>
-        <TouchableOpacity style={s.hm} onPress={()=>setScreen('setup')}><Text style={s.hmt}>🏠 Neues Spiel</Text></TouchableOpacity>
+      <ScrollView contentContainerStyle={s.sc}>
+        <Text style={s.tp}>🏆</Text>
+        <Text style={s.st}>Spiel beendet!</Text>
+        <Text style={s.ss}>{maxRounds} Runden</Text>
+        {sorted.map((p,i)=><View key={p.id} style={[s.li,i===0&&s.lf]}>
+          <Text style={s.lr}>{i===0?'🥇':i===1?'🥈':'🥉'}</Text>
+          <Text style={s.ln}>{p.name}</Text>
+          <Text style={s.ls}>{p.score} ⭐</Text>
+        </View>)}
+        <Text style={s.ht}>📊 Runden</Text>
+        {history.map((h,i)=><View key={i} style={s.hr}>
+          <Text style={s.hrn}>R{h.round}</Text>
+          <Text style={s.hp}>{players[h.playerIdx]?.name}</Text>
+          <Text style={s.hl}>{h.city}</Text>
+          <Text style={s.hpt}>+{h.points}</Text>
+        </View>)}
+        <TouchableOpacity style={[s.pri,{marginTop:20,width:'100%'}]} onPress={()=>{setScreen('setup');}}><Text style={s.priT}>🔄 Nochmal</Text></TouchableOpacity>
+        <TouchableOpacity style={[s.skipB,{width:'100%',marginTop:10}]} onPress={()=>setScreen('tutorial')}><Text style={s.skipT}>🏠 Menü</Text></TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -318,84 +299,64 @@ export default function App() {
 const s = StyleSheet.create({
   c:{flex:1,backgroundColor:'#0a0a1a'},
   // Tutorial
-  ts:{flex:1,justifyContent:'center',alignItems:'center',paddingHorizontal:40},
-  ti:{fontSize:80,marginBottom:30},tt:{color:'#fff',fontSize:32,fontWeight:'bold',marginBottom:15,textAlign:'center'},
-  tsub:{color:'#aaa',fontSize:18,textAlign:'center',lineHeight:26},
-  td:{flexDirection:'row',justifyContent:'center',marginBottom:30},
+  tutContent:{flex:1,justifyContent:'center',alignItems:'center',paddingHorizontal:40},
+  tutIcon:{fontSize:64,marginBottom:16},tutTitle:{color:'#fff',fontSize:22,fontWeight:'800',marginBottom:10,textAlign:'center'},
+  tutText:{color:'#aaa',fontSize:15,textAlign:'center',lineHeight:22},
+  tutDots:{flexDirection:'row',justifyContent:'center',marginBottom:30},
   dot:{width:8,height:8,borderRadius:4,backgroundColor:'#333',marginHorizontal:5},dotA:{backgroundColor:'#e94560',width:24},
-  tbr:{flexDirection:'row',justifyContent:'space-between',paddingHorizontal:30,paddingBottom:50},
-  tsk:{paddingVertical:14,paddingHorizontal:20},tskt:{color:'#666',fontSize:16},
-  tn:{backgroundColor:'#e94560',paddingVertical:14,paddingHorizontal:28,borderRadius:12},tnt:{color:'#fff',fontSize:16,fontWeight:'600'},
-  tgo:{backgroundColor:'#4CAF50',paddingVertical:14,paddingHorizontal:28,borderRadius:12},tgot:{color:'#fff',fontSize:16,fontWeight:'bold'},
+  tutBtns:{flexDirection:'row',justifyContent:'space-between',paddingHorizontal:30,paddingBottom:50},
+  ghost:{color:'#666',fontSize:15,paddingVertical:14,paddingHorizontal:20},
+  pri:{backgroundColor:'#e94560',paddingVertical:14,paddingHorizontal:24,borderRadius:12},priT:{color:'#fff',fontSize:16,fontWeight:'600'},
+  ok:{backgroundColor:'#4CAF50',paddingVertical:14,paddingHorizontal:24,borderRadius:12},okT:{color:'#fff',fontSize:16,fontWeight:'bold'},
   // Setup
-  sc:{flex:1,justifyContent:'center',paddingHorizontal:30},
-  sTi:{color:'#fff',fontSize:36,fontWeight:'bold',textAlign:'center',marginBottom:5},
-  sSu:{color:'#888',fontSize:16,textAlign:'center',marginBottom:35},
-  sL:{color:'#888',fontSize:12,marginBottom:6,fontWeight:'600',letterSpacing:1},
-  sIn:{backgroundColor:'#16213e',color:'#fff',borderRadius:10,paddingHorizontal:16,paddingVertical:14,fontSize:16,borderWidth:1,borderColor:'#2a2a4a',marginBottom:25},
-  dr:{flexDirection:'row',gap:10,marginBottom:30},
-  db:{flex:1,paddingVertical:14,borderRadius:12,borderWidth:2,borderColor:'#333',backgroundColor:'#16213e',alignItems:'center'},
-  dbA:{borderColor:'#e94560'},di:{fontSize:24,marginBottom:4},
-  dt:{color:'#888',fontSize:13,fontWeight:'600'},dtA:{color:'#fff'},
-  go:{backgroundColor:'#e94560',paddingVertical:18,borderRadius:14,alignItems:'center'},
-  got:{color:'#fff',fontSize:20,fontWeight:'bold'},
-  // Game — TRUE FULLSCREEN
+  setupC:{padding:30,alignItems:'center',paddingTop:60},
+  setupT:{color:'#fff',fontSize:28,fontWeight:'800',marginBottom:25},
+  label:{color:'#888',fontSize:11,fontWeight:'600',letterSpacing:1,alignSelf:'flex-start',marginBottom:6,marginTop:12},
+  input:{backgroundColor:'#16213e',color:'#fff',borderRadius:10,paddingHorizontal:16,paddingVertical:14,fontSize:16,borderWidth:1,borderColor:'#2a2a4a',width:'100%'},
+  row:{flexDirection:'row',gap:8,width:'100%',marginBottom:8},
+  diff:{flex:1,paddingVertical:12,borderRadius:12,borderWidth:2,borderColor:'#333',backgroundColor:'#16213e',alignItems:'center'},
+  diffA:{borderColor:'#e94560'},diffI:{fontSize:20,marginBottom:2},
+  diffT:{color:'#888',fontSize:13,fontWeight:'600'},diffTA:{color:'#fff'},
+  start:{backgroundColor:'#e94560',paddingVertical:18,borderRadius:14,alignItems:'center',width:'100%',marginTop:16},
+  startT:{color:'#fff',fontSize:18,fontWeight:'bold'},
+  // Game
   gc:{position:'absolute',top:0,left:0,right:0,bottom:0,backgroundColor:'#000'},
   sv:{position:'absolute',top:0,left:0,right:0,bottom:0,backgroundColor:'#000'},
   lo:{...StyleSheet.absoluteFillObject,justifyContent:'center',alignItems:'center',backgroundColor:'#000',zIndex:5},
   lot:{color:'#aaa',fontSize:16},
-  eo:{...StyleSheet.absoluteFillObject,justifyContent:'center',alignItems:'center',backgroundColor:'#1a1a2e',zIndex:10},
-  ee:{fontSize:60,marginBottom:15},ec:{color:'#fff',fontSize:20,fontWeight:'bold',marginBottom:20},
+  eo:{...StyleSheet.absoluteFillObject,justifyContent:'center',alignItems:'center',backgroundColor:'#0a0a1a',zIndex:10},
+  ee:{fontSize:60,marginBottom:15},
   rb:{backgroundColor:'#e94560',paddingHorizontal:24,paddingVertical:12,borderRadius:10},rbt:{color:'#fff',fontSize:16,fontWeight:'600'},
-  tmr:{position:'absolute',top:40,right:15,width:52,height:52,borderRadius:26,backgroundColor:'rgba(0,0,0,0.85)',borderWidth:3,justifyContent:'center',alignItems:'center',zIndex:20},
+  tb:{position:'absolute',top:40,left:12,right:12,flexDirection:'row',justifyContent:'space-between',alignItems:'center',zIndex:20},
+  pb:{flexDirection:'row',alignItems:'center',gap:6,backgroundColor:'rgba(0,0,0,0.65)',borderRadius:20,paddingVertical:6,paddingHorizontal:12,borderWidth:2,borderColor:'transparent'},
+  pbA:{borderColor:'#e94560',backgroundColor:'rgba(233,69,96,0.2)'},
+  pn:{color:'#fff',fontSize:12,fontWeight:'600'},ps:{color:'#FFD700',fontSize:12,fontWeight:'700'},
+  rb2:{backgroundColor:'rgba(0,0,0,0.65)',borderRadius:16,paddingVertical:6,paddingHorizontal:12},
+  rb2t:{color:'#fff',fontSize:12,fontWeight:'600'},
+  tm:{position:'absolute',top:80,right:12,width:52,height:52,borderRadius:26,backgroundColor:'rgba(0,0,0,0.85)',borderWidth:3,justifyContent:'center',alignItems:'center',zIndex:20},
   tmt:{fontSize:22,fontWeight:'bold'},
-  tb:{position:'absolute',top:40,left:15,flexDirection:'row',alignItems:'center',gap:8,zIndex:20},
-  tn2:{color:'#e94560',fontSize:14,fontWeight:'bold',backgroundColor:'rgba(0,0,0,0.75)',paddingHorizontal:10,paddingVertical:5,borderRadius:8},
-  tr:{color:'#fff',fontSize:12,backgroundColor:'rgba(0,0,0,0.75)',paddingHorizontal:10,paddingVertical:5,borderRadius:8},
-  tsc:{backgroundColor:'rgba(0,0,0,0.75)',paddingHorizontal:10,paddingVertical:5,borderRadius:8},
-  tsct:{color:'#FFD700',fontSize:13,fontWeight:'bold'},
   sk:{position:'absolute',bottom:60,alignSelf:'center',backgroundColor:'rgba(0,0,0,0.85)',paddingHorizontal:28,paddingVertical:14,borderRadius:25,borderWidth:1.5,borderColor:'#4CAF50',zIndex:20},
   skt:{color:'#4CAF50',fontSize:17,fontWeight:'600'},
   ao:{position:'absolute',top:0,left:0,right:0,bottom:0,backgroundColor:'rgba(0,0,0,0.92)',zIndex:30,justifyContent:'center',paddingHorizontal:24},
   ac:{backgroundColor:'#16213e',borderRadius:20,padding:24},
-  at:{color:'#fff',fontSize:22,fontWeight:'bold',textAlign:'center',marginBottom:5},
-  asu:{color:'#888',fontSize:14,textAlign:'center',marginBottom:20},
-  mt:{flexDirection:'row',gap:10,marginBottom:20},
-  mtb:{flex:1,paddingVertical:12,borderRadius:10,borderWidth:2,borderColor:'#333',backgroundColor:'#0f3460',alignItems:'center'},
-  mtA:{borderColor:'#e94560'},mtt:{color:'#888',fontSize:14,fontWeight:'600'},
-  tr2:{flexDirection:'row',gap:8,marginBottom:12},
-  tin:{flex:1,backgroundColor:'#0f3460',color:'#fff',borderRadius:10,paddingHorizontal:16,paddingVertical:14,fontSize:16,borderWidth:1,borderColor:'#2a2a4a'},
-  sbtn:{width:52,height:52,borderRadius:12,backgroundColor:'#4CAF50',justifyContent:'center',alignItems:'center'},
-  sbt:{color:'#fff',fontSize:24,fontWeight:'bold'},
-  mh:{backgroundColor:'#0f3460',paddingVertical:16,borderRadius:12,alignItems:'center',borderWidth:1,borderColor:'#2a2a4a',marginBottom:12},
-  mht:{color:'#fff',fontSize:16},
-  sab:{paddingVertical:10,alignItems:'center'},sat:{color:'#666',fontSize:14},
+  at:{color:'#fff',fontSize:18,fontWeight:'700',textAlign:'center',marginBottom:16},
+  tin:{backgroundColor:'#0f3460',color:'#fff',borderRadius:10,paddingHorizontal:16,paddingVertical:14,fontSize:18,borderWidth:1,borderColor:'#2a2a4a',textAlign:'center',marginBottom:16},
+  abtns:{flexDirection:'row',gap:10},
+  skipB:{backgroundColor:'transparent',paddingVertical:14,paddingHorizontal:20,borderRadius:12,borderWidth:1,borderColor:'#333'},skipT:{color:'#888',fontSize:15},
   ro:{position:'absolute',top:0,left:0,right:0,bottom:0,backgroundColor:'rgba(0,0,0,0.92)',zIndex:40,justifyContent:'center',paddingHorizontal:20},
   rc:{backgroundColor:'#16213e',borderRadius:20,padding:24,alignItems:'center'},
-  re:{fontSize:50,marginBottom:10},
-  rti:{fontSize:28,fontWeight:'bold',marginBottom:18,textAlign:'center'},
-  co:{color:'#4CAF50'},wr:{color:'#ff4444'},
-  ri:{width:'100%',marginBottom:18},
-  rr:{flexDirection:'row',justifyContent:'space-between',paddingVertical:10,borderBottomWidth:1,borderBottomColor:'#2a2a4a'},
-  rl:{color:'#aaa',fontSize:15},rv:{color:'#fff',fontSize:15,fontWeight:'600'},
-  ph:{color:'#4CAF50',fontSize:20,fontWeight:'bold'},
-  nb:{backgroundColor:'#e94560',paddingVertical:16,paddingHorizontal:30,borderRadius:14,width:'100%',alignItems:'center'},
-  nbt:{color:'#fff',fontSize:18,fontWeight:'bold'},
-  mm:{position:'absolute',top:0,left:0,right:0,bottom:0,zIndex:50,backgroundColor:'#0a0a1a'},
-  mh2:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingHorizontal:16,paddingVertical:12,paddingTop:45,backgroundColor:'#16213e',borderBottomWidth:1,borderBottomColor:'#2a2a4a'},
-  mt2:{color:'#fff',fontSize:16,fontWeight:'600'},
-  mc:{width:36,height:36,borderRadius:18,backgroundColor:'#e94560',justifyContent:'center',alignItems:'center'},
-  mct:{color:'#fff',fontSize:18,fontWeight:'bold'},
-  // Result screen
-  rsc:{padding:30,alignItems:'center',paddingTop:60},
-  tp:{fontSize:80,marginBottom:15},
-  rst:{color:'#fff',fontSize:32,fontWeight:'bold',marginBottom:5,textAlign:'center'},
-  rss:{color:'#888',fontSize:16,marginBottom:30,textAlign:'center'},
-  wc:{backgroundColor:'rgba(255,215,0,0.1)',borderRadius:20,padding:25,alignItems:'center',marginBottom:25,borderWidth:2,borderColor:'#FFD700',width:'100%'},
-  wn:{color:'#FFD700',fontSize:26,fontWeight:'bold',marginBottom:5},
-  ws:{color:'#fff',fontSize:22,fontWeight:'600'},
-  ag:{backgroundColor:'#e94560',paddingVertical:16,borderRadius:14,width:'100%',alignItems:'center',marginTop:10},
-  agt:{color:'#fff',fontSize:18,fontWeight:'bold'},
-  hm:{backgroundColor:'#16213e',paddingVertical:14,borderRadius:14,width:'100%',alignItems:'center',marginTop:12,borderWidth:1,borderColor:'#2a2a4a'},
-  hmt:{color:'#aaa',fontSize:16},
+  re:{fontSize:48,marginBottom:8},rti:{fontSize:26,fontWeight:'800',marginBottom:16,textAlign:'center'},
+  ri:{width:'100%',marginBottom:12},
+  rr:{flexDirection:'row',justifyContent:'space-between',paddingVertical:8,borderBottomWidth:1,borderBottomColor:'#2a2a4a'},
+  rl:{color:'#aaa',fontSize:14},rv:{color:'#fff',fontSize:14,fontWeight:'600'},
+  pts:{fontSize:26,fontWeight:'800',color:'#FFD700',marginBottom:16},
+  // Summary
+  sc:{padding:30,alignItems:'center',paddingTop:50},
+  tp:{fontSize:64,marginBottom:10},st:{color:'#fff',fontSize:28,fontWeight:'800',marginBottom:4},ss:{color:'#888',fontSize:14,marginBottom:20},
+  li:{flexDirection:'row',alignItems:'center',backgroundColor:'#16213e',borderRadius:12,padding:14,marginBottom:8,width:'100%',borderWidth:1,borderColor:'#2a2a4a'},
+  lf:{borderColor:'#FFD700',borderWidth:2,backgroundColor:'rgba(255,215,0,0.08)'},
+  lr:{fontSize:22,marginRight:12},ln:{flex:1,color:'#fff',fontSize:16,fontWeight:'600'},ls:{color:'#FFD700',fontSize:16,fontWeight:'700'},
+  ht:{color:'#fff',fontSize:16,fontWeight:'700',marginTop:16,marginBottom:10,width:'100%',textAlign:'center'},
+  hr:{flexDirection:'row',alignItems:'center',paddingVertical:6,borderBottomWidth:1,borderBottomColor:'#2a2a4a',width:'100%'},
+  hrn:{color:'#666',fontSize:12,width:28},hp:{color:'#fff',fontSize:13,flex:1},hl:{color:'#aaa',fontSize:13,flex:1},hpt:{color:'#4CAF50',fontSize:14,fontWeight:'700',width:36,textAlign:'right'},
 });
