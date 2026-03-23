@@ -130,9 +130,15 @@ export default function App() {
     if (textInput.trim()) {
       try {
         const allLocs = require('./src/data/locations_complete').default;
-        const n = textInput.toLowerCase().trim().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
-        let m = allLocs.find((l: any) => l.city.toLowerCase() === n);
-        if (!m) m = allLocs.find((l: any) => l.city.toLowerCase().includes(n) || n.includes(l.city.toLowerCase()));
+        const norm = (s: string) => s.toLowerCase().trim()
+          .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+          .replace(/[^a-z]/g,'');
+        const n = norm(textInput);
+        let m = allLocs.find((l: any) => norm(l.city) === n);
+        if (!m) m = allLocs.find((l: any) => {
+          const cn = norm(l.city);
+          return cn.includes(n) || n.includes(cn);
+        });
         if (m) { dist = calculateDistance(location.lat,location.lng,m.lat,m.lng); city = m.city; }
         else { city = textInput; }
       } catch {}
