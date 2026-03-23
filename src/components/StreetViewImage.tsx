@@ -1,50 +1,111 @@
-// GeoCheckr — Street View Image (uses NATIVE Android Activity for 360°)
-import React, { useState } from 'react';
-import { View, Image, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { openStreetView } from '../modules/StreetViewNative';
-import { getCityImage } from '../data/locationImages';
+// GeoCheckr — Street View via WebView with interactive Google Maps JS API
+// Touch-Navigation funktioniert weil WebView die Events direkt bekommt
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { WebView } from 'react-native-webview';
+
+const API_KEY = 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
 
 interface StreetViewProps {
-  location: { 
-    city: string; 
-    country?: string; 
-    region?: string; 
-    continent?: string; 
-    panoramaUrl?: string; 
-    streetViewUrl?: string; 
-    lat?: number; 
+  location: {
+    city: string;
+    country?: string;
+    lat?: number;
     lng?: number;
   };
   showInfo?: boolean;
 }
 
+function buildHtml(lat: number, lng: number): string {
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body,#pano{width:100%;height:100%;overflow:hidden;background:#000}
+#status{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#888;font-family:sans-serif;text-align:center;font-size:14px}
+#status .spinner{width:32px;height:32px;border:3px solid #333;border-top-color:#e94560;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="pano"></div>
+<div id="status"><div class="spinner"></div>Lade Street View...</div>
+
+<script>
+function init() {
+  var status = document.getElementById('status');
+  
+  var sv = new google.maps.StreetViewService();
+  
+  sv.getPanorama({
+    location: {lat: ${lat}, lng: ${lng}},
+    radius: 50000,
+    preference: google.maps.StreetViewPreference.NEAREST,
+    source: google.maps.StreetViewSource.OUTDOOR
+  }, function(data, st) {
+    if (st === google.maps.StreetViewStatus.OK) {
+      var pano = new google.maps.StreetViewPanorama(document.getElementById('pano'), {
+        pano: data.location.pano,
+        pov: {heading: Math.random() * 360, pitch: 0},
+        zoom: 0,
+        addressControl: false,
+        linksControl: true,
+        panControl: true,
+        zoomControl: true,
+        fullscreenControl: false,
+        motionTracking: false,
+        motionTrackingControl: false,
+        enableCloseButton: false,
+        clickToGo: true,
+        scrollwheel: true,
+        disableDefaultUI: false
+      });
+      
+      status.style.display = 'none';
+      
+      // Report to React Native
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage('loaded');
+      }
+    } else {
+      status.innerHTML = '🌍 Kein Street View hier verfügbar<br><small>' + data.location?.description + '</small>';
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage('error');
+      }
+    }
+  });
+}
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init&libraries=streetView"></script>
+</body>
+</html>`;
+}
+
 export default function StreetViewImage({ location, showInfo = false }: StreetViewProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  
-  const hasNative360 = !!(location.lat && location.lng);
-  
-  // Reset when location changes
-  React.useEffect(() => {
+  const webViewRef = useRef<WebView>(null);
+
+  useEffect(() => {
     setLoading(true);
     setError(false);
-    // Auto-open native Street View when location has coordinates
-    // Wrapped in setTimeout to avoid blocking render
-    if (location.lat && location.lng) {
-      const timer = setTimeout(() => {
-        try {
-          openStreetView(location.lat!, location.lng!);
-        } catch (e) {
-          console.warn('Auto-open StreetView failed:', e);
-        }
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [location]);
+  }, [location.lat, location.lng]);
 
-  // Flat Image Mode (shown in background while Street View is in separate Activity)
-  const imageUrl = getCityImage(location.city);
-  
+  if (!location.lat || !location.lng) {
+    return (
+      <View style={styles.errorOverlay}>
+        <Text style={styles.errorEmoji}>🌍</Text>
+        <Text style={styles.errorText}>{location.city}</Text>
+        <Text style={styles.errorHint}>Keine Koordinaten</Text>
+      </View>
+    );
+  }
+
+  const html = buildHtml(location.lat, location.lng);
+
   return (
     <View style={styles.container}>
       {loading && (
@@ -53,33 +114,34 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
           <Text style={styles.loadingText}>Lade Street View...</Text>
         </View>
       )}
-      
-      <Image
-        source={{ uri: imageUrl }}
-        style={styles.image}
-        onLoad={() => setLoading(false)}
+
+      <WebView
+        ref={webViewRef}
+        source={{ html }}
+        style={styles.webview}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        allowsInlineMediaPlayback={true}
+        mediaPlaybackRequiresUserAction={false}
+        mixedContentMode="compatibility"
+        scrollEnabled={false}
         onError={() => { setError(true); setLoading(false); }}
-        resizeMode="cover"
+        onHttpError={() => { setError(true); setLoading(false); }}
+        onMessage={(e) => {
+          const msg = e.nativeEvent.data;
+          if (msg === 'loaded') setLoading(false);
+          if (msg === 'error') { setError(true); setLoading(false); }
+        }}
       />
-      
+
       {error && (
         <View style={styles.errorOverlay}>
           <Text style={styles.errorEmoji}>🌍</Text>
           <Text style={styles.errorText}>{location.city}</Text>
-          <Text style={styles.errorHint}>{location.region} • {location.continent}</Text>
+          <Text style={styles.errorHint}>{location.country}</Text>
         </View>
       )}
-      
-      {/* 360° Button to re-open Street View */}
-      {hasNative360 && (
-        <TouchableOpacity 
-          style={styles.streetViewButton}
-          onPress={() => openStreetView(location.lat!, location.lng!)}
-        >
-          <Text style={styles.streetViewButtonText}>🌐 Street View öffnen</Text>
-        </TouchableOpacity>
-      )}
-      
+
       {showInfo && !error && (
         <View style={styles.infoOverlay}>
           <Text style={styles.infoText}>{location.city}, {location.country}</Text>
@@ -91,7 +153,7 @@ export default function StreetViewImage({ location, showInfo = false }: StreetVi
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000', position: 'relative' },
-  image: { width: '100%', height: '100%' },
+  webview: { flex: 1, backgroundColor: '#000' },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
@@ -110,17 +172,6 @@ const styles = StyleSheet.create({
   errorEmoji: { fontSize: 60, marginBottom: 15 },
   errorText: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
   errorHint: { color: '#888', fontSize: 14, marginTop: 8 },
-  streetViewButton: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    backgroundColor: '#e94560',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    zIndex: 20,
-  },
-  streetViewButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   infoOverlay: {
     position: 'absolute',
     bottom: 20,
