@@ -478,7 +478,7 @@ function renderResult(el) {
       zoomControl: true,
       styles: [
         { elementType: 'geometry', stylers: [{ color: '#1a1a2e' }] },
-        { elementType: 'labels.text.stroke', stylers: [{ visibility: 'off' }] },
+        { elementType: 'labels.text.stroke', stylers: [{ color: '#1a1a2e' }, { weight: 4 }] },
         { elementType: 'labels.text.fill', stylers: [{ color: '#ffffff' }] },
         { featureType: 'administrative.locality', elementType: 'labels', stylers: [{ visibility: 'off' }] },
         { featureType: 'administrative.country', elementType: 'labels', stylers: [{ visibility: 'off' }] },
