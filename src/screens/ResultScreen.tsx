@@ -1,262 +1,82 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Vibration } from 'react-native';
+// GeoCheckr — Result Screen (after all rounds)
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 
-export default function ResultScreen({ route, navigation }: any) {
-  const { winner, scores, players } = route.params || {
-    winner: { name: 'Spieler 1', id: 1 },
-    scores: { 1: 10, 2: 7 },
-    players: [{ id: 1, name: 'Spieler 1' }, { id: 2, name: 'Spieler 2' }]
+interface Player {
+  id: number;
+  name: string;
+}
+
+interface Props {
+  route: any;
+  navigation: any;
+}
+
+export default function ResultScreen({ route, navigation }: Props) {
+  const { players, scores, rounds } = route.params as {
+    players: Player[];
+    scores: Record<number, number>;
+    rounds: number;
   };
-  
-  const sortedPlayers = [...players].sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0));
-  
-  // Animations
-  const trophyScale = useRef(new Animated.Value(0)).current;
-  const trophyRotate = useRef(new Animated.Value(0)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
-  
-  useEffect(() => {
-    // Celebration animation
-    Vibration.vibrate([200, 100, 200, 100, 400]);
-    
-    Animated.sequence([
-      Animated.spring(trophyScale, {
-        toValue: 1.2,
-        friction: 4,
-        tension: 80,
-        useNativeDriver: true,
-      }),
-      Animated.spring(trophyScale, {
-        toValue: 1,
-        friction: 6,
-        useNativeDriver: true,
-      }),
-    ]).start();
-    
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(trophyRotate, { toValue: 1, duration: 1000, useNativeDriver: true }),
-        Animated.timing(trophyRotate, { toValue: -1, duration: 1000, useNativeDriver: true }),
-      ]),
-      { iterations: 3 }
-    ).start();
-    
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
-    ]).start();
-  }, []);
-  
-  const trophyRotation = trophyRotate.interpolate({
-    inputRange: [-1, 1],
-    outputRange: ['-10deg', '10deg'],
-  });
-  
+
+  const sorted = [...players].sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0));
+  const winner = sorted[0];
+
   return (
     <View style={styles.container}>
-      <View style={styles.trophyContainer}>
-        <Animated.Text 
-          style={[
-            styles.trophy, 
-            { 
-              transform: [
-                { scale: trophyScale },
-                { rotate: trophyRotation }
-              ] 
-            }
-          ]}
-        >
-          🏆
-        </Animated.Text>
-        <Text style={styles.winnerText}>{winner.name} gewinnt!</Text>
-        <Text style={styles.scoreText}>{scores[winner.id]} Punkte</Text>
-        <View style={styles.confettiRow}>
-          <Text style={styles.confetti}>🎉</Text>
-          <Text style={styles.confetti}>⭐</Text>
-          <Text style={styles.confetti}>🎊</Text>
-          <Text style={styles.confetti}>⭐</Text>
-          <Text style={styles.confetti}>🎉</Text>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.trophy}>🏆</Text>
+        <Text style={styles.title}>Spiel beendet!</Text>
+        <Text style={styles.subtitle}>{rounds} Runden gespielt</Text>
+
+        {/* Winner highlight */}
+        <View style={styles.winnerCard}>
+          <Text style={styles.winnerEmoji}>🥇</Text>
+          <Text style={styles.winnerName}>{winner.name}</Text>
+          <Text style={styles.winnerScore}>{scores[winner.id]} ⭐</Text>
         </View>
-      </View>
-      
-      <Animated.View 
-        style={[
-          styles.leaderboard, 
-          { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
-        ]}
-      >
-        <Text style={styles.leaderboardTitle}>📊 Endstand</Text>
-        {sortedPlayers.map((player, index) => {
-          const medals = ['🥇', '🥈', '🥉'];
-          const medal = index < 3 ? medals[index] : `${index + 1}.`;
-          
-          return (
-            <View 
-              key={player.id} 
-              style={[
-                styles.playerRow,
-                index === 0 && styles.winnerRow,
-                index === sortedPlayers.length - 1 && styles.lastRow,
-              ]}
-            >
-              <Text style={styles.rank}>{medal}</Text>
-              <Text style={[
-                styles.playerName,
-                player.id === winner.id && styles.winnerName
-              ]}>
-                {player.name}
-              </Text>
-              <Text style={styles.playerScore}>{scores[player.id] || 0}</Text>
-            </View>
-          );
-        })}
-      </Animated.View>
-      
-      <Animated.View 
-        style={[styles.buttonContainer, { opacity: fadeAnim }]}
-      >
-        <TouchableOpacity 
-          style={styles.primaryButton}
-          onPress={() => navigation.navigate('Setup')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.primaryButtonText}>🔄 Revanche!</Text>
+
+        {/* All players */}
+        {sorted.map((p, i) => (
+          <View key={p.id} style={[styles.playerRow, i === 0 && styles.firstRow]}>
+            <Text style={styles.rank}>
+              {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
+            </Text>
+            <Text style={styles.playerName}>{p.name}</Text>
+            <Text style={styles.playerScore}>{scores[p.id]} ⭐</Text>
+          </View>
+        ))}
+
+        {/* Buttons */}
+        <TouchableOpacity style={styles.againBtn} onPress={() => navigation.replace('Game', route.params)}>
+          <Text style={styles.againText}>🔄 Nochmal spielen</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.secondaryButton}
-          onPress={() => navigation.navigate('Home')}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.secondaryButtonText}>🏠 Hauptmenü</Text>
+
+        <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.replace('Setup')}>
+          <Text style={styles.homeText}>🏠 Neues Spiel</Text>
         </TouchableOpacity>
-      </Animated.View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1a1a2e', padding: 20 },
-  
-  trophyContainer: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center',
-    paddingTop: 20,
-  },
-  trophy: { 
-    fontSize: 100, 
-    marginBottom: 15,
-    textShadowColor: 'rgba(255, 215, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 30,
-  },
-  winnerText: { 
-    fontSize: 32, 
-    fontWeight: 'bold', 
-    color: '#FFD700', 
-    marginBottom: 8,
-    textShadowColor: 'rgba(255, 215, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
-  },
-  scoreText: { 
-    fontSize: 24, 
-    color: '#fff', 
-    marginBottom: 15 
-  },
-  confettiRow: {
-    flexDirection: 'row',
-    gap: 15,
-  },
-  confetti: {
-    fontSize: 28,
-  },
-  
-  leaderboard: { 
-    backgroundColor: '#16213e', 
-    borderRadius: 15, 
-    padding: 20, 
-    marginBottom: 25,
-    borderWidth: 1,
-    borderColor: '#2a2a4a',
-  },
-  leaderboardTitle: { 
-    fontSize: 20, 
-    fontWeight: '600', 
-    color: '#fff', 
-    marginBottom: 15, 
-    textAlign: 'center' 
-  },
-  playerRow: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingVertical: 12, 
-    borderBottomWidth: 1, 
-    borderBottomColor: '#2a2a4a' 
-  },
-  winnerRow: {
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
-    borderRadius: 8,
-    marginBottom: 2,
-    borderBottomWidth: 0,
-  },
-  lastRow: {
-    borderBottomWidth: 0,
-  },
-  rank: { 
-    width: 40, 
-    fontSize: 20, 
-    textAlign: 'center',
-  },
-  playerName: { 
-    flex: 1, 
-    fontSize: 18, 
-    color: '#fff' 
-  },
-  winnerName: {
-    color: '#FFD700',
-    fontWeight: 'bold',
-  },
-  playerScore: { 
-    fontSize: 20, 
-    color: '#e94560', 
-    fontWeight: 'bold',
-    minWidth: 50,
-    textAlign: 'right',
-  },
-  
-  buttonContainer: { 
-    marginBottom: 20 
-  },
-  primaryButton: { 
-    backgroundColor: '#e94560', 
-    paddingVertical: 18, 
-    borderRadius: 12, 
-    marginBottom: 12, 
-    alignItems: 'center',
-    shadowColor: '#e94560',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  primaryButtonText: { 
-    color: '#fff', 
-    fontSize: 20, 
-    fontWeight: 'bold' 
-  },
-  secondaryButton: { 
-    backgroundColor: '#16213e', 
-    paddingVertical: 15, 
-    borderRadius: 12, 
-    alignItems: 'center', 
-    borderWidth: 1, 
-    borderColor: '#2a2a4a' 
-  },
-  secondaryButtonText: { 
-    color: '#ccc', 
-    fontSize: 16 
-  },
+  container: { flex: 1, backgroundColor: '#0a0a1a' },
+  content: { padding: 30, alignItems: 'center', paddingTop: 60 },
+  trophy: { fontSize: 80, marginBottom: 15 },
+  title: { color: '#fff', fontSize: 32, fontWeight: 'bold', marginBottom: 5, textAlign: 'center' },
+  subtitle: { color: '#888', fontSize: 16, marginBottom: 30, textAlign: 'center' },
+  winnerCard: { backgroundColor: 'rgba(255,215,0,0.1)', borderRadius: 20, padding: 25, alignItems: 'center', marginBottom: 25, borderWidth: 2, borderColor: '#FFD700', width: '100%' },
+  winnerEmoji: { fontSize: 40, marginBottom: 8 },
+  winnerName: { color: '#FFD700', fontSize: 26, fontWeight: 'bold', marginBottom: 5 },
+  winnerScore: { color: '#fff', fontSize: 22, fontWeight: '600' },
+  playerRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#16213e', borderRadius: 14, padding: 16, marginBottom: 10, width: '100%', borderWidth: 1, borderColor: '#2a2a4a' },
+  firstRow: { borderColor: '#FFD700', borderWidth: 2 },
+  rank: { fontSize: 24, marginRight: 15 },
+  playerName: { flex: 1, color: '#fff', fontSize: 18, fontWeight: '600' },
+  playerScore: { color: '#FFD700', fontSize: 20, fontWeight: 'bold' },
+  againBtn: { backgroundColor: '#e94560', paddingVertical: 16, borderRadius: 14, width: '100%', alignItems: 'center', marginTop: 25 },
+  againText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  homeBtn: { backgroundColor: '#16213e', paddingVertical: 14, borderRadius: 14, width: '100%', alignItems: 'center', marginTop: 12, borderWidth: 1, borderColor: '#2a2a4a' },
+  homeText: { color: '#aaa', fontSize: 16 },
 });
