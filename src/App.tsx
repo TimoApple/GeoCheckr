@@ -1,13 +1,13 @@
-// GeoCheckr — Debug Mode: Street View Navigation Test
+// GeoCheckr Debug Mode — Full Screen Street View Only
 import React from 'react';
 import { View, StyleSheet, StatusBar } from 'react-native';
-import StreetViewDebug from './components/StreetViewDebug';
+import DebugStreetView from './screens/DebugStreetView';
 
 export default function App() {
   return (
     <View style={styles.container}>
       <StatusBar hidden />
-      <StreetViewDebug />
+      <DebugStreetView />
     </View>
   );
 }
