@@ -55,6 +55,7 @@ export default function GameScreen({ route, navigation }: any) {
   const resultScaleAnim = useRef(new Animated.Value(0)).current;
   const timerPulse = useRef(new Animated.Value(1)).current;
   const headerSlide = useRef(new Animated.Value(0)).current; // 0 = visible, -100 = hidden
+  const [headerHidden, setHeaderHidden] = useState(false);
   const audioWebViewRef = useRef<WebView>(null);
 
   // Auto-hide header during view phase
@@ -63,11 +64,13 @@ export default function GameScreen({ route, navigation }: any) {
       // Slide header up after 2 seconds
       const timeout = setTimeout(() => {
         Animated.timing(headerSlide, { toValue: -100, duration: 300, useNativeDriver: true }).start();
+        setHeaderHidden(true);
       }, 2000);
       return () => clearTimeout(timeout);
     } else {
       // Show header again
       Animated.timing(headerSlide, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+      setHeaderHidden(false);
     }
   }, [phase]);
 
@@ -271,8 +274,9 @@ export default function GameScreen({ route, navigation }: any) {
             style={styles.headerLeft} 
             onPress={() => {
               // Tap to show header when hidden
-              if (headerSlide.__getValue() < -50) {
+              if (headerHidden) {
                 Animated.timing(headerSlide, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+                setHeaderHidden(false);
               }
             }}
           >
