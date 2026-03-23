@@ -487,8 +487,8 @@ function renderResult(el) {
       zoomControl: true,
       styles: [
         { elementType: 'geometry', stylers: [{ color: '#1a1a2e' }] },
-        { elementType: 'labels.text.stroke', stylers: [{ color: '#1a1a2e' }] },
-        { elementType: 'labels.text.fill', stylers: [{ color: '#666' }] },
+        { elementType: 'labels.text.stroke', stylers: [{ visibility: 'off' }] },
+        { elementType: 'labels.text.fill', stylers: [{ color: '#ffffff' }] },
         { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0f3460' }] },
         { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2a2a4a' }] },
         { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1a1a2e' }] },
