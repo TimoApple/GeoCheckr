@@ -353,30 +353,13 @@ function renderGame(el) {
 function renderScan(el) {
   const locsLeft = LOCATIONS.length - state.usedLocations.length;
   el.innerHTML = `
-    <div class="screen screen-game">
-      <div class="game-header">
-        <div class="player-info">
-          <span class="current-player">${state.players[state.currentPlayer].name}</span>
-          <span class="player-turn">ist dran</span>
-        </div>
-        <div class="round-info">Runde ${state.round}/${state.maxRounds}</div>
-      </div>
-      <div class="scoreboard">
-        ${state.players.map((p,i) => `
-          <div class="score-item ${i===state.currentPlayer?'active':''}">
-            <span class="score-name">${p.name}</span>
-            <span class="score-value">${state.scores[i]||0}</span>
-          </div>
-        `).join('')}
-      </div>
+    <div class="screen screen-game" style="align-items:center;justify-content:center;">
       <div class="scan-phase">
-        <div class="scan-icon">📷</div>
+        <div class="scan-icon">🌍</div>
         <h2>Bereit?</h2>
-        <p>Location laden um zu starten</p>
         <button class="btn btn-primary btn-scan" onclick="loadLocation()">
-          📍 Location laden
+          📍 Start
         </button>
-        <p class="scan-hint">${locsLeft} von ${LOCATIONS.length} verfügbar</p>
       </div>
     </div>
   `;
