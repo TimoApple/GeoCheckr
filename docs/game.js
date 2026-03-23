@@ -226,42 +226,39 @@ function loadPanorama(lat, lng) {
   if (!container) return;
 
   if (!ensureMapReady()) {
-    // Maps API not loaded yet, retry
     container.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#888;font-family:sans-serif;"><div style="text-align:center;"><div style="font-size:24px;">⏳</div><div style="margin-top:10px;">Lade Maps API...</div></div></div>';
     setTimeout(() => loadPanorama(lat, lng), 1000);
     return;
   }
 
-  // Try to find a nearby panorama
-  svService.getPanorama({ location: { lat, lng }, radius: 50000, preference: 'nearest' }, (data, status) => {
-    if (status === 'OK' && data && data.location) {
-      panorama = new google.maps.StreetViewPanorama(container, {
-        position: data.location.latLng,
-        pov: { heading: Math.random()*360, pitch: 0 },
-        zoom: 0,
-        addressControl: false,
-        linksControl: true,
-        panControl: true,
-        zoomControl: true,
-        fullscreenControl: false,
-        motionTracking: false,
-        motionTrackingControl: false,
-        enableCloseButton: false,
-        clickToGo: true,
-      });
-      state.streetViewLoaded = true;
-    } else {
-      // Fallback: static map image
-      container.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#111;">
-        <div style="text-align:center;color:#888;">
-          <div style="font-size:48px;">🌍</div>
-          <div style="margin-top:10px;">Street View nicht verfügbar</div>
-          <div style="font-size:12px;margin-top:5px;">Betrachte die Umgebung genau!</div>
-        </div>
-      </div>`;
-      state.streetViewLoaded = false;
-    }
-  });
+  try {
+    // Direkt Panorama erstellen — Google sucht automatisch das nächste
+    panorama = new google.maps.StreetViewPanorama(container, {
+      position: { lat, lng },
+      pov: { heading: Math.random() * 360, pitch: 0 },
+      zoom: 0,
+      addressControl: false,
+      linksControl: true,
+      panControl: true,
+      zoomControl: true,
+      fullscreenControl: false,
+      motionTracking: false,
+      motionTrackingControl: false,
+      enableCloseButton: false,
+      clickToGo: true,
+      scrollwheel: true,
+    });
+    state.streetViewLoaded = true;
+  } catch(e) {
+    console.error('Panorama error:', e);
+    container.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#111;">
+      <div style="text-align:center;color:#888;">
+        <div style="font-size:48px;">🌍</div>
+        <div style="margin-top:10px;">Street View nicht verfügbar</div>
+      </div>
+    </div>`;
+    state.streetViewLoaded = false;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
