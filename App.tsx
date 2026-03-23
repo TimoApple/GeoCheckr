@@ -254,7 +254,7 @@ export default function App() {
 
   // ===== GAME =====
   if (screen === 'game') return (
-    <View style={s.c}><StatusBar hidden />
+    <View style={s.gc}><StatusBar hidden translucent backgroundColor="transparent" />
       <WebView key={`${location.lat}-${location.lng}`}
         source={{html:buildStreetViewHtml(location.lat,location.lng)}}
         style={s.sv} javaScriptEnabled domStorageEnabled allowsInlineMediaPlayback
@@ -339,21 +339,22 @@ const s = StyleSheet.create({
   dt:{color:'#888',fontSize:13,fontWeight:'600'},dtA:{color:'#fff'},
   go:{backgroundColor:'#e94560',paddingVertical:18,borderRadius:14,alignItems:'center'},
   got:{color:'#fff',fontSize:20,fontWeight:'bold'},
-  // Game
-  sv:{flex:1,backgroundColor:'#000'},
+  // Game — TRUE FULLSCREEN
+  gc:{position:'absolute',top:0,left:0,right:0,bottom:0,backgroundColor:'#000'},
+  sv:{position:'absolute',top:0,left:0,right:0,bottom:0,backgroundColor:'#000'},
   lo:{...StyleSheet.absoluteFillObject,justifyContent:'center',alignItems:'center',backgroundColor:'#000',zIndex:5},
   lot:{color:'#aaa',fontSize:16},
   eo:{...StyleSheet.absoluteFillObject,justifyContent:'center',alignItems:'center',backgroundColor:'#1a1a2e',zIndex:10},
   ee:{fontSize:60,marginBottom:15},ec:{color:'#fff',fontSize:20,fontWeight:'bold',marginBottom:20},
   rb:{backgroundColor:'#e94560',paddingHorizontal:24,paddingVertical:12,borderRadius:10},rbt:{color:'#fff',fontSize:16,fontWeight:'600'},
-  tmr:{position:'absolute',top:15,right:15,width:52,height:52,borderRadius:26,backgroundColor:'rgba(0,0,0,0.85)',borderWidth:3,justifyContent:'center',alignItems:'center',zIndex:20},
+  tmr:{position:'absolute',top:40,right:15,width:52,height:52,borderRadius:26,backgroundColor:'rgba(0,0,0,0.85)',borderWidth:3,justifyContent:'center',alignItems:'center',zIndex:20},
   tmt:{fontSize:22,fontWeight:'bold'},
-  tb:{position:'absolute',top:15,left:15,flexDirection:'row',alignItems:'center',gap:8,zIndex:20},
+  tb:{position:'absolute',top:40,left:15,flexDirection:'row',alignItems:'center',gap:8,zIndex:20},
   tn2:{color:'#e94560',fontSize:14,fontWeight:'bold',backgroundColor:'rgba(0,0,0,0.75)',paddingHorizontal:10,paddingVertical:5,borderRadius:8},
   tr:{color:'#fff',fontSize:12,backgroundColor:'rgba(0,0,0,0.75)',paddingHorizontal:10,paddingVertical:5,borderRadius:8},
   tsc:{backgroundColor:'rgba(0,0,0,0.75)',paddingHorizontal:10,paddingVertical:5,borderRadius:8},
   tsct:{color:'#FFD700',fontSize:13,fontWeight:'bold'},
-  sk:{position:'absolute',bottom:40,alignSelf:'center',backgroundColor:'rgba(0,0,0,0.85)',paddingHorizontal:28,paddingVertical:14,borderRadius:25,borderWidth:1.5,borderColor:'#4CAF50',zIndex:20},
+  sk:{position:'absolute',bottom:60,alignSelf:'center',backgroundColor:'rgba(0,0,0,0.85)',paddingHorizontal:28,paddingVertical:14,borderRadius:25,borderWidth:1.5,borderColor:'#4CAF50',zIndex:20},
   skt:{color:'#4CAF50',fontSize:17,fontWeight:'600'},
   ao:{position:'absolute',top:0,left:0,right:0,bottom:0,backgroundColor:'rgba(0,0,0,0.92)',zIndex:30,justifyContent:'center',paddingHorizontal:24},
   ac:{backgroundColor:'#16213e',borderRadius:20,padding:24},
@@ -381,7 +382,7 @@ const s = StyleSheet.create({
   nb:{backgroundColor:'#e94560',paddingVertical:16,paddingHorizontal:30,borderRadius:14,width:'100%',alignItems:'center'},
   nbt:{color:'#fff',fontSize:18,fontWeight:'bold'},
   mm:{position:'absolute',top:0,left:0,right:0,bottom:0,zIndex:50,backgroundColor:'#0a0a1a'},
-  mh2:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingHorizontal:16,paddingVertical:12,paddingTop:40,backgroundColor:'#16213e',borderBottomWidth:1,borderBottomColor:'#2a2a4a'},
+  mh2:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingHorizontal:16,paddingVertical:12,paddingTop:45,backgroundColor:'#16213e',borderBottomWidth:1,borderBottomColor:'#2a2a4a'},
   mt2:{color:'#fff',fontSize:16,fontWeight:'600'},
   mc:{width:36,height:36,borderRadius:18,backgroundColor:'#e94560',justifyContent:'center',alignItems:'center'},
   mct:{color:'#fff',fontSize:18,fontWeight:'bold'},
