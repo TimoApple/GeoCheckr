@@ -16,6 +16,49 @@ import { panoramaLocations, PanoramaLocation } from './src/data/panoramaLocation
 const { width, height } = Dimensions.get('window');
 const API_KEY = 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
 
+const QUOTES = [
+  "All roads lead to Rome.",
+  "Not all those who wander are lost.",
+  "The world is a book, and those who do not travel read only one page.",
+  "To travel is to live.",
+  "A journey of a thousand miles begins with a single step.",
+  "The earth has music for those who listen.",
+  "Life is either a daring adventure or nothing at all.",
+  "Wanderlust: a strong desire to wander and explore the world.",
+  "Go where you feel most alive.",
+  "Collect moments, not things.",
+  "Take only pictures, leave only footprints.",
+  "The earth laughs in flowers.",
+  "Travel far enough, you meet yourself.",
+  "When in Rome, do as the Romans do.",
+  "The map is not the territory.",
+  "Borders? I have never seen one.",
+  "Paris is always a good idea.",
+  "The cure for anything is salt water: sweat, tears, or the sea.",
+  "Somewhere, something incredible is waiting to be known.",
+  "Geography is destiny.",
+  "Travel makes one modest. You see what a tiny place you occupy in the world.",
+  "I am not the same, having seen the moon shine on the other side of the world.",
+  "The real voyage of discovery consists not in seeking new landscapes, but in having new eyes.",
+  "There are no foreign lands. It is the traveler only who is foreign.",
+  "Without geography, you are nowhere.",
+  "The world is big and I want to have a good look at it before it gets dark.",
+  "Adventure is worthwhile in itself.",
+  "The globe is a map, the world is a book.",
+  "If you think adventure is dangerous, try routine; it is lethal.",
+  "Every place has its own spirit.",
+  "One's destination is never a place, but a new way of seeing things.",
+  "Travel is the only thing you buy that makes you richer.",
+  "To move, to breathe, to fly, to float, to roam the roads of lands remote, to travel is to live.",
+  "In every walk with nature one receives far more than he seeks.",
+  "The best journeys answer questions that in the beginning you didn't even think to ask.",
+  "We do not inherit the earth from our ancestors; we borrow it from our children.",
+  "Every journey has secret destinations of which the traveler is unaware.",
+  "To understand just one life you have to swallow the world.",
+  "The more I traveled the more I realized that fear makes strangers of people who should be friends.",
+  "Rome wasn't built in a day.",
+];
+
 const C = {
   bg: '#111225', surface: '#1d1e32', surfaceHigh: '#252647',
   accent: '#bdc2ff', green: '#a6d700', blue: '#3340ca',
@@ -52,6 +95,9 @@ export default function App() {
   const [location, setLocation] = useState<PanoramaLocation>(panoramaLocations[0]);
   const [usedLocations, setUsedLocations] = useState<number[]>([]);
   const [usedCards, setUsedCards] = useState<number[]>([]);
+  const [showLoading, setShowLoading] = useState(true);
+  const [loadingQuote, setLoadingQuote] = useState(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
+  const loadingFade = useRef(new Animated.Value(0)).current;
   const [phase, setPhase] = useState<Phase>('view');
   const [timer, setTimer] = useState(30);
   const [timerPaused, setTimerPaused] = useState(false);
@@ -73,6 +119,17 @@ export default function App() {
   useEffect(() => {
     AsyncStorage.getItem('geocheckr_tut_v7').then(v => { if (v === 'true') setScreen('setup'); });
   }, []);
+
+  // Loading screen animation
+  useEffect(() => {
+    if (!showLoading) return;
+    // Fade in → hold → fade out → hide
+    Animated.sequence([
+      Animated.timing(loadingFade, { toValue: 1, duration: 800, useNativeDriver: true }),
+      Animated.delay(2200),
+      Animated.timing(loadingFade, { toValue: 0, duration: 600, useNativeDriver: true }),
+    ]).start(() => setShowLoading(false));
+  }, [showLoading]);
 
   // Voice WebView messages
   const handleVoiceMessage = (event: any) => {
@@ -202,6 +259,24 @@ export default function App() {
   const completeTutorial = async () => { try { await AsyncStorage.setItem('geocheckr_tut_v7', 'true'); } catch { } playClickSound(); setScreen('setup'); };
 
   const PCOLORS = ['#bdc2ff', '#a6d700', '#88da7d', '#FF9500', '#ffb4ab', '#5ac8fa', '#af52de', '#ff6b6b'];
+
+  // ═══ LOADING ═══
+  if (showLoading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40 }}>
+        <StatusBar hidden />
+        <Text style={{ color: C.green, fontSize: 14, fontWeight: '700', letterSpacing: 2, marginBottom: 16 }}>GEOCHECKR</Text>
+        <Animated.View style={{ opacity: loadingFade }}>
+          <Text style={{ color: C.muted, fontSize: 18, textAlign: 'center', fontStyle: 'italic', lineHeight: 26 }}>"{loadingQuote}"</Text>
+        </Animated.View>
+        <View style={{ position: 'absolute', bottom: 80, flexDirection: 'row', gap: 6 }}>
+          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.green, opacity: 0.6 }} />
+          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.green, opacity: 0.3 }} />
+          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.green, opacity: 0.15 }} />
+        </View>
+      </View>
+    );
+  }
 
   // ═══ TUTORIAL ═══
   if (screen === 'tutorial') {
