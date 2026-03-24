@@ -174,17 +174,23 @@ function loadPanorama(lat, lng) {
 function renderLeafletMap(containerId, realLat, realLng, guessLat, guessLng, realCity, guessCity) {
   const el = document.getElementById(containerId);
   if (!el) return;
+  if (typeof L === 'undefined') {
+    el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#8E8E93;">Loading map...</div>';
+    setTimeout(() => renderLeafletMap(containerId, realLat, realLng, guessLat, guessLng, realCity, guessCity), 500);
+    return;
+  }
   el.innerHTML = '';
   const hasGuess = guessLat != null && guessLng != null;
   const center = hasGuess ? [(realLat+guessLat)/2, (realLng+guessLng)/2] : [realLat, realLng];
   const map = L.map(el, { attributionControl: false }).setView(center, hasGuess ? 3 : 10);
-  L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map);
-  L.circleMarker([realLat, realLng], { radius: 10, fillColor: '#34C759', fillOpacity: 1, color: '#fff', weight: 2 })
-    .addTo(map).bindPopup(realCity);
+  // Dark Theme Tiles — kein Label-Stroke nötig (weiße Labels auf dunklem Hintergrund)
+  L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map);
+  L.circleMarker([realLat, realLng], { radius: 10, fillColor: '#a6d700', fillOpacity: 1, color: '#fff', weight: 2 })
+    .addTo(map).bindPopup('<span style="color:#fff;background:#1a1a2e;padding:4px 8px;border-radius:4px;font-family:Space Grotesk,sans-serif;font-size:13px;">'+realCity+'</span>');
   if (hasGuess) {
     L.circleMarker([guessLat, guessLng], { radius: 8, fillColor: '#FF3B30', fillOpacity: 1, color: '#fff', weight: 2 })
-      .addTo(map).bindPopup(guessCity);
-    L.polyline([[guessLat, guessLng], [realLat, realLng]], { color: '#AF52DE', weight: 3, opacity: 0.8 }).addTo(map);
+      .addTo(map).bindPopup('<span style="color:#fff;background:#1a1a2e;padding:4px 8px;border-radius:4px;font-family:Space Grotesk,sans-serif;font-size:13px;">'+guessCity+'</span>');
+    L.polyline([[guessLat, guessLng], [realLat, realLng]], { color: '#a6d700', weight: 3, opacity: 0.8 }).addTo(map);
     map.fitBounds([[realLat, realLng], [guessLat, guessLng]], { padding: [30, 30] });
   }
 }
