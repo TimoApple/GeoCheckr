@@ -8,10 +8,6 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import {
-  ExpoSpeechRecognitionModule,
-  useSpeechRecognitionEvent,
-} from 'expo-speech-recognition';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { calculateDistance, calculatePoints, formatDistance } from './src/utils/distance';
 import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playTimerWarning, playTimerTick, playAnswerphoneBeep } from './src/utils/sounds';
@@ -99,45 +95,80 @@ export default function App() {
   }, []);
 
   // ═══════════════════════════════════════════════════════════
-  // SPEECH RECOGNITION EVENTS
+  // VOICE INPUT (WebView Web Speech API)
   // ═══════════════════════════════════════════════════════════
-  useSpeechRecognitionEvent('start', () => {
-    setListening(true);
-    setVoiceCountdown(10);
-    Vibration.vibrate(100);
-    // Start countdown
-    voiceTimerRef.current = setInterval(() => {
-      setVoiceCountdown(prev => {
-        if (prev <= 1) {
-          ExpoSpeechRecognitionModule.stop();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  });
+  const voiceWebViewRef = useRef<WebView>(null);
 
-  useSpeechRecognitionEvent('end', () => {
-    setListening(false);
-    setVoiceCountdown(0);
-    if (voiceTimerRef.current) { clearInterval(voiceTimerRef.current); voiceTimerRef.current = null; }
-  });
+  const VOICE_HTML = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<style>*{margin:0;padding:0;box-sizing:border-box}
+body{background:transparent;display:flex;align-items:center;justify-content:center;height:100vh;width:100vw;overflow:hidden}
+#mic{width:80px;height:80px;border-radius:40px;background:#1d1e32;border:3px solid #bdc2ff;color:#fff;font-size:36px;cursor:pointer;text-align:center;line-height:80px;padding:0;outline:none}
+#mic.on{background:#a6d700;border-color:#a6d700;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+</style></head><body>
+<button id="mic" onclick="toggle()">🎤</button>
+<script>
+var rec=null,on=false;
+var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+function toggle(){on?stop():start()}
+function start(){
+  if(!SR){window.ReactNativeWebView.postMessage(JSON.stringify({t:'error',v:'no SR'}));return}
+  rec=new SR();rec.lang='en-US';rec.continuous=false;rec.interimResults=true;
+  rec.onstart=function(){on=true;document.getElementById('mic').classList.add('on');document.getElementById('mic').textContent='■';window.ReactNativeWebView.postMessage(JSON.stringify({t:'start'}))};
+  rec.onresult=function(e){var t='';for(var i=e.resultIndex;i<e.results.length;i++)t+=e.results[i][0].transcript;if(e.results[e.results.length-1].isFinal){window.ReactNativeWebView.postMessage(JSON.stringify({t:'final',v:t}));stop()}else{window.ReactNativeWebView.postMessage(JSON.stringify({t:'partial',v:t}))}};
+  rec.onerror=function(e){window.ReactNativeWebView.postMessage(JSON.stringify({t:'error',v:e.error}));stop()};
+  rec.onend=function(){stop()};
+  try{rec.start()}catch(e){stop()}
+}
+function stop(){on=false;document.getElementById('mic').classList.remove('on');document.getElementById('mic').textContent='🎤';if(rec){try{rec.stop()}catch(e){}rec=null}window.ReactNativeWebView.postMessage(JSON.stringify({t:'end'}))}
+</script></body></html>`;
 
-  useSpeechRecognitionEvent('result', (event) => {
-    const transcript = event.results[0]?.transcript || '';
-    setVoiceText(transcript);
-    if (event.results[0]?.isFinal) {
-      Vibration.vibrate(50);
-      // Auto-submit after final result
-      setTimeout(() => handleVoiceSubmit(transcript), 500);
-    }
-  });
+  const handleVoiceMessage = (event: any) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.t === 'start') {
+        setListening(true);
+        setVoiceCountdown(10);
+        Vibration.vibrate(100);
+        voiceTimerRef.current = setInterval(() => {
+          setVoiceCountdown(prev => {
+            if (prev <= 1) {
+              voiceWebViewRef.current?.injectJavaScript('stop();true;');
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }
+      if (data.t === 'partial') setVoiceText(data.v);
+      if (data.t === 'final') {
+        setVoiceText(data.v);
+        Vibration.vibrate(50);
+        setTimeout(() => resolveAnswerFromText(data.v), 500);
+      }
+      if (data.t === 'end' || data.t === 'error') {
+        setListening(false);
+        setVoiceCountdown(0);
+        if (voiceTimerRef.current) { clearInterval(voiceTimerRef.current); voiceTimerRef.current = null; }
+      }
+    } catch { }
+  };
 
-  useSpeechRecognitionEvent('error', (event) => {
-    setListening(false);
-    setVoiceCountdown(0);
-    if (voiceTimerRef.current) { clearInterval(voiceTimerRef.current); voiceTimerRef.current = null; }
-  });
+  const startVoice = () => {
+    playClickSound();
+    setVoiceText('');
+    voiceWebViewRef.current?.injectJavaScript('toggle();true;');
+  };
+
+  const stopVoice = () => {
+    voiceWebViewRef.current?.injectJavaScript('stop();true;');
+  };
+
+  const handleVoiceSubmit = (text: string) => {
+    if (!text.trim()) return;
+    resolveAnswerFromText(text.trim());
+  };
 
   // Pulse animation for mic button
   useEffect(() => {
@@ -152,30 +183,6 @@ export default function App() {
       micPulse.setValue(1);
     }
   }, [listening]);
-
-  // ═══════════════════════════════════════════════════════════
-  // VOICE INPUT
-  // ═══════════════════════════════════════════════════════════
-  const startVoice = async () => {
-    playClickSound();
-    const result = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-    if (!result.granted) return;
-    setVoiceText('');
-    ExpoSpeechRecognitionModule.start({
-      lang: 'en-US',
-      interimResults: true,
-      continuous: false,
-    });
-  };
-
-  const stopVoice = () => {
-    ExpoSpeechRecognitionModule.stop();
-  };
-
-  const handleVoiceSubmit = (text: string) => {
-    if (!text.trim()) return;
-    resolveAnswerFromText(text.trim());
-  };
 
   // ═══════════════════════════════════════════════════════════
   // TIMER
@@ -487,6 +494,17 @@ export default function App() {
     if (phase === 'answer') {
       return (
         <View style={ss.c}><StatusBar hidden />
+          {/* Hidden Voice WebView */}
+          <WebView
+            ref={voiceWebViewRef}
+            source={{ html: VOICE_HTML }}
+            style={{ width: 0, height: 0, position: 'absolute' }}
+            onMessage={handleVoiceMessage}
+            javaScriptEnabled
+            domStorageEnabled
+            allowsInlineMediaPlayback
+            mediaPlaybackRequiresUserAction={false}
+          />
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 30 }}>
             {/* Player name */}
             <Text style={{ color: C.accent, fontSize: 14, fontWeight: '600', marginBottom: 8, letterSpacing: 1 }}>

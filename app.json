@@ -49,14 +49,7 @@
     },
     "plugins": [
       "expo-camera",
-      "expo-asset",
-      [
-        "expo-speech-recognition",
-        {
-          "microphonePermission": "Allow GeoCheckr to use the microphone for voice input.",
-          "speechRecognitionPermission": "Allow GeoCheckr to use speech recognition."
-        }
-      ]
+      "expo-asset"
     ],
     "extra": {
       "eas": {
