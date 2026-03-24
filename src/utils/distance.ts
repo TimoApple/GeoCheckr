@@ -1,221 +1,24 @@
-// GeoCheckr - Distance calculation utility
-// Haversine formula for calculating distance between two coordinates
-
-// Normalize city names for comparison (umlauts, special chars, whitespace)
-export function normalizeCityName(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/ä/g, 'ae')
-    .replace(/ö/g, 'oe')
-    .replace(/ü/g, 'ue')
-    .replace(/ß/g, 'ss')
-    .replace(/é/g, 'e')
-    .replace(/è/g, 'e')
-    .replace(/ê/g, 'e')
-    .replace(/á/g, 'a')
-    .replace(/à/g, 'a')
-    .replace(/â/g, 'a')
-    .replace(/ñ/g, 'n')
-    .replace(/ó/g, 'o')
-    .replace(/ò/g, 'o')
-    .replace(/ô/g, 'o')
-    .replace(/ú/g, 'u')
-    .replace(/ù/g, 'u')
-    .replace(/û/g, 'u')
-    .replace(/ç/g, 'c')
-    .replace(/ş/g, 's')
-    .replace(/ğ/g, 'g')
-    .replace(/ı/g, 'i')
-    .replace(/ș/g, 's')
-    .replace(/ț/g, 't')
-    .replace(/\s+/g, ' ');
-}
-
-// City name aliases (German names, landmarks → canonical city names)
-const CITY_ALIASES: Record<string, string> = {
-  // Deutsch → Englisch/Original
-  'peking': 'beijing',
-  'mailand': 'milano',
-  'florenz': 'firenze',
-  'venedig': 'venezia',
-  'neapel': 'napoli',
-  'rom': 'roma',
-  'genf': 'geneve',
-  'bruessel': 'bruxelles',
-  'den haag': 'the hague',
-  'kopenhagen': 'kopenhagen',
-  'moskau': 'moskau',
-  'st petersburg': 'st. petersburg',
-  'sankt petersburg': 'st. petersburg',
-  'bombay': 'mumbai',
-  'kalkutta': 'kolkata',
-  'kanton': 'guangzhou',
-  'tokio': 'tokyo',
-  'muenchen': 'münchen',
-  'munchen': 'münchen',
-  'zuerich': 'zürich',
-  'zurich': 'zürich',
-  'marrakesch': 'marrakesch',
-  'marrakech': 'marrakesch',
-  'kapstadt': 'kapstadt',
-  'cape town': 'kapstadt',
-  'kairo': 'kairo',
-  'cairo': 'kairo',
-  'hongkong': 'hongkong',
-  'hong kong': 'hongkong',
-  'mexiko stadt': 'mexiko-stadt',
-  'mexico city': 'mexiko-stadt',
-  'new york city': 'new york',
-  'nyc': 'new york',
-  'rio': 'rio de janeiro',
-  'buenos aires': 'buenos aires',
-  'san francisco': 'san francisco',
-  'sf': 'san francisco',
-  'jerusalem': 'jerusalem',
-  'tel aviv': 'tel aviv',
-  // Länder → Hauptstadt (als Hilfe)
-  'japan': 'tokyo',
-  'china': 'beijing',
-  'deutschland': 'berlin',
-  'frankreich': 'paris',
-  'italien': 'rom',
-  'spanien': 'madrid',
-  'grossbritannien': 'london',
-  'tuerkei': 'istanbul',
-  'griechenland': 'athen',
-  'aegypten': 'kairo',
-  'thailand': 'bangkok',
-  'indien': 'mumbai',
-  'brasilien': 'rio de janeiro',
-  'mexiko': 'mexiko-stadt',
-  'australien': 'sydney',
-  'suedkorea': 'seoul',
-  'südkorea': 'seoul',
-  'korea': 'seoul',
-  'taiwan': 'taipei',
-  'vietnam': 'hanoi',
-  'kanada': 'toronto',
-  'usa': 'new york',
-  'argentinien': 'buenos aires',
-  'marokko': 'marrakesch',
-  'suedafrika': 'kapstadt',
-  'südafrika': 'kapstadt',
-  'kenia': 'nairobi',
-  'israel': 'jerusalem',
-  'kuba': 'havanna',
-  'island': 'reykjavik',
-  'neuseeland': 'auckland',
-  'singapur': 'singapur',
-  'v.a.e.': 'dubai',
-  'vae': 'dubai',
-  'emirate': 'dubai',
-  // Sonderfälle
-  'chinesische mauer': 'beijing',
-  'grosse mauer': 'beijing',
-  'great wall': 'beijing',
-  'eiffelturm': 'paris',
-  'big ben': 'london',
-  'tower bridge': 'london',
-  'kolosseum': 'rom',
-  'colosseum': 'rom',
-  'sagrada familia': 'barcelona',
-  'brandenburger tor': 'berlin',
-  'taj mahal': 'delhi',
-  'freiheitsstatue': 'new york',
-  'statue of liberty': 'new york',
-  'oper sydney': 'sydney',
-  'sydney opera': 'sydney',
-  'burj khalifa': 'dubai',
-};
-
-// Find location by city name (fuzzy match with normalization + aliases)
-export function findLocationByCity(
-  cityName: string,
-  locations: Array<{ id: number; city: string; lat: number; lng: number }>
-): { id: number; city: string; lat: number; lng: number } | undefined {
-  const normalized = normalizeCityName(cityName);
-  if (!normalized) return undefined;
-  
-  // Check aliases first
-  const aliased = CITY_ALIASES[normalized];
-  const searchTerm = aliased || normalized;
-  
-  // Exact normalized match
-  for (const loc of locations) {
-    if (normalizeCityName(loc.city) === searchTerm) {
-      return loc;
-    }
-  }
-  
-  // Partial match (input contained in city or vice versa)
-  for (const loc of locations) {
-    const locNorm = normalizeCityName(loc.city);
-    if (locNorm.includes(searchTerm) || searchTerm.includes(locNorm)) {
-      return loc;
-    }
-  }
-  
-  return undefined;
-}
-
-export function calculateDistance(
-  lat1: number,
-  lng1: number,
-  lat2: number,
-  lng2: number
-): number {
-  const R = 6371; // Earth's radius in km
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-    Math.sin(dLng / 2) * Math.sin(dLng / 2);
-  
+// Haversine Distance — Correct Implementation
+export function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371; // Earth radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distance = R * c;
-  
-  return Math.round(distance);
+  return R * c;
 }
 
-function toRad(deg: number): number {
-  return deg * (Math.PI / 180);
-}
-
-// Find closest city to a given location
-export function findClosestCity(
-  targetLat: number,
-  targetLng: number,
-  cities: Array<{ city: string; lat: number; lng: number }>
-): { city: string; distance: number } {
-  let closest = cities[0];
-  let minDistance = calculateDistance(targetLat, targetLng, closest.lat, closest.lng);
-  
-  for (const city of cities) {
-    const dist = calculateDistance(targetLat, targetLng, city.lat, city.lng);
-    if (dist < minDistance) {
-      minDistance = dist;
-      closest = city;
-    }
-  }
-  
-  return { city: closest.city, distance: minDistance };
-}
-
-// Calculate points based on distance
 export function calculatePoints(distance: number): number {
-  // Round to integer first (safety check)
-  const dist = Math.round(distance);
-  if (dist < 100) return 3; // Sehr nah
-  if (dist < 500) return 2; // Nah
-  if (dist < 2000) return 1; // Weit
-  return 0; // Sehr weit
+  if (distance <= 50) return 3;
+  if (distance <= 200) return 2;
+  if (distance <= 500) return 1;
+  return 0;
 }
 
-// Format distance for display (always integer km)
 export function formatDistance(distance: number): string {
-  const dist = Math.round(distance);
-  return `${dist.toLocaleString('de-DE')} km`;
+  if (distance < 1) return `${Math.round(distance * 1000)}m`;
+  if (distance < 10) return `${distance.toFixed(1)}km`;
+  return `${Math.round(distance)}km`;
 }
