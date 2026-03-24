@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GeoCheckr — 200 City Cards</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Space Grotesk',sans-serif;background:#f5f5f5}
+.controls{text-align:center;padding:16px}
+.controls button{font-family:inherit;padding:12px 24px;border-radius:9999px;border:none;font-size:14px;font-weight:600;cursor:pointer;background:#3340ca;color:#fff}
+.a4{width:210mm;height:297mm;background:#fff;margin:12px auto;padding:8mm;box-shadow:0 2px 12px rgba(0,0,0,.08);page-break-after:always}
+.hdr{text-align:center;margin-bottom:4mm;font-size:11px;color:#999}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,1fr);gap:4mm}
+.card{border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:58mm;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;opacity:0.3;border-radius:8px}
+.city{font-size:20px;font-weight:700;color:#111225;margin-bottom:2px;z-index:1}
+.country{font-size:11px;color:#666;margin-bottom:6px;z-index:1}
+.qr{width:24mm;height:24mm;z-index:1}
+.qr img{width:100%;height:100%;object-fit:contain}
+.num{font-size:9px;color:#999;margin-top:4px;z-index:1}
+@media print{body{background:#fff}.controls{display:none!important}.a4{box-shadow:none;margin:0}}
+</style>
+</head>
+<body>
+<div class="controls"><button onclick="window.print()">Print All Cards</button></div>
+<div class="a4"><div class="hdr">GeoCheckr — Europe — Page 1</div><div class="grid">
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Amsterdam</div>
+  <div class="country">Netherlands</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADUSURBVEiJzZUxDoQgFETHWFByBG6yezETTbyY3IQjUFps/Pv/17jRLZlCCjGvYHRmAMht4LlgARCkDklnJBLIunQQ+SR/sEBFCrmOEhYMVOAqbLDFiQvMjw29XAxqBJ5cvkfZCHyYyZfSNQJ1AejqYEUbWUDUZF19Luvr+HQCWOJucgERaHLFpLB2Z5TNQGSyzEwlEsGRHN4yscDZMd8XJOC7wZxGt6tQgJ8w6i8QuUBqX/QnemECfS+XI6cVmB/ZOoY4Cwl4cq6yxV8dGsHfTfhQ8AWsUN2r7P0LqAAAAABJRU5ErkJggg=="></div>
+  <div class="num">#6</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Athens</div>
+  <div class="country">Greece</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzZWxDcQgDEX/KQVlRmCTTBYJpCxGNmGElClO+GwnV3BX8ou4AOkVGL6/DeQn8FxQAIQ256g7IgnsenRomCSIvGngQAxFs4SClQravAkdyLFGKjA9TIpOoEHglds1S1fKQeBhInemGwSqgp0/VRUlsUBTac8FSbBcV+eAVF0PU4YFRDLOl976WzkOuJ2gLUEEGrtsVZfMArfHJhMFLODdoAmuR7CATxjzmLuXCMyzRoUJvGj9cBwDpkexboAORBLwylkW/2RI4O8nfCj4AL5k24BGb7jeAAAAAElFTkSuQmCC"></div>
+  <div class="num">#11</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Barcelona</div>
+  <div class="country">Spain</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdSxDYQwDAXQf6KgZIRswmRIILEY3oQRUl6B4rMddALa/IIUYD0kArZj6GPhvbAB6MuwJLsjkUDs1f02rNqrHjTISAaHXTBRofgubBB97NIKng/RJd0S1AhROcnTvZSNEGvz+Np0jeCdgBGz4pM7HvjL8+xa/4UAxcAyMVlUK8cAawJ8Yd8fj0igVrRorzgSLPAlnt+zxxhw9ti8W9QpCeI0FFOVy/Fohf8wKAMXRFeNiAmxwX2OtUGd2rpjrD3GgLNyMQxWFjzWa+EHtBj5oz52TloAAAAASUVORK5CYII="></div>
+  <div class="num">#31</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Belgrade</div>
+  <div class="country">Serbia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADaSURBVEiJzZSxDYQwDEU/oqDMCNnkbjEkkFgs2YQRKCkQvh8nOgGtXeAisV4RR9/fhjwC7wUJwHCGOfJGdAKZTw8pLDKIHG5gQyQ4eGB0BWep4g2yPKpYQdEjyxxvAhmBdi5v472VRqCRSn41nREUJ+CDSdBtvRcQikwqhdavOwCKvOIrB+T8d84MhE3jsciO0ASyA76NNg1B7eABNHLRt3nMA6jHEqaVWS9OQKeBomDvLuNhBboMWIAbwRcU92rmCVTf68qxgrph6N5P9ZgHaJ1Dda8TeMRrwQ+QNAOj4dbqUQAAAABJRU5ErkJggg=="></div>
+  <div class="num">#22</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Berlin</div>
+  <div class="country">Germany</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADWSURBVEiJzdUxDoQgEAXQMRaUHIGb6MVMNOFicBOOQLmF8e8wq4VuyS+0UHmF6HwGBY9D3gtJRBzqEvQqgQRZH+2yggN2GlQJCiNckoUKbQI6aFG40OqRZMWtQJ1gyeVnlJ1gR34uuk5IPkJmLYoMGh8LZC2fyUc9Xd/CAC3F1KaSX3IMOPzW3n/Xsbd6UKAlNiMWncqWAwOu5IoMoIGtsbMbRpDAugFVuyFjCyw4NwNxh9+pkDyKa3dMQB3LfR/rBNth/Ba0JQASnMmtRUeRBX9/wpfCF6MQ0HdmBrIrAAAAAElFTkSuQmCC"></div>
+  <div class="num">#3</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Bratislava</div>
+  <div class="country">Slovakia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADaSURBVEiJzZSxDYUwDEQPUVBmhGySyZBAYjGyCSOkTIHwt02+FGjtAhcQPSRsnS8HehW+C3YA0xXWyG9EJ5D519MeNpqITjdQEBmc/MDsCi7p4g0yvbpYgeiRaY0PgYxAN5fL/FylEWjtcu5NZwTiBCQshKGMXuAKJyoEpHt0D6Ais778qducEfDoR00Yqabw18MOMIOnls2FZgc70Mqib/OYB7g9RnTwaSQn0EReUYfueliBhgE34ETwBeJePXkC4ntLfeRYgSZMWQ40j3mAljAaBpsXeNVnwQ+yv/EV1ILHqgAAAABJRU5ErkJggg=="></div>
+  <div class="num">#24</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Brussels</div>
+  <div class="country">Belgium</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzdQxDoQgEAXQbywoOQI3cS9mookXk5twBEoLw+wMkF21nSmkEHwFKPMB9Gh4L+wAXPFr4B7BCCJP7Xa/kSM6zSAjMJz8wGwKRVaxhkiPVbQg+xFpDbcNUkKtXMzzvZRKqG2X8TV0SpAkYMJCGPJoBvzFxyDzT/9/0QLx3FI5UGmVM4J0fGijY/JtgwyAM5taxoqvcbCAXrlROjPoGVtSUxuop4EyQNfjoYXfZdD3wwwkvXVkCTVet3tMCe3WpoSeMQtoleNri982K3i018IXoDYGr/9agEMAAAAASUVORK5CYII="></div>
+  <div class="num">#18</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Bucharest</div>
+  <div class="country">Romania</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADeSURBVEiJzZUxDoMwDEVdMWTMEXKTcjGkIuVi4SY5AiNDFffbUAm6dMgfyBCkN9jof39H9OfIfUERkdDinPCVRAILSocmgwbVNw2skkJBl1BkooIWs9KBrlOiAtPDpLgI1AncuQVdLlZ2Aj8m8mXoOgFUsPpDhSgvFlg0q4siz+/g9gPXt0ToW3gAQajbiL+WcXeOAWAacivT0YoD/ECUimtmgWPG4JzlggQ8DWgg2+MUj16wb5hcfc0wgc0slsGgTGC51fPK6QWmR4moL1iIJODOWQN/ZEjg/9N4D/ABCn7dfkJnJV8AAAAASUVORK5CYII="></div>
+  <div class="num">#20</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Budapest</div>
+  <div class="country">Hungary</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzdU9DoQgEAXgZygoOQI3WS9GookXg5twBEqLjbMMuJtoswWvkEKSr2DI/CDktvBciACslODrDk+CVI+2Im/fPiwo8DaVRWxEoEKLwobDrVzQfBwwcknQILTKpXspB6EtTfKl6QahZgGYStBGW1jQtgiT99d5dQIk2aRGMRlEOLDIPhdgn3rlGBCdZMwtiqPBr3KYZWVB7zG9tc4FCdo01PvrNKw06C9M6MPLhDq3WRtNmBDdli9PzihoPpL2GNwmJDhfGJO/+WDA/1/jM+ADc/rn+yJY4QEAAAAASUVORK5CYII="></div>
+  <div class="num">#9</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Copenhagen</div>
+  <div class="country">Denmark</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzZSxDYQwDEU/oqDMCNmEyZBAYjGyCSNQXhHln51wiKO1C1wk1itixf/b4CPwXrABGEpYotyITiDJ08MWVg5kdgMHooAsByZXULSKN0h8VLEC7UfiEv8aZARVuXRM/1IaQY1N87vpjECdgBEz0R29G8C8t/fH31/sgJQqHTNYmnIeQOyg8q38jKH2wwVw0bnNolw4/WEHNZL29/SYB2geI3fJejqBOg3UptzHwwquZVCCL1DlauYJKHPL+8qxgra1uePymB2cG6Yug9ULPOK14AtXBhMqk1kCVQAAAABJRU5ErkJggg=="></div>
+  <div class="num">#14</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Dublin</div>
+  <div class="country">Ireland</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzdU9DoYgDAbg1zAwcgRu4ncxEk24GN6EIzAyGPjaauLPSgc7oHkGS9qC6K/AdyEBsLR4esIrwUaftlsJ3va+q0GBt6IJQRUSjD7wrlVBdu1ifxRoEKRzXORHKwdBovH7fegGIbkdttHW63ymVYAGkyuOLLErAT0yzVjsmDRhRf2VJVPnVq8EPA6UQIqiBhJcaQrTlUBmrJeAChe14LxhqHPbVY9hkMuAj1hzuypw0+p0y6ICxXD75IipwFGPJWN2anD+XwIt7rq2BuEVn4U/WT3zVB0a22YAAAAASUVORK5CYII="></div>
+  <div class="num">#13</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Edinburgh</div>
+  <div class="country">UK</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzZSxDYQwDEWNKCgzQja5yZBAYjGyCSOkvALl33eIOKC1C1wkzitiyf/bgkfIe8EqIkMJc+Qt0Qkkfj2sYcEA7G4gSyTYecjoCopW8QYJjypWoP1ImOOtQUZQlUt5vEtpBDVWza+mMwJ1gnxkgnS59wIJCz/Pk9JmXAeQ2Q/2V1BOKc2AJlDa4/sJbW49AKOjcnUknEANrYLmMQ/QPDZtzHo4gToNXFua/cfDCs5lUIIvUPfWzBOAyuG6cqzg2DDYpHnMAxzKcW3xtXiBR7wW/AAUUQMcooW0UQAAAABJRU5ErkJggg=="></div>
+  <div class="num">#30</div>
+</div>
+</div></div>
+<div class="a4"><div class="hdr">GeoCheckr — Europe — Page 2</div><div class="grid">
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Florence</div>
+  <div class="country">Italy</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzdUxDoMwDAXQX2XImCPkJu3FkIrExZKb5AiMHVBc24UBOuYPZAG9gSjfdoBcFu4LBUCUdcr6RCZB1U/HqhBFNhqsyApBYsFEBduADhoKFyyPgrecAhoEr1y9lnIQfNVr0w1CSYvgpaHgoeUjQU9b/jzT0uwQmQQaBfBEaNKPUhJAZkt6QuzJ82BAR7A8dBrsECTwpT3Wjh5jwN5jPg1BSODTYFHoLgsNbIP+C5kLddU87I0JukE7XTmj4Le2zDYSIiTwypUkTfaQGfD3J7wpfAGSqfKMZmTXcwAAAABJRU5ErkJggg=="></div>
+  <div class="num">#192</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Hamburg</div>
+  <div class="country">Germany</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzdSxDYQwDAXQf0qRkhGyyU2GBBKLJZtkBEoKhM820Qlo8wtSkOgVxLIdQx4L74UMIB7DnHRHIkHRX8c8LBJFdhqsSAq7fjBS4bBb2FDkcUsvWD6KzOmWoE7wypV1vJeyE3xlO1+brhOsE/DFJPisgQVatKoqph46B2ZY0fR0Vo4BWaPegCDbd2jvth8OhBrtAu1ebwcGtMoF22jQemyqp3LAX4NlWsrlefTCfxi0fNDAo7YTE7y9bnOsE86pLRWtxxjglWvDYGHBY70WfpPV3bB4yOfLAAAAAElFTkSuQmCC"></div>
+  <div class="num">#38</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Helsinki</div>
+  <div class="country">Finland</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADYSURBVEiJzZSxDYQwDEX/iYIyI2QTJkMCicWSTTJCBkDx2SZ3IrR2gQsIryDJ/98GPQrvBQnA3MIe+Y3oBDL/ek7hoJnodAMVkcHJD6yuoMku3iDTYxcrED0y7XEQyAjUuVzX0Uoj0EqyvofOCCQJWLARPnXyAkQ7qAUS2o/uAFgKcY7p5ZwHSJgKScb4Er1v7UDixVKIc6Hnww60sujbM+YBNGN86iKXICeg3aD23dvDCv7DoAVfoHrIyhNovIY5ZgQ6tbEVLL+M2cE1YXhs8dfhBR71WvAFlrgEu0//e8QAAAAASUVORK5CYII="></div>
+  <div class="num">#17</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Istanbul</div>
+  <div class="country">Turkey</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADaSURBVEiJzZSxDcQwCEU5pUjpEbxJbrFIiZTFwiYeweUVkf8Bjk6XtFCEwkavMBb/A+EW9FywE9HY0prlphwEWJ4e97RhBI4wUCkLOOSgORQ0rRINGLcqXqD9YKz50iAnMOW4zlcpncBi1/zfdE6gTqCJFtCrDlGA61A+b31/Oo0bAFpCUdEk68pFANQFWkqaknqDAoCJNsk0EKVzxPzAwqqcHosA5jH5dZFsQBCwaWhCwX/j4QW/ZdBSLGBssCwSmL0ue8wJbGvTUsQTQBDoyvVlsEWBWzwWfAHv2PkSCCSMewAAAABJRU5ErkJggg=="></div>
+  <div class="num">#37</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Kiev</div>
+  <div class="country">Ukraine</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdSxDYQwDAXQf6KgzAjZBBZDOiQWI5swAiUFyj/boBPQ2gUukugVJLKNwUfgvTADaGsas+zIQVDk0+2cJrbkHgYrssAuC4ZQqHpLNBQ+bvGC5qNwzLcEOcEqV9bhXkonWMx6vjadE7QT0OFLfNYmCsgRW5eoej7dD5ZkyS9YL5Vzgm5bz4msyfIRBVIzXdKeg8CiaH7PHouAo8fIRU4Ng8CSXEVZLr+HF/7DoKZYsFfrKRLsgvsc88ExYbigO3osAqxy5zCYouARr4Ufazj47+MyMjMAAAAASUVORK5CYII="></div>
+  <div class="num">#35</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Krakow</div>
+  <div class="country">Poland</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzZSxDcQgDEUdpaBkBDa5WwwpJ2Ux2IQRUqY44fsmpDhafhEXIXoFNt/fFh1CnguSiDg9YsApgQQyrnYZwKl+aeCQALCqSxKpwBLQAUThAtMjyaZ/Ak2C1rk8tnIStMij6SZB8rvKG6LIgvaRQEXF56J7sUcEEuhZkKBenWMA2AGiHFFc9U0PCkDVqB7TUH33xzxokbyW22MM0DyW/MemYVUSaNOg12enAZtbSGEicwFSFWd/TICqy7DH5sC1YSScr9tj86BvmK1oF5kBhngs+AFbpwN7EGvIJgAAAABJRU5ErkJggg=="></div>
+  <div class="num">#193</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Lisbon</div>
+  <div class="country">Portugal</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADUSURBVEiJzdUxDoQgEAXQbywoOQI3cS9mogkXw5twBEoKwywDJqvb8gunUPMKIZ9xhPwV3gsBgKkXV+9wJDjqq82RVmdEThokONM0YKVCwMwH3TUV2q6tl0dAg9BOTkN+HOUgtCr6fG+6QQj2hCl163m5liWApC1m9FW8kEDPC0ttB0w8ENkhxUrER3ZHghpFNFcoNGilUGsWErQek7Qiw3oW9AmjURw9Dwq0YaCfWLEnFTTfPN1W4YDXHmufGAX6bN0iFkuD/n/RHgv2N7YG4a9eC19W6NcqRDQuMQAAAABJRU5ErkJggg=="></div>
+  <div class="num">#12</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Ljubljana</div>
+  <div class="country">Slovenia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdWxDYQwDAXQjyhSZoRsAoshcRKLhU0YIWUKFJ8duBPQ5he4gOgV2HIsA3kE3gsRgNNH0DcCCVb9tFvTFJzIToOE4KpGTFSI6PlgVVOhVu0XuTWoEerNWZNvV9kINYqdr0PXCNHvcEVLz8OZlgBWdR5TzbIIC6zJdkZHBE2QuzRvOr2fQIKiM4tRdmDwNKhhndbohQR1xopChl9YcGwYbUUezwYx4L8MNBUVivY3d5csDDhnTIQFx26dNx0HGvw2jP5k/G1ttcAjXgtfs3/mp4ULceoAAAAASUVORK5CYII="></div>
+  <div class="num">#25</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">London</div>
+  <div class="country">UK</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADWSURBVEiJzdQ9DoQgEAXgZygoOQI3cS9m4iZeDG7CESgpiLMDuoW0vEIa41dIfPMDGQ7eCwGAlbx5fcKTIOqnbVSwIpUGGV7BiA3YqNAuoIOGwoWWR8Auj4AmoVcujqWchH7i2HSTENwh+GgoWLR8LMCeCmBSWf//Mg8iR+o9pnFsLGhFK3BV3909t/OgIwuroSSsrrcDBe7KJSxCg95j9zQYIUGfhlND0Vu+ngV9GbRQTlepEPPeegJUkGzSc49NwrW14ct69RgDrg2j7dDmggXDeS38ANho38dbDvBgAAAAAElFTkSuQmCC"></div>
+  <div class="num">#2</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Madrid</div>
+  <div class="country">Spain</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdQxDoQgEAXQbywoOQI32b2YyZp4MbgJR7C0MP4dUAtp+YU0hlcImT8D2Cy8FyIAx3UK9kUQQbJfu2TgyF0GK4LBSBcxSaEcIAcrihZKPSJ+fBSoE2pyqY2yE+pKbdN1QvQL8bWiYLD4RJC4cAPGvH3uxu0HcrbQylE4k1NA9HvYPn63vb/q0Q8HJpRTMkyDCO7kMgbK4OqxOg0jRVCn4TinYQ4quB4D3PWQgc1trvdXwmGN+3hyeuF8YVAajRRBTa5c3XaLCpr1WvgDoSfNrFvn3FgAAAAASUVORK5CYII="></div>
+  <div class="num">#5</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Milan</div>
+  <div class="country">Italy</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzdWxDYQwDAXQf6KgzAjZhMkiHRKLJZswAiUFyj/bHHdAGxe4APMKgmwngLfAcyED6GsYo9wRnaDIq/scJvbk5gYLosAmFyRXqLqKNxTeVmkFrUfhGC8FagTrXFnStZWNYJE1Pw9dI+gkYMCbeC2dF9SwYR0CVe3TXQAWSbPkB3Kr6GhLOYHM2NG5cGyxZrAoWt/vjHnAPmPkLFlHJ7DdIMeWZv/t0Qq/w6AGX7B6aOYJlM7xfOS0wn5qc8YxYw5gncvyf5GnyQtu8Vj4ANFC5V3cAwDIAAAAAElFTkSuQmCC"></div>
+  <div class="num">#34</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Moscow</div>
+  <div class="country">Russia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADbSURBVEiJzZQ7DoQwDERnRUGZI+QmcDGkIHExchOOkJICxWsbdvm0doGLYL0iCZ7JgB6F94IZQFvDGPmL6AQyb93OYaKWaHMDBZHBxgsGV1DlFG+Q6XGKFcg8Mo3xNiAjUOVyGe5SGoHWLP3VdEYgTkCHRPiUxg0gLWsv+3e/f7EDUQ49baB6SmkFVBKt4Pvzsg/IAVRRTpwABLWDB9DKMt/DYx5APTYHWrhryAnoa+DYku58HlbwD4MafIG4VztPoPO9Ro4VaMKUtKDbPeYBDuVGCYPJCzzqteALDHH7iI36klQAAAAASUVORK5CYII="></div>
+  <div class="num">#36</div>
+</div>
+</div></div>
+<div class="a4"><div class="hdr">GeoCheckr — Europe — Page 3</div><div class="grid">
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Munich</div>
+  <div class="country">Germany</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADZSURBVEiJzZQxDoQwDAT3dAVlnpCfwMeQQOJjyU94QkoKFJ/tQ3dAmy1wQcwUSbTeLORWeC5IALoa5qgrIglk3bpLYZFOZKeBgqhg1w9GKqh2ChtkuZ3SCkyPLHO8CNQIfHK5jNdRNgKvZP3ZdI3AnIAek+BV3iwgKrJUA/1xdQKogA/NupEFcpnWbZBFNgTXgwH06sDgHgt7ZAGrbPoeHmMA91jCtGr3FhLw16CxZd3/ebSCXxjUwAWuh3VM4PqeI6cVeGqryOgP0xHAN2E0tvRvYYFbPRZ8APac9zKtbNcCAAAAAElFTkSuQmCC"></div>
+  <div class="num">#32</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Oslo</div>
+  <div class="country">Norway</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzdSxDYQwDAXQf7qC0iNkk7vFkEBisWQTRkhJEcVnG3QCWrvABUSvICaxDb4FngsZwNBpTvJGCoIinx4yLTwwtzCoSAJNHhhDoesu0VD4tosX9DwKz+lyQE6wmyt1vF6lEyyyrs9F5wStBHwwMV71HQWdmj5Y1VKPANlllfUout9cCOC9bl/JegMdfesHaVlYeQHUUhBYFD3fo8YiwGosE6/6ExwE1g1cAT63hxf+w6BTLFjWuooEy/o8crxgE6ZOUr17jUXAMWFsGCxRcIvHwg+VE+s0bb4pegAAAABJRU5ErkJggg=="></div>
+  <div class="num">#16</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Paris</div>
+  <div class="country">France</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADUSURBVEiJzdQ7DoUgEAXQMRSULIGd6MZMnokbg52wBEoL4rwLaiEtt3Aa9RRC5ifahXwXgohYzavHUzwJIn5tI8CqFhpk8QCjNshKhXoAHZAULtR8BPnpK0GD0CoX+1IOQovYN90gBLerLEiKTCgfCU5X6lF7Oubr6gzArRNOMYp0rDxAvTBi+HYtHww43VZrZpLMrngSPJVLMikNWo/d02CUBG0aTqQC07B5FtzLQKCFCpjbZOsbEzSb9N5jg9A2jNv8MT9NNw7XhkE71DljQRefhT860O2bChwXmAAAAABJRU5ErkJggg=="></div>
+  <div class="num">#1</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Porto</div>
+  <div class="country">Portugal</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADQSURBVEiJzdU7DoMwDAZgIwaPOUIuGolIXCy5SY6QsQPCtV1ECx3zD2QA6Rsw+AXJ7dBzoRARS09R7xRBUPXRLLJFv6CgU+TaF+FCCQoeBQ17yFiwfOw0yyVBg+CVq/dSDoIfS/Kl6QZBs0A09WSNtuBgaRplbvYREQT61o0NGAg6XfSaJFtmNhSUsBGXsGpPBBicleMqGQVnj/lcgMCn4Vgzq6Dgs2GSzm0QKGgA67EZCkeP/S7HMbBUlJDpReGboEHwymmPNV+IIPj7Ez4U3jR+CegpUHfNAAAAAElFTkSuQmCC"></div>
+  <div class="num">#191</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Prague</div>
+  <div class="country">Czech Republic</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzdQxDoUgEATQNRSUHIGb6MVI/AkXg5twBEsL4/wBtZCWLaRRXiFmdxZBt+S7kETEYgueT/FKkPlpmwkWONRgE08wsEmCKtQD1IFF0YVajyQrXgUahNa53LdyENrKfegGIbkIWVgUmdg+JcC2AqeLZZ/vX9eBIrMYsBxBC2oSmInAvXvmdhgyYmEcDI9ydz7G4elckQlqcGUMvzoNBkrQpqGla6FqQbsMWGSb3KEKtR62vmlCDe7ryhmF64YRv89PxsahdS45FO6iFnTrs/AHPorsptMFw7IAAAAASUVORK5CYII="></div>
+  <div class="num">#8</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Reykjavik</div>
+  <div class="country">Iceland</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzZUxDoMwDEVdMWTMEXKTcjEkkHKx5CY5AiNDFfc7pbSw5g94CXpDjP7/dkQvJfcFSURc9UvAKYEEMq52VQZ1qi8aWCW4hC4uyUQF1UelA12nQAWmh0lxEqgTNOcyupys7AStTORT6DoBVLD7hwJRZhZAFa0yqzyPXyeAWEQ89E08UHFs49c+Ekg2XRYvpJcGdudiQdoWFtgzBudsLkigTQO+ZXv8jUcv+GyYWNqaYYLq1ZQelAmytoz9Vk4vMD0SuiC9UUng2DDtkSGBS90WvAFVgtaZhaOUCQAAAABJRU5ErkJggg=="></div>
+  <div class="num">#29</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Riga</div>
+  <div class="country">Latvia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADbSURBVEiJzZSxDYQwDEU/oqDMCNmEWwyJSCyWbMIIKSkQPts5dEBrF7gg5hWxZf980CPwXpABDEdIkU9EJ1D46iGHhQai3Q1URAY7fzC5gkOqeINCjypWIPMolOJtQEagmyt1uq/SCDSy5FfRGYEoASNmQld7L1Bqv25dnYU24boARHxoBx3/VZoBJWzadQ46Dw8g81WNAeGUgxloFKny05gHUI1x1ytnPTkBfQ1UwUO5PA8rUDPgAuwIvkC7lswTqLxuPmYEzWFoxXiKzg6aw7Bt8d/iBR7xWvAFlOjwXBR/pi4AAAAASUVORK5CYII="></div>
+  <div class="num">#27</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Rome</div>
+  <div class="country">Italy</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADQSURBVEiJzdWxDYQwDAXQjyhSZoRswi0WCaQsRjZhhJQpTvgcI04HzRX5BSkAvQIH2zGQ28JzYQXgpMSgdwQSZH21E3kHu7CgILhcZnErIhUsCht2v3Ch5WPHKJcEdYJVLt9L2Qm2WpIvTdcJmgVgKLE12syCLEnq5NNWp7NxCWABJG0gwu6TyOoX1OGoHAOkaMVeFsXz4Kyc6sKCb4/ZuSCBnYbfKBSwCaP5BTwXWjvoR4zCBH3eLiOnF458ABWt2zhwVE63bgORBP9/jc+AD6tS6l0UwFbHAAAAAElFTkSuQmCC"></div>
+  <div class="num">#4</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Salzburg</div>
+  <div class="country">Austria</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADQSURBVEiJzdW7DYMwEAbgP6Jw6RFuk7AYEpZYDG+SEVy6QFzODykJrf9EcQHSV3DWvYBeDv4XdgAu6iH2hpAg2qfd7jd1asqCBHEWqjwWKsS08OG8RhmFko8a5T1Bg9AqZ/BZyjH4Tp/6A/XW+d7DEkATSqbt6jfdlAUaYJVbkIkQ0/TIswaxGgahwaqYTW3OaFBPCZCBSUlQe+y0ZQD4jQV9GtaHi63HKNCXQQvFBGtcWI8FYULvsdfVR6HlAzZinga1cvVXYBMsJGAspV/AE3oD+kM4Qp6wAAAAAElFTkSuQmCC"></div>
+  <div class="num">#195</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Sarajevo</div>
+  <div class="country">Bosnia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADQSURBVEiJzZWxDYQwEARPInDoEtzJf2NIj0RjphNKoADkY/fEvx5Sb8AltibwWbvrs/mt7LmgmllqeSpYrYjAgqNTs8GT+y4Dm5VU0SVVG6Wg5dnlwLexSAH1oBQXgTpBOLegy8XKThBFkS+h6wRQgecPK0T5qABqRRdsX7+rdwP6Fc5RGRnI6OJf+0RggQr2ZsZaloHTuXlF2iYVODMG5/guRCBeAyl2uwzEhGHGIr1CwMySuhLErf9HTi+gHpEJw0AUgXCuIl7xyYjArR4LDl1z6EEACNvWAAAAAElFTkSuQmCC"></div>
+  <div class="num">#39</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Seville</div>
+  <div class="country">Spain</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADUSURBVEiJzdSxDcQgDAVQn1K4ZAQ2uVss0kXKYrAJI6S8Iorvm5AitPwiLhL0CpC+DWJdyXMhiYjaNkf8JZIgY2vNADXbabBJBEymSWYq+AF0QChc8DySfO0W0CDUzuW+lYNQK/dDNwgprCYfhCIvtI8ECNk/WKc2uAywBUGEtehxdW4c6t5Yix7hurfDgCEQ9VAAe6QBKgUr14wxoM5Yuw2TkaDeBo8Cp6w0aI+Bh8wF3NuivmLCIVO5PTmjUF+YsMTf+5wxBpwvjFmxFjIDunos/AHRafCTkFmlIAAAAABJRU5ErkJggg=="></div>
+  <div class="num">#194</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Sofia</div>
+  <div class="country">Bulgaria</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADZSURBVEiJzZU7DoQwDEQHbUHJEXIT9mJIIHGx5CZ7BMotEN6xQSugzRS4APOK2Iw/gd0MzwUZQLt1U+IbSQQKj25zN1trtsrAgkSw8oFBCjaPogbFblFqgetRbEoXgSpBVK4sw7WUlSAsu39uukrgnYAeo6FZXjrAs10U0v1fBICVg+sL2/6lrAbeXpE/vdBDApgw3qxcjIQIhBXX9+gxBTh6bPzQe5kIxDQYlf42p/GoBbEMGIAbQQsia/eUIAJc91gdiA1DkdHvPaYAUbnM+4Vfswrc7LHgB1HJ/P+2MEvNAAAAAElFTkSuQmCC"></div>
+  <div class="num">#21</div>
+</div>
+</div></div>
+<div class="a4"><div class="hdr">GeoCheckr — Europe — Page 4</div><div class="grid">
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Stockholm</div>
+  <div class="country">Sweden</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzZUxDoQwDARXSpEyT8hPuI8hgcTHkp/kCZRXoPhsQ3HcldkCN6ApvNJ67UB+Cs8FBUDsac36RSaBqq1jR5AoctDAjhyLqsSCmQp62oQOZJ8zFZgfZsXNoEHgk6uqchvlIPAyk2+hGwTqgvUPTU1ZWKDuoZ39pyu4FLA0TEn9LUQga35PWL7WYxx0FcBL/4FEA15VtuZ6JHBmTEG0vSAB3wYVML2DBvzCWMY8vUTQk9iFCcIE5czY93EcA+6HbpfGYRMSuCZ3ZH9kSODvJXwo+ADem+Ro9TxNAQAAAABJRU5ErkJggg=="></div>
+  <div class="num">#15</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Tallinn</div>
+  <div class="country">Estonia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADYSURBVEiJzZSxDYUwDEQPUaTMCNmEyZCCxGLJJoyQMgXC3zZ8CWjtAhfBegWBO/tAr8J3QQEQjrgkfiI5gcqvDiWuFIh2N9CQGOx8YHYFh9ziDSq9brEC0aPSkh4CGYE6V9v8tNIItIr096EzApkETMiEoY1uAHnrQ8tCr3+xgyPSJqZxdzrnAdi08/s7ourhAajNbBlvgx5eQKqKvteMeQCdscKicDeSE9BtIBalD7f1sAINA76AE8EXqB7SeQLV9x45VnCmNm2Y/kNnB1fCaBisXuBVnwU/OxjzhuOw3wwAAAAASUVORK5CYII="></div>
+  <div class="num">#26</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Tirana</div>
+  <div class="country">Albania</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADZSURBVEiJzdSxDYQwDAXQf6JImRGyCbcYEkgslmxyI6SkQPxzDEhAaxe4gOgVCdiOwUfgvZABhC1OSd5ITlBk65DjzECublCRBFZ5YHCFrZ3iDYWPU6zQ8lE4pVuCjKCVK3W4l9IIGrmtr01nhNYJ6DESn9q5AcYfWcemx7/YocjeYcMAbmcp7ZAj2ykdlz4e+bCD9BgkFcN+JZxAo30/jx7zAO0xzXRGRyfQ2yBjC8v3cj2soMNADkAffaFwpq48QdvrNseMsE9t/nD2mAMcldNhMHvBI14Lf7+s7cjbv/C8AAAAAElFTkSuQmCC"></div>
+  <div class="num">#40</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Venice</div>
+  <div class="country">Italy</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzdTBDYQgEAXQv/HgkRLsxG3MRBMbg04sgQIIszMj2ahX/kEOSp6JkOEzkMfAeyECGGvYJn1jIkHSX48x7DKKFBpkTApFH1ioUG0VNiR5rNILVo8k23QrUCf4yaW83I+yE3xEm19D1wmWBMxYBZ88sKBaaavBfG6dAVrkA18p7RMJ8nroXHcdg9eDAZYsDW45rwQJfCSrb8sYAzxjEbr/iEFI4Lehqkq6XI9e+DeDGrjgu7YZEzxetz7WCd5hNGiYW+gI0DqMN4OdBY/xWvgBVyH1wJ+Z/pcAAAAASUVORK5CYII="></div>
+  <div class="num">#33</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Vienna</div>
+  <div class="country">Austria</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADUSURBVEiJzdQxDoQgEAXQbygoOQI3cS9GsiZeDG7CESwtjLPjyCa7tPxCGuUVSv4MA+kWngsZgJctRX0ikqDop31R8CIHDTZEBSc+I1Hh+gEdNBQuXHlkvOUvoEGwypW+lINgq/RNNwg5rIKXhoJJy0cC0XdN2tV9bkcnwAlXrcc0jsQCkQX7tCXdhxbQOJzhuO6tq5iDtQMDvpWrmIQGrcfsNjghgd0GsTEjS2RBGwb45kGDHKTa+ZlgjfY7ckbhnjCI+3z3GAPuymk76G5lQbceCx9LWeiWTy4JggAAAABJRU5ErkJggg=="></div>
+  <div class="num">#7</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Vilnius</div>
+  <div class="country">Lithuania</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADZSURBVEiJzdSxDYUwDARQI4qUjJBN+IshgcRiZBNGSEmBuG87IAFtriAFhIdEkH2J4DXku7CISDi6KepdIgmSfjos3YwA7DTIEhV2vchAhcNWYUPCa5VasHokTPFRoErwzqU8PFtZCT4Wm99DVwmWBOllhDS5ZYE2bcVh0JdfZ0DKOv9h11dXK+tBd5dVusXWdwAJkMdVSzFYej0OFCida+1GgzNj41qUA74bgEm25rY9asEPA13gqgcNEmb4jAker8c5Vgl+wlgmzowxoHROjy19mlnwGp+FPwtO/zTDvp8bAAAAAElFTkSuQmCC"></div>
+  <div class="num">#28</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Warsaw</div>
+  <div class="country">Poland</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADUSURBVEiJzdS9DYQwDAXgd6KgzAjZJJMhgcRiySY3AiUFyjvbRCegjQtcQPQVBPkPfATeCxnAWMMS5Y3oBEU+PeawciQPN9gQBQ55YHKFqrd4Q+Hjll7QfBQu8ZagTrDKlW26l7ITLLKer03XCdoJSJiJzzZ4ASXJu0Fqv+4A1rMVE1jPynmA3kLtsT0F0glyWIBk0xDOdnAAi6L5bT3mAa3H5q+cBjqBTYMkBbyORy/8l0ENvmB/rSdPoMwtryunF84Nwy9aj3mAVa4tg9ULHvFa+AErqu5j8kfAFgAAAABJRU5ErkJggg=="></div>
+  <div class="num">#10</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Zagreb</div>
+  <div class="country">Croatia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADYSURBVEiJzZWxDYUwDEQPUVBmhGzCZEggsViyCSOkpEDxtw36AtpcgQswDwlHvrOBvALfBQnAUMMS9Y5IAlk/PaSwyiBy0EBBVHDoBRMVVKvCBlleVVqB9SPLEh8NagSuXC7TU8pG4JEsv5uuEZgTMGIWdKVngWqtTUGM+tE5AC7a9YoDREXbR+iprRQJmMfQucfCf8RagUe2/l4eYwD3WMK8adYLCfg0SAH27jYercCXgRbQjcAFWVbxjAlO9973WCM4t7ZsGC+PEcCpnP5f9GllgVd8FvwAQ4HjbtM3Bd8AAAAASUVORK5CYII="></div>
+  <div class="num">#23</div>
+</div>
+<div class="card" style="background:#E8EAFF;border:2px solid #3340ca">
+  <div class="city">Zurich</div>
+  <div class="country">Switzerland</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzdSxDYQwDAVQI4qUHiGbMBlFJBZLNmEESooovh8fBdDmF7gA9ApsOY7FXiHfhSwiAY+It0QSFPw6lGONwazS4JAYXLOsVMgy86FXTQWvWjd7NGgQ/OR6kx9HOQgerX/fh24QslYJDaWfy5WWAGYpnoumnmUzFhyYhIJvmXjQkOAUtR2aIgnQDx8vXF6lgUex2qdhNhL4jDVkQf0bC64Ng0m4+kEBXwb9ijWtVPDjm25ZOOAz5leMAt4Ps10WpcF/w2AcQtbb2hqDV3wWfia35haf8CVvAAAAAElFTkSuQmCC"></div>
+  <div class="num">#19</div>
+</div>
+</div></div>
+<div class="a4"><div class="hdr">GeoCheckr — Asia — Page 1</div><div class="grid">
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Almaty</div>
+  <div class="country">Kazakhstan</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADYSURBVEiJzZTLDYQwDERnxYFjSkgnVIYUJBojnVBCCkAxtrOrBa6ZAz7A8A6JGX8gj8B7wQZgrGGJ+kYkgaxHj1tYZRQ5aKAgKjj0gZkKqt3CBlket/QC8yPLEm8GdQKvXC7zvZSdwGMzfW26TmCdgAlJ8CkDD+jZuSSj7V8IQGQxJ2ZIbZWjAPVXtWZdQzOIAGxkfRqA4O3AAB7Z/P32GAN4j6nTu6pBSMCnQfM39R+PXvBbBpgCF3jWppjA/b2unF7gG6akXVMXIYG2YXRt6dfKAo94LTgB08L3+sbdfuMAAAAASUVORK5CYII="></div>
+  <div class="num">#75</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Amman</div>
+  <div class="country">Jordan</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADYSURBVEiJzdS7DYUwDAXQiyhSZoRswlsMKUgsRjZhhJQpUPxsQwG0dkEKCKfA4E9Ar4XvwgYg9LgkviM5QeFXhy2uFIgON6hIDAdfMLtClyjeUOgVxQqSj0JLeiTICFq5UudnKY2ga5P9vemMIJ2ACZkw1NENkPf2q1n0+hc7kOSXiwbqZ+U8QKarTRipIWo+nEBqNp8j4QS6iuT36jEPuHos77wbyQl0GqgCbbiNhxX0MOAAmKIvSPfqzhO6BHieYzbQE4aTzJ9O5ARn5Xgk+Gn1gtf6LPwB8gzg6e0CkpsAAAAASUVORK5CYII="></div>
+  <div class="num">#62</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Ankara</div>
+  <div class="country">Turkey</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADWSURBVEiJzZQxDoMwDEV/xcCYI+Qm9GJIReJiyU04QsYOKL+2SdXCGg94SKwXKbbsb4MXw31BAjDWsES5EZ1Alq/HFFaO5O4GCqKAXQ7MrqBqFG+QeYnSC7QemUs8FagTWOdymc+t7ARmSf1/0XUCVQImvIhHGbxA1dImBdORugdIOghP7u3JB1QJ8IbkL0+kEzAlaAAgNH30A7Os9W0a8wCHxshNvIFOwKZB1pZ6v/HoBd9lgCn4gsyV5nkCFlPv7AaOrc1NUiedQOvcostg9QIXuy34AHqu9kdq9YTjAAAAAElFTkSuQmCC"></div>
+  <div class="num">#77</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Baghdad</div>
+  <div class="country">Iraq</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADaSURBVEiJzZSxDYUwDEQPUVBmhGySyZBAYrFkE0ZISRHhbzvoC2jtAhfBepFwdD4b9Ap8F2QA0xnWyF9EJ1D411MOG01EzQ1URAaND8yu4JQq3qDQq4oViB6F1vgQyAi0c6XOz1YagUaW/G46IxAnIGEhDHX0AmdoOBSk/nQPkMMK0Zeveuc8ANFG+v4jhUsgO2AnAEmnIVz+sAONIvpeHvMA6rGMZedsJCeg00AVOIbbeFiBLgMuoKJ4AtVDMk+g9nrsMSPoW5t2/D1mB33D8NrqFvYBr/gs+AF9Uu3IWMn6bQAAAABJRU5ErkJggg=="></div>
+  <div class="num">#60</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Baku</div>
+  <div class="country">Azerbaijan</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADaSURBVEiJzZUxDsMgEAQvckHJE/hJXmbJlvgY/MRPcJkCcdkDKwppUrCFaZCmuIPdPRD9WXJfkETEVb8H7BJIIKO0q7KoUy00cEpwCV1ckpUKqo9KB3qugQpMD5NiEGgSNOcyugxWToK2TOQhdJMAKlj95YAoGw2gweth9Z/XXQggN32hhynDAoo4aJXtMw0MkDxOLb5Yemngci4euMTOAi1jyZyzuSCBNg1oILCv0EB/YeIBUXYqqFDazq9MkMy08XGcA9oabJaJqCTQnesZ+4rDHPj/Nd4DvAG0x8c6OGV3WAAAAABJRU5ErkJggg=="></div>
+  <div class="num">#69</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Bangkok</div>
+  <div class="country">Thailand</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADWSURBVEiJzZW9DcQgDEYtUVAyApski0UKEovBJoyQMsUJn+2cTuGaK/iKUJDoFRg9/0D8s+i5oBCR7yFF+VIEgSpH+06OPfMLBg6KvkgUX2iDgh4ywwEfW4QC9aEqBkGTwDJXJcqQyklgSyUPRTcJxIKe75pI2VGARfK5BPldPlcHAfOhZlCg0950Y1qvzCHALXMBBmxVzk22hAIWpYTcvPYFCFg3SI3Rud7aYxZcEyY38ZGgQDMnw8AxEthwGYbjJFAfVbpLrp4ZBL41Zo8MCPx/Gp8B3vYMusl/IsnoAAAAAElFTkSuQmCC"></div>
+  <div class="num">#44</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Beijing</div>
+  <div class="country">China</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADUSURBVEiJzdQxDoQgEAXQb7ag5AgcxYuRSLIXg5twBEoLw+wAGxNs+YVTCHmFGOY7kEfhvRABmCSX0xWOBElfbVI5xIgqCwpc35sITwY9ig16KY4K/QAb3HRBizA6V/yjlWvQq8VhCt0iRBy5xSFjk+BIILqce/lkI8WzoGq/Wudwbjxoe6n2m3v7SNA+2FQbcN8HA1pFK3LCXizoGas4RFfPgjFhWsbquA8K3MMgTWOLAJoxbDoQmZAktIzBsWBMGM1YGv8tA/4TRp/7NLaW4FGvhR9zYu1zvGFwcQAAAABJRU5ErkJggg=="></div>
+  <div class="num">#42</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Beirut</div>
+  <div class="country">Lebanon</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADUSURBVEiJzZUxDoUgEEQ3saDkCNzEfzETSbgY3oQjWFoY1lk0P/qbXzCFFEqeCeDM7CL6M+S9IIuIqz4GvCWQwIKlXZVBnepOA6sEl7GLyzJRQfVJ6UDXKVCB6WFSPATqBM25Bbs8rOwEbZjIj9B1Aqhg6w8Fosw0gA22D+YyXv9CAMhsEfHQN/MAnCvbKPO9PAggXXGongYu51LBp8gCLWPZnLO6IIFWDbDPZjsNtA5z2hepwDJrVJkgnxm7N8c+YHrYA0dPSgLfDtMuGRL4fzW+Axw2stGAUqGw7gAAAABJRU5ErkJggg=="></div>
+  <div class="num">#79</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Busan</div>
+  <div class="country">South Korea</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADYSURBVEiJzdUxDoQgEAXQMRaUHIGbuBcz0YSLyU04AqWF4e8MroVuyS+kUPNMRP8wKHgMeS9sIuJQ5qBnCSRI+miXFBxw0KBIUBjhNpmpYBPQQUPhguWxyYJbQJ3QKpeepeyENtJz0XXC5iPko6HIoOUjAcqS9wER9hGBBKkskEnGjHqVsh+qP2Sf9OCqb3lwIGatmXaD3gokuCqXrzXGgHONYbVuGEGC1g0Whc4SaWB9W8+QuaB9m51dMcHKd9tyeqHtMH4NutAAErTK2avjFzID/v6EL4UvR9v9n28rLWcAAAAASUVORK5CYII="></div>
+  <div class="num">#196</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Chiang Mai</div>
+  <div class="country">Thailand</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdQxDoQgEAXQMRaUHIGb7F7MxE28GNyEI1haGP9+wC2Wll9IoeYVjv5hMHTLngvRzBz2JfBuQQSJr3aJ4IBTBrsFwgwXbZFCKSAHhqKFkke0FX8BDULtXOpbOQh1pX7TDUL0G+zNUGxi+0QAbDhe1PITQQTRf4xVWOBqnVMAb3ZMOM1dvuahgDIItQrhHrFxaJ3b1/zbYwqoe+yehhkiqNOAdtlkUOa2JM08tBA9sitPSuBX5+4cG4N2alvgSAAiaCcMkHGHrIBuPRa+Mc0HkEKPAQIAAAAASUVORK5CYII="></div>
+  <div class="num">#197</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Colombo</div>
+  <div class="country">Sri Lanka</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADaSURBVEiJzZSxDYUwDEQPUVBmhGwCiyEFicWSTRghJQXC3zb5EtDaBS6C9Qos3Z0NehW+CzKA4QxL5C+iEyj86yGHlQaiww1URAYHP5hdwSlTvEGh1xQrED0KLfEhkBGoc6XOTyuNQCtLfw+dEUgSMCIRutp7gVL7bZ9qEnoF1wFkpA0THaDzcs4DyHaxDiuLElQPD6DxEud0JZyAVhF9W8Y8QMtY2rjryQnoNhAt2LvbeliBHgMegDH4giLOSecJiJ2j+8mxAr3akt7xnzE7aM6hpdcHvOqz4AfHRAXsnYMrZAAAAABJRU5ErkJggg=="></div>
+  <div class="num">#63</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Damascus</div>
+  <div class="country">Syria</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADYSURBVEiJzdSxDYQwDAXQf6KgzAhsAoshgcRiySaMkJICxWcbkIA2vyAFhFfEyHYMeS18FyKAtoS50zc6EiQ9uo1hkVZkp0FGp7DrAyMVikVhQ5JXlFqwfCSZu0eCKsErl/L4LGUl+Iq2vzddJVgnoMck+OWGBZbfbciT6dm49RCDHj3IDilH5RiQNICGWmTrg+eDASXIit5uQwneDgw4K9fYiwbeYxHTeigH/DYUVa8hC65h4Elhgv+17Zggem/lPnJqwae2JhlX0xHgmDA6tvRrYcFrfRb+HFL8VcCsTJsAAAAASUVORK5CYII="></div>
+  <div class="num">#78</div>
+</div>
+</div></div>
+<div class="a4"><div class="hdr">GeoCheckr — Asia — Page 2</div><div class="grid">
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Delhi</div>
+  <div class="country">India</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzdSxDYQwDAXQf6KgzAjZBBaLdEgslmzCCJRXoPi+TQqgjQtSkOgh4cg2hjwW3gsZwFjDErkjOkHhp8ccVhlFDjfYEQkHH0iuUDWKNxR5ROkFzUeRJd4S1AlWubKneyk7wVbW87XpOkE7ARO+gs8+eEEFtxxE1a7uAUwFeE76KnmB9izzsIrU0PLhAJqKmZVj97Z26IdWuUE3N7AeY6jtVB+wv6FSf/Pl9+gFGwYMgCn4gt1aT55gRbvPsT44p7ZsvLqIE7QJg9a9PvBYr4U/Wb/kE6X5G24AAAAASUVORK5CYII="></div>
+  <div class="num">#49</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Dhaka</div>
+  <div class="country">Bangladesh</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzdUxDoUgDAbg3zgwcgRu4skcTLgY3sQjODoQa1te8tSVf7CDkm+QpoUKeQW+CwVA0EfSNxIJVv10WPc5BZFKgx0puBbMVCgY+WBZU8GzjlkeBeoE75wV+dHKTvA4bX0/dJ1QYkU4NfVj+m1LgBPj1tYiWVgQq52xLBh4UOKSrH2bdm5JLNAzi2GfgSnSwMMqrTEKCfyMaVFwIGYWtAkjXpQlscCHgW6g9ahUsNtwDLddOGDta1eMAm3CyKap06D9X+zylvgfW53wis/CBUb/z6Uz5xTHAAAAAElFTkSuQmCC"></div>
+  <div class="num">#57</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Doha</div>
+  <div class="country">Qatar</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzZSxDYUwDETvi4IyI2QTWAwJJBZLNmEESooo921DAbRxgQswr8DW+WzwFfguSAD6GpYob0QnkOXXfQore7K4gR1RQJEHJldQtYo3yHxVaQWqR+YSHwI1Aptc3qfnKBuBRdL8brpGoE7AgJn47Z0XoIjMGqj0bN0BJF2EkQWs5+ScAA7t+kC49GgH5AKzFxBKdAMSWfW9POYBTo+Rm2QdnYBtg4xPRLmtRyuwYyAFMARfYHpo5gmqFnjesTZgVxvzJq2TTsAmpyshX6sXeMVnwR+gEOMj/5EzjAAAAABJRU5ErkJggg=="></div>
+  <div class="num">#66</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Dubai</div>
+  <div class="country">UAE</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADWSURBVEiJzdUxDoUgDAbgvjh05AjcxHcxEk24mNzEIzg6EPraYvKiK/8gAybfAPq3IMlj0HthIyJuYY36pAiCoktzo0lYpMLgoMib7sIbJSi0kAUOcqQIBcvDorgFNAheuaK73Eo5CD4s5FvTDYKmYOtPu4aywCCInF9bf76+BQD+vh/Nw5KBwZGsJxbh0iuHAOssmkPVygUY+CiSd51WFPQeU2A7FyDw02Cq5asw6DdM3jWPFQot+FaTIKH0HvtfOaNgedikr54FBFflavSfDAge47XwAxul3N7EaD7qAAAAAElFTkSuQmCC"></div>
+  <div class="num">#47</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Hanoi</div>
+  <div class="country">Vietnam</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADWSURBVEiJzdSxDYQwDAVQnyhSZoRswmRIILFYsgkjpLwiyj/buTsBrV2QAqKHRCzbMeG26LmQiSj0uCV+U3KCwr8OOe4IQHODSomh8YMWV+hyijcU3E6xguSjYEuXBBlBK1fqci2lEXRl2Z+bzgjSCTTTCnrVyQs6p/ZNAvMI3QcmPgBtfHICSTKXbwd6/N9bK3QOOEArF1tyAl1F8vvtMQ/QHssRB+8mOIHeBlQinK+HFX7DgOboC9K9uvMEjfo8cqygE6auB4cOOMGo3BgGuxfc1mPhA3//6oBgh5uWAAAAAElFTkSuQmCC"></div>
+  <div class="num">#55</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Hong Kong</div>
+  <div class="country">China</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADPSURBVEiJzdS9DYMwFATgQxSUHsGbhMWQEonF7E0YwSUF4uX9KJFI60sUF2B9BbbOhyEfA/8LBcAkcmR9I5Og6qcnaUt2ZUGDzu1RsFCh2ipsKOngguVxplUuAXWCn5xt/XKUnfCdnibZMMsqNmPBiSX278mQwFaJPG4YaWDRVnlgKu/Uu0G3rgskBVUW+LDi7ojiMsA7VjBu+9xeeXSD/w213cWUBnHDjJvYf8aEU0PGEB2jgWgd9qEhs8DzsI5ZKCSIk/M6RB4MYFxKv4AnuknxOBrFWbEAAAAASUVORK5CYII="></div>
+  <div class="num">#46</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Islamabad</div>
+  <div class="country">Pakistan</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADYSURBVEiJzdQxDoUgDAbgvjgwcgRu8rwYiSZcDG7CERgdDP9r+xjUlQ520OYblLSlhEfQeyETket+D/ymYASFP+2yT3DAaQaNAsPJD4qm0OUv1lDw+MssSD0K9nAr0CRo50qL91ZOgkaW/Dp0kyCTQF/aQJ+2WAE3rR5r20T16CZAC89si5JFM+CZ1fMfXw8YAZCq63ob/BnMgKNIfceMWYDOWPaonC0wAr0NnfVYL9djFnQZSPtGPcygIEEzS/jPxG2PzYFumLZVGjNmAWPD6DJIVvCI18IPGYn+qEfT+r0AAAAASUVORK5CYII="></div>
+  <div class="num">#80</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Jaipur</div>
+  <div class="country">India</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzdWxDYMwEAXQH1G49AjeJCyGBBKL2Zt4BMoUyD9nA0VI6V9wDegVnPTPZ8Bb4bkQAThuU7AnggiSfdolA0fuMtgQDAa6iEkKtYEcLBQt1DwiZv4E1Altcuk+yk5ole6HrhOiX4nRQsHLxieDHZ+3X3NLWgSJCzDSoFyTE8A2gcVaueJbHhJgy8O2wTSIoFX0zNcZU8BxxrjUbRgogrYN5diGVQZ1b21oNWQtWKvs6psSCob8c+X0wnHDINhKkCI4b5g58wxZAX9/wofCF8/d9gurH9XMAAAAAElFTkSuQmCC"></div>
+  <div class="num">#198</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Jakarta</div>
+  <div class="country">Indonesia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzdSxDYQwDAXQjygoM0I2ucmQQGIxsgkjpLwC8c/2BQlo7QIXnPWKi2U7AR+B98IKYDjSnOUXOQiK/PWwpoUDuYdBRRbY5YMxFA49JRoKH6d4QftROOdbg5xgkyt1vI/SCRar5telc4JuAj6YiK72UUDOqlRtpfvhQL/p5DQbo4BS8BeQqvWoIND+orMdS+c6uMGiaH/bjkVA27Fpk6xnENhtYAV4vR5eOB8DfFIs6PZaFgmUe8vrk+OF/wvDTUong6BNzh6DJQoe8Vr4AcNf/kkrQBd5AAAAAElFTkSuQmCC"></div>
+  <div class="num">#53</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Jerusalem</div>
+  <div class="country">Israel</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADcSURBVEiJzZUxDsMgDEV/lYGRI3CT9GKRgsTF4CYcgTFDhWs7Tdt06YCHeEikN2Dr/48B/RSuCzIA130M/EcwAoWPdh0TOaKHGWgILnMXl7GYgu4TmQNqSzAFoodIcRJoEKhzhbucrBwEWiLyKXSDgFWQ86fKoqxWgChim7ES5mP0cdAhpnnWN9sBalPd7jz14ZwF6P6VhL2VDdAqlCp/ohXQjGVxTu6FEdDbUMS+29f1GAX7hkkV8NEUdM6YzE+WoJBm7LNyRoHqwRnj0RMZgfeG0UfGCPx/Gq8BnqtH1BnqCQcNAAAAAElFTkSuQmCC"></div>
+  <div class="num">#61</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Kabul</div>
+  <div class="country">Afghanistan</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzZQxDoUgEETnx4KSI3ATvZiJP/FieBOPQElBWJfFnx9tncItIHkFQ2ZnF3IrvBdEAK76EvRGIIFNn3abrOJECg0kBFVRGjFTgamwgbSDCeT89cWgh8A6t6X52sqHoJd+/Rq6Z0BVVMAX5NGvLKACzZTS2md+MIAlQY89jxiEBCpm5KlZUbvJFKBWYFKpDG8mM4BV9F/8gssAPWPqL6Y0CAnYNLT2uYqFBvoyKEEz9l9bFKAjZnpMEL1lbKEB29ppkfxJNHBumGHXjK0scKvXggMgwQzb07IwdwAAAABJRU5ErkJggg=="></div>
+  <div class="num">#199</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Kathmandu</div>
+  <div class="country">Nepal</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADUSURBVEiJzdSxDYUwDATQQxSUGSGbwGJIILFYsgkjpEyB8HcchD60uQI3oFdgdLEDeRW+CwHAIAlen/AkiPrpIWD2g8hBA21gXUyZENzBh5MNJY8omzwCagQ7uZjm51E2gtXpXkPXCNrFo5Ntz6PbWHA6fZ9kBaaaBwUwl23QPEb0QoN+z13pMtaQGRCw7HZyNWkOWMUSxTW4DLhmTP9/Sr2QwLZB0iL5/9pqhbK3pUsZDGFCcKv+f90GGpSQdRwWGtgNkzSMLtHgvmEy7kVuhld9Fn5gZOYRMrme8AAAAABJRU5ErkJggg=="></div>
+  <div class="num">#64</div>
+</div>
+</div></div>
+<div class="a4"><div class="hdr">GeoCheckr — Asia — Page 3</div><div class="grid">
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Kochi</div>
+  <div class="country">India</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzdQxDoQgEAXQbywoOQI32b2YiSZcDG7CESwtCLMz6Ca7tP7CadRXSPgzABkKz4UEwMm+BH0ikCDrr11WcCKVBjuCwiwuYaGCLUAHDYULlkfCKn8B3YTeuTy28ib0yuPQ3YTko+CtoWDS9rEAC44X5mKbCCQQ2YCXj8W1s3MMaL6aVtOeBwO0So/CJV8DD0SjWMt3xhjQZyz5zU7DLCTop6FpFJgk0uC6DKDKBV2qOHtjQrMZ+71y7sJ5wyAc14wx4OycjoN+RRYM9Vj4AD3u7k+JTLtvAAAAAElFTkSuQmCC"></div>
+  <div class="num">#200</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Kuala Lumpur</div>
+  <div class="country">Malaysia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADYSURBVEiJzZWxDYUwDESNKCgzQjZhMiSQWCzehBFSUqDctw1fAlq7wEVwXhFHvoshvIK+CwoRDS0tWb6UgwDL0UNJKwbgCAOVsoBDFppCQdMq0YDxquIF2g/Gkh8NcgJTjuv0lNIJLIrmd9M5gTqBRppBXe2jAGPF3tVZ6WVcP2hqL1FOslO5CMC136Ae2ylZPyKAnC2SSSlbgoAFa38vj0WA02PAJlmPIGCvAVgI9+fhBf9hQGOKBXZrzSKBGg3POeYD54TBJlcHgoApV+T/Irs1Crzis+AHQgr9Hfwf+i4AAAAASUVORK5CYII="></div>
+  <div class="num">#56</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Kuwait City</div>
+  <div class="country">Kuwait</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzZQxDoYgDIWfcXDkCNyEk5lowsXgJh6B0cFQ2+KfX13pYAcg30CT914LehW+CxKAqbrV8w1vBDJ/PSUXaSI6zECBZ3DwgdkUVOliDTK9uvQC0SPT6h8CdQJ1Lpf5aWUn0EryvoeuE0gSELAQhjJaAdF3H+T/8AtuP6DCerBpoNqcMwG0grtE2oO7BLIAcWsZq+7wZkCdG+UyA5qxhGVr1AboNIjSLMp/PHqBLgNugOBsQWbn9GUJiOeW7iunF7QNQxuujFmAyzldBtEKvOqz4AQeNfybeFHP1gAAAABJRU5ErkJggg=="></div>
+  <div class="num">#68</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Manila</div>
+  <div class="country">Philippines</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADZSURBVEiJzdS9DYQwDAXgd6KgzAjZJJMhEYnFkk1uBEoKxDs7CiegtQtcQPQVBPkPfATeCwXAeIQc5Y3oBFU+PZawcCR3N1gRBXZ5YHKFQ2/xhsrHLVbQfFTmeEuQEVrl6jrdS2mEFkXP16YzgnYCEmbisw5eQEnyBoXUf90BpGgyDZjA46ycHTTJcsvALYX/3FpBigb5a61c6CNmhxZV89t7zANaj5XAr5wGOkGbBjKD1/GwwrkMkIIvVC5sJ09o7XXbY0ZoWxvzF2ePOUCvXNZlsHjBI14LP7IC2ZY4hNI9AAAAAElFTkSuQmCC"></div>
+  <div class="num">#54</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Mumbai</div>
+  <div class="country">India</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADgSURBVEiJzZUxDoMwDEV/xZAxR8hNysWQQMrFkptwBEaGKu530orShSEeyBL0htj6/9tA/g7uCxIAV/wSeCMYgcynXcEgTuRlBjYEl1jFJUymoPgo5kC2KZgC1UOlOAnUCapzmVVOVnaCelTkU+g6AVXQ94eVosxWoF7J8/P5ad0CCAfhQT1UGSugre/ALBi/zvUD2ShFYbyYXjvQnIsr07ZYgZqxpM7pXBiBOg3MGPbxZzx6QdswcQX8Ygo0aNq/WILcMnasnF6gemRWYetRjEDbMLq2ij/i0Amuf433AG8uKskksvjgFgAAAABJRU5ErkJggg=="></div>
+  <div class="num">#48</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Muscat</div>
+  <div class="country">Oman</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADWSURBVEiJzZSxDYUwDESNKCgzQjZhMiQisViyCSOk/AXKfdtQAG2uwEWwXiRs3TkWvEK+C7KITC2kqF+JJFD011MOGybgoIEqUcGhhyxU0KwKGxS8qvQC06MgxYdAncCdK3V5WtkJPLLl96HrBDYJMssKGerIAs2kbQFGvXUGQF13M+264oAc0tm/HpceDHBElcKcC+c4EIBHMX2vGWOAc8aAXbMRJOCvAUjyG27Poxf4MtACMgcu8K4tYwKoc7ivnF7gG0anV1sHSMCdu5bBxgKv+Cz4A8626xun3ut0AAAAAElFTkSuQmCC"></div>
+  <div class="num">#67</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Osaka</div>
+  <div class="country">Japan</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzZSxDYQwDEX/iSIlI2QTbrFIILFYsgkjZACUf7YPJKCNC1wk1isS6/vb4CPwXpABhDYuUW5EJ1Dk6ZDHlYHc3UBFFLDLgeQKmv7iDQofv/QC1aNwiTeBOoF1rtR0b2UnsMiaX03XCdQJmDATnzp4gVKHzUQR+jeuD2BoSGA7W9kPmr6tHpPD9PAAFI/hK52zkfACGlo/D495APNYxrxJNtAJ2DRI/eB1PHrBuQwwjb7A9NDME1jV15XTC2xri8hSOukEjg1jy2D1Ao94LfgBZ2v+CLwVviMAAAAASUVORK5CYII="></div>
+  <div class="num">#51</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Phnom Penh</div>
+  <div class="country">Cambodia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADRSURBVEiJzdQxDoUgDAbg3zgwcgRu4ruYiSZeDG7iERwdDP9rURNxpYMdlHyDYFsKvgLfhQjAZT8HeSMYQZJPu+gXOvIwgw1B4JAHRlPIuos1JL52aQXNR+IcqgQ1Qqlc2sa6lI1QIur62XSNoJ2AARPRbb0ZYFr3Tr8/3P9iA/jxAPNZOSuQdc8dnjQCaQI4SuXKlTADiaT5vXrMAq4ek/NH9DSCchuyKNPjerTCPQwweFso+dCVJWTdoJ5jbXBOba5ydNIISuWuYbBYwSs+C39kVfZlJFyCPQAAAABJRU5ErkJggg=="></div>
+  <div class="num">#72</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Riyadh</div>
+  <div class="country">Saudi Arabia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdSxDcQgDAXQf0qRkhHYhMmQEimLwSY3QsorIv7ZPk5K0uIiFGC9IkS2MXhbeC4UAHMLa5QT0QmqfHouYeNMHm6wIwocsiG7QtNbvKHydssoaD4q13hJ0CBY5eqer6UcBFtF43PTDYJ2AhIW4rVPXsB9IZtC6r/uAJIKSJwhmr2gYXrrxk8Klg8fWN6Siqzde0Qn6JWb9HAD67EiV/3UB+w1kCt4fh6j8B8GSMEXtHst8gRK5XgeOaNgU1t7oveYB/TK2TDYvOC2HgtfTvPo15SPB3MAAAAASUVORK5CYII="></div>
+  <div class="num">#58</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Seoul</div>
+  <div class="country">South Korea</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADYSURBVEiJzZUxDsMgDEW/lIGRI3CT9mKRgsTF4CY5QsYMFa7tNlLSpQN/iAeQ3oDR9/8A+SncF1QAocecdEcigaZHh45JgsiLBjakULVLqJipoMcidCDbnKjA9DApLgINAp9c0y6XUQ4CLxP5YrpBoCrY+dOqoiwsIJIhHYvgcVx9HNRoxo2qb+UB09e7hHakgQO8i0aCBryalFWXzAJfj+nkLBck4Gkwuj9P8RgFnxemrEDMVGCe1VaTMIF74vzkjALXQ92rVy9CAj45s5d/MiTw/2u8B3gDsozTEHkgzZYAAAAASUVORK5CYII="></div>
+  <div class="num">#43</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Shanghai</div>
+  <div class="country">China</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADZSURBVEiJzZSxDYQwDEU/oqDMCNmEWwwJJBZLNrkRUlJE+BzDSUDrX+ACzCvi8P1tyCPwXpAADHtYor4RSSDr0UMKqwwilQYKooKqD0xUsLcqbJDlUcULmh5ZlngTyAmsc7lM91Y6gUVq+dV0TtCcgBGzoCs9DWD+mihKz3/xgz1UoJOq2dE5CtCzt4/eehuD6cEA6iydWy1gI0ECFrnpe3qMAcxjpnRCLyRg0yCyQK7j4QX/ZYAxcIHdumVMYPa67TEnsA1T5i9OjzHAsWF0benXygKPeC34AY/E7iI0uIEPAAAAAElFTkSuQmCC"></div>
+  <div class="num">#50</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Singapore</div>
+  <div class="country">Singapore</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzZSxDYQwDEWNKCgzQjbJLYZ0SCyWbMIIlBQo/2znCqDNL3ARzEOK0fe3BY+Q94IsIlMNS9SnRBIoevWUw4oJOGlgl6jg1ENmKqhWhQ0KHlV6gelRsMSbQJ3AO1f2+d7KTuCRLb+arhOYEyTJFzLsIwtUlfZIAUb91xlAm6bTIHP7RAJVCxwDVnhGAmhNsyO4HSjAopi+f48xgHssB2yajSABn4aq9PhcxqMX+DLQApICF7geljGB63tdOb2gbW1skprHGKBtGF1b+raywCNeC37YgPDK8rlzSgAAAABJRU5ErkJggg=="></div>
+  <div class="num">#45</div>
+</div>
+</div></div>
+<div class="a4"><div class="hdr">GeoCheckr — Asia — Page 4</div><div class="grid">
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Taipei</div>
+  <div class="country">Taiwan</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADUSURBVEiJzdSxDYQwDAXQf6KgzAjZhMkigcRiZBNGoKSI8s8OIAGtXeDi8D0kHMVOwFfgu7AA6GuYojwRnSDLp/slzOzJ4gYbokCRHyRXqFrFGzJfVayg+5E5xccGGaF1Lm/p2UojtFg0vw+dEXQSMGAkflvnBTUUVaq2pXuANk3yJK+uztmBuuDMmTvCsUEukHCehlCiF2hkLXXOmAecMzauknV0gnYayAm8Hw8rXJcBhuAL2rmWeULVAs97zAbHrc1Vlk46wdE5ubbk3+wFr/gs/AEcagjaAjuzpQAAAABJRU5ErkJggg=="></div>
+  <div class="num">#52</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Tashkent</div>
+  <div class="country">Uzbekistan</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADWSURBVEiJzdSxDYQwDAXQf6KgzAhscrcYEkgsRjZhBMorUP7ZhpOANr/ABUSvwJFtDN4Cz4UZQFvS2NkbnQiyfbqd08SW3GSwojPY7IFeCsWzqCHzlqUWvB6ZY3cpUCVE5/LaX1tZCRGzn89DVwk+CXhjIF5rowJakS3L4LpfXQLD4k0Dy945BRRLYDPR8IsU9ZBA2oBPdC7FOCggwrPwmDEF7DNGLnZqKIL4G4op8+n3qIX/MsA7acGnN05KKJ7gusfqYN8wXOzqpAiODRPLYFLBLR4LP/LE9qsFs1luAAAAAElFTkSuQmCC"></div>
+  <div class="num">#76</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Tbilisi</div>
+  <div class="country">Georgia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADYSURBVEiJzdSxDYQwDAXQf6KgzAjZhMmQQGKxZBNGSEmB4rMNSECbX5CCix7SGTk/hrwWvgsJQF/DHPUXkQRZ/7pPYZFeZKdBQVTY9YGRCtWqsCHLq0orWD+yzPHRoEbwk8tlfB5lI/hKtr+HrhEsCRgwCX6lY0ENOzYEMfVPZ4AULQCM+uo4OQZof63KItsQvB8M0IuAM2PhiAMBfGXr75kxBnjGEqZVd52QwG9DVZV8ux6tcA0DDIELll7fMcHj9ZhjjeATpkwrrtAR4Dw5HwYLC17rs/AHRk/iaooz94UAAAAASUVORK5CYII="></div>
+  <div class="num">#70</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Tehran</div>
+  <div class="country">Iran</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADUSURBVEiJzZWxDYUwDEQPUaTMCNmEyZBAYrGwCSNQUkT42w7SB9pcgQtAr8DWy2Egr8J3QQYQ9JL0jkQCq746rPuYgkihgR0pOM0YqSCj5wObmgp86rjIQ1Aj8JMzyY+jbARepz3fQ9cIciwIp45+DFdbCpDNTWuLRUhAVQCDxgEdD4jMSem0aXrnRAL1kzUpOdKA1yrF0tALCXjGRKUciAsL1A3jUqoPCvBloA0wxEIFp/o9ulsXBrDMasZEWKBu7WnT0Wng+r+MlrH/2moEr/os+AGhJ987eZrRPQAAAABJRU5ErkJggg=="></div>
+  <div class="num">#59</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Tokyo</div>
+  <div class="country">Japan</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADaSURBVEiJzZUxDoMwDEW/lCFjjpCbtBdDAomLJTfJERgZqri2QSp06ZA/1AOgN8To/28H8lX4X1AAxJ6WrG9kEqh6dOwIEkVeNLAhx6JdYsFEBT2tQgeyTZkKTA+T4ibQIHDnqna5WTkIvEzkW+gGgapg54emoswsULfQxL7xOINLAFrN9TBlWKBglh1J5OPcOOg446UjQQNeVdamj4UFPGPFnLO5IAGfBqP78zIeo+DYMGsD0kIFPXmrIExQ7a+vK2cUmB7VpgG6EEngcE7j5ZcMCfy+Gv8DvAHhp9NvTIDN2gAAAABJRU5ErkJggg=="></div>
+  <div class="num">#41</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Ulaanbaatar</div>
+  <div class="country">Mongolia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADNSURBVEiJzdQxDoQgEAXQbygoOQI3WS9mookXg5twBEoL4+zMaOO2/t0sBZJXCPkzAPkY+F8oAKLInvWLTIKqv47Sp+zKgg5d21QwUaHaLmwoaeeC5XGkVW4BPQSvnB39VsqH8J0+TdIwyiq2YoF2AjY7tidDgqobAFo5vBBYcGBu1hNQ8JApkBZEn6osLPBhjauhTCy4eiy0bexBSOC3oWDWKwEenC9MaGL3jAkWMoarx5iwDR2ZBZaH9ZhOs5DgrJxYO5x5MIDxKP0C3kJ28MVNij1KAAAAAElFTkSuQmCC"></div>
+  <div class="num">#65</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Vientiane</div>
+  <div class="country">Laos</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADbSURBVEiJzZSxDYQwDEWNKCgzQjbJLYYEEouRTTJCSgrEPzvkdECbX+ACnFfEkf2/BY+Q94JVRIbDzV7/4kkg6tXD6hYMwE4DWbyCXT8yUsFhVdgg4lGlFVg/ImZ/a1AjKJOLebyPshGUWC2/iq4RmBIkyATpcs8CMfdp6+z+UIVLALD+6tAExzk5BlhlStsHizbFVd8SgFk2aIFiCRIoEa2/VWMMUDU2Jc16kEBxg64ty/72aAW/ZSDBcUF5tWVMAPUtriunFZwbBkmfDpBAmZwJTU8LCzziteALbzD0/QMQwWgAAAAASUVORK5CYII="></div>
+  <div class="num">#73</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Yangon</div>
+  <div class="country">Myanmar</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADaSURBVEiJzdSxDYQwDAXQjygoM0I2gcWQQGKxZBNGSEmB4rNN7nTQ2gUuuOgVZ+F8DHoU3gsJwFDDGvkX0Qky//WQwkYD0ekGBZHh5AdmV6jSxRsyPbpYQeaRaY23ARlBby6X+X6VRtBKcv4PnREkCRixELrSe0GmjXjSi2gLrh0SN5D5gup1cx5APN9j4lbHGK4BOQDHC+g4CUBo+bCDVpb5tox5gGYsBdr51JMT6NdQWeUlohd8lwHG4As6Dzl5gsbrtseMoFsby45fxuzQNowug80LHvVa+ABRDf5i0l7OVwAAAABJRU5ErkJggg=="></div>
+  <div class="num">#74</div>
+</div>
+<div class="card" style="background:#FFE8E8;border:2px solid #d44040">
+  <div class="city">Yerevan</div>
+  <div class="country">Armenia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADZSURBVEiJzZW9DYQwDIXfiYIyI2QTJkMiEoslm9wIlFdEeWcbTge0cYGL4HwFtp5/At4MzwUZwNhCivJFdAJFfj3msHIkqxvYEAVUOTC7gqZRvEHhLUovUD0KU7wI1AmscmWbr6XsBGZZ/XPTdQLtBExYiNc2eAEy4YNApUfq/SCHBNUXbHvlPIDoq4dk3YLp4QEkdSmaTUOo0Q2IWZSjxzyA9VjG8hZvoBOwaZC1pd5/PHrBbxlgCr6gcKV5nsD0Pa+cXmBbW0SW1EknsFdO3he5rV7gZo8FX8Mk+P5AwhGEAAAAAElFTkSuQmCC"></div>
+  <div class="num">#71</div>
+</div>
+</div></div>
+<div class="a4"><div class="hdr">GeoCheckr — Africa — Page 1</div><div class="grid">
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Abidjan</div>
+  <div class="country">Ivory Coast</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzdSxDcQgDAXQf0rhkhHY5LJYpCtYDDZhBMoUUXyOIScdrV3EDdIrAvk2gKfCcyEDIG5blBXRCYp8mooAMR9u0BAFFqaMzRWuDdxBQvGFK4+MD/8FZATtXJlbaQStMg+dEXJIjFVCwUva5wQnZDlDqtdPRCfIAlQ4MZ29cx4gVfe1bcA73AGZoW8goVAOYz7soJUD13vGPGDMmN6GhZ1AbwM3vQ3JDcZjAA3FE+TeVj2/J8ip6/SO2aC/MIj7b8bs0Dsn08sjZA+Y6rHwBYAyEDwLONmzAAAAAElFTkSuQmCC"></div>
+  <div class="num">#101</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Accra</div>
+  <div class="country">Ghana</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADaSURBVEiJzZSxDYQwDEU/oqD0CNmEyZAOicWSTRghJUUUnx1yOqC1C1xA9JBi4/9t8CPwXhABTJXWIG8EJ5Dk6inSxhNzcQMZQUCRBxZXUDWLN0j8yGIF2o/Ea7g1yAiacikvdymNoEXU89V0RqBOwIwPY8ijFxDR9mPQ++ezdA8gokkjqMinn3J2EDHuB6T+Y6Y+t3ZQiXcMzWNUghNokbS/3WMeoHksSir9CXYCbRo4A3wdDyv4LwPyBa1qPXmCqgnue8wGzq0tnuge8wBduVWXweYFHvFa8AXv//PMGI/H4wAAAABJRU5ErkJggg=="></div>
+  <div class="num">#90</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Addis Ababa</div>
+  <div class="country">Ethiopia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADWSURBVEiJzZWxDYNADEV/REF5I9wmZDEkkFiM24QRrkyB+LFNRIDWLnAB5hV8sL994C3wXDADaLc0ZrkjB4Eir27nNLEl1zBQkQWsckEfCjZViQaFNxUv0HoUjvlSICewzpXaX1vpBBaz5mfTOYE6AR0G4lWbMCBf/EGi0uNfvGATe+Fde8n2zkUAsYPmDU0qCpCLquwjEQQsitb357EIsHtMpCQ7OucFNg3UopzHwwv+yyDFgsKJlkUCs9dljzmBbZg6LOgOj7mBdW6W80Wepihwi8eCL+yz9X8XBiqLAAAAAElFTkSuQmCC"></div>
+  <div class="num">#92</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Algiers</div>
+  <div class="country">Algeria</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADYSURBVEiJzZUxDoMwEARXonDpJ/gnyceQgsTHzE94AiUF8mXPgBSnSeEt4uKQpvDB7t0C+zr4X5ABhBKnxCeSCCy8OhQMFswOGdiQQmaXkDFKQYmzyYFtY5IC18OlaATqBNW5hV0aKztBPS5yM3SdgCr4/cNKUV4yEM12sOBxfYsA8O711DfrQAFf2MvtnATEw7fh8OmVgcu5eeW0TSpQZ8xB8L0QgboNnDHsz4/16AVnwrCLB6ISVOcyA1EJarg04dgJXA8vAANRBE7n2ODWQwF+/xr/A7wBHozUvnokk5cAAAAASUVORK5CYII="></div>
+  <div class="num">#89</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Antananarivo</div>
+  <div class="country">Madagascar</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADRSURBVEiJzdQ7DsMgEATQiVxQcgRuklzMUiL5YnATjuAyhcVmWbDk0DKFKWzrFf7MDoYMC/eFCMDJvgY9I5Ag6a1dUnAiBw12BIVFXMRKhfoAOmgoXKh5RLzlL6BJsMmlcZSTYCuNpZuE6DfBS0PBQ8dHgtpZKar1IwIJWsh+y65cJzcHEUvWpxzA0/d9Ow/1rZ0dorc6MOCcXD47xgDrWN8Ni5DAQi5tN2w06D8DWChMsDzqFRNK7dj1lzMLrbif8O0dY0CbnJcsPWQGDOu28AMOUQepwgzbTgAAAABJRU5ErkJggg=="></div>
+  <div class="num">#104</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Asmara</div>
+  <div class="country">Eritrea</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzdUxDsMgDAXQX2Vg5AjcpL0YUivlYnCTHIGxQ4Vrm1Rq05E/hCXRG0D5tgnksHBeKACCtJz0iUSCqluHqhBEXjRoSAqLhIJMBTuADhoKFyyPgrv8BDQJXrl6LOUk+KrHppuEElfBTUPBRcvHAmTXzT4ikaBH7QRpyxb6qBwF7BRVjTh6HgyodoD4NMR9xObBl/bY9ukxBowek4dNwyIk8GnoYxpWGvhl0DJCj1yoTfOwNyZ0aPm+r5xZGDcM0vO69xgBvHLWDrKHzIC/P+FJ4Q2C3ux+r0K6gQAAAABJRU5ErkJggg=="></div>
+  <div class="num">#120</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Bamako</div>
+  <div class="country">Mali</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzdUxDoQgEAXQv7Gg5AjcZPdiJpp4MbgJR6C0MMwOo26iW/ILaTSvEP0zg5DbwnMhAnBSxqBXBBIkfbRLCk5ko0FBUBjERYxUaBvQQUPhQssjYpJLQJ1glUv3UnaCrXRvuk6IfhF8NBS8tHw0mLHqfW4fEUhg7VWhUM9SEkAW0a024O0tDwboyMKicKqBBVa5MuWzxxhw9JhNwyAksGmo+zQsNGgbaNHgqudC9JLt/ZnQeuxy5PSCndoyh/XXdP2wV04kyxEyA/7+hA+FL/R/+wtstlxTAAAAAElFTkSuQmCC"></div>
+  <div class="num">#102</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Banjul</div>
+  <div class="country">Gambia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdSxDcQgDAXQf0pByQhsklssUk7KYrAJI1CmiPDZhlN0tLgITaJXxNG3DWg4eC5EAI7KFviJYASJP+0SgyO6zKAgMCzkIjZTkALmwKHYguQRsdNfQJOgnUtjKydBTxqHbhKiPwhvDgUvbp8RUAHOFUvWpK1A/lcKuNo6ZwESxQl/wVWveVhA31vZBn+PwyS0zpU9/2bMArRK34aFjEC3gYpuw2EGsre1hWwLXCo7ebOE2gZ3MwO9YfwnnOs9dLPQb5g9Uw/ZAobzWPgCWNf2ztwiT5IAAAAASUVORK5CYII="></div>
+  <div class="num">#119</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Brazzaville</div>
+  <div class="country">Congo</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzdQxDoQgEAXQv7Gg5AjcxL0YiZt4MbgJR6C0MMwOoIW0/EIKNa9Q/DMDZFh4LwQARrJ3eocjQdRXm6hgRE4aZDiFRUyAp0L9AB00FC7UPAI2eQQ0Ca1ycSzlJLQVx6abhGB3wVdDwUfLR4JizxrKLvUnHAnafldoj5VeOQbo1tMBeJhi7zymoWgnABqKCba1AwN65fKW7h5jQO8x+dVpWIQEbRqkX3YatMMgt5C5oHObTH1iQsGSHkfOLPQTBu5Ye48x4KqcJLlCZsCwXgt/TNj/SE0kVB8AAAAASUVORK5CYII="></div>
+  <div class="num">#115</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Cairo</div>
+  <div class="country">Egypt</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADbSURBVEiJzZUxDoMwDEUtMWTMEXKTcjGkInEx5yY5AmOHKu530lbQpUP+gAdAb8iPvu2P2E/JdYGKSKhxTXhLIoGMo0OVyYLZkwZ2SUGhElQWKqhxMzqwfUlU4H64FSeDBkHrXIbKqZWDoJWbfBq6QQAX/PypwJQ7C6DKY8a33L5XHwYarfSmKQ9UXL2pfDrHAFAxmX0cNNJAq2xbwWNlgTZjGrcSfC9IoG0DZgymHNZjFPSEgYoHIhPU6FIIRCbwvbVj5IyC7gfOFwQiCfSE8Rl7+8EA/3+N1wAvjxfgK/V1/wQAAAAASUVORK5CYII="></div>
+  <div class="num">#81</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Cape Town</div>
+  <div class="country">South Africa</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADZSURBVEiJzZS9DYQwDIXfiYKSEbIJLIZ0SCxGNskIKSlQfLb5OUhrF7gg1lfE4fnZoCrwXrAAaEs3BT4RnEDkq9ulm6kl2txARmCw8QejKyhSxRtEqqpYgegRaQoPgYxAOxfz+GylEWgskt9NZwTiBPT4Ej65cQP84lVB//8XK4i5SeIxUDlbaQcSXKWhFd0lkBWwHkntpSPhBDSi6Ht4zAPsHiNKnF2dswKdhiLtG27jYQW6DLjAqYcb0FdL5gnUXo89ZgT71qaEfveYBzg2jC6D2QtU8VrwAxnC4lH9TBPpAAAAAElFTkSuQmCC"></div>
+  <div class="num">#82</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Casablanca</div>
+  <div class="country">Morocco</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdWxDYQwDAXQj1KkzAjZhFss0iGxWNgkI1BSRPHZgdMdtPwCFwG9gli2EyCXwHMhA/C6RH0ikmDRT/tlTdGLVBqsiL5rRqJChuODZU2FnnWY5VSgm9A7Z0U+tfIm9Gj2/j90NyGHCt809W08tqWAFF0m22UWEjS4gtfqBAMPbAg063fRzk2RBDYEukEFxkAEDau0hhMS9BlrSNgQZhYc9wDiNuz1oMDvMgiVCta00y4MsNOg7etHjAL7DSNFx4EGx/8l4VsPBlzisfABVy/KafZek28AAAAASUVORK5CYII="></div>
+  <div class="num">#87</div>
+</div>
+</div></div>
+<div class="a4"><div class="hdr">GeoCheckr — Africa — Page 2</div><div class="grid">
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Conakry</div>
+  <div class="country">Guinea</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADOSURBVEiJzdSxDYQwDAXQf7oiZUbIJsdiSJzEYskmGYGSAsVnO1BcWn6BG9AriPS/A2QYPBcygCDbnPSJRIKinw5FIYgcNNiQFN4SMmYq2AF00FC4YHlkLPIX0E3w5spY5U3wKePS3YQcV8GkoeCl9ZHAUtj1vXrSJGjwUWi9OQaUbZF9kgOhRc+DASJfWy+7DfFINOjN1WvHGNB37DqKBH4bWr8NKw3s3mppFjIXtL4a7I0J0hd3pkH/ayPtn3PpCODN5ShVzpAZMMxj4QeF+fcU9bRz+QAAAABJRU5ErkJggg=="></div>
+  <div class="num">#118</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Dakar</div>
+  <div class="country">Senegal</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADYSURBVEiJzZSxDYQwDEU/oqDMCNmEySIdEoslm2SElFeg+GzD3QGtXfALsF4RJ/a3QTfhuSADmHpYIv8RnUDho6ccVpqINjfQEBls/EFyBV2yeINCtyxWIPUotMRLgYxAO1daurbSCFRZ4rPpjECcgBkvwtBGL8Cq70HOn39XN4OOkT3bkkTJC2SMlT3Bt+7hmFs7KCSe1WkIhz/sQKVZDo95APVYDlTlEeQEdBqIFtB5PKzgvwyCL9B6SOQJ2GORzivHCvYNQxXz12N2sHduXwarF7jpseADfOMUM7XZjBoAAAAASUVORK5CYII="></div>
+  <div class="num">#91</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Dar es Salaam</div>
+  <div class="country">Tanzania</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdSxDYQwEATAfREQugR3Ao0hgURjuBNKICRA7PsOXg+k3oALwJoAo7u1wUfhvTABqPcwxPxGFEHKn66nMLImNxksiBm2/EAnhd12UUPiY5dSsH4kDvHWoELwyaWlu4+yELwmW19DVwiWBDToic9SqSD/NVYEmh7BlUA1W8bA/TdKBQBryzE3JZAi8MzaBn4kROCVrL9nxhRwZIyc86qiCPw0kAN4PR6l8L8MghYsvb5Sgv/19copBb+10c9oztAJwCd3XgajCh71WvgC17b+8+cA/UIAAAAASUVORK5CYII="></div>
+  <div class="num">#93</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Djibouti</div>
+  <div class="country">Djibouti</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADRSURBVEiJzdQ9DoQgEAXgt7Gg5AjcZL2YCQUXg5twBMotDG+HHwttmcIpJPkK0TcD4KPwXogADMvhZIVTgiSvNknAkKcaFDiBjSbiUIW2gTpIKLrQ8ojwvAW0CL1z6dnKReiVnkO3CNEGYpdQ8JH2KQGLJ6sNuf2E0wKewBcyY3V0TgeYZZcTptoroGWQJWNnkJmwfRw0oFcUvWZMA+aM9dOwUQn6aeB4BDWYl0ELWRdS8bl/vyZUbPl25azCuLXhft8xYxowO+czZ8ga8KjXwh+YfBoyun2HrgAAAABJRU5ErkJggg=="></div>
+  <div class="num">#111</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Freetown</div>
+  <div class="country">Sierra Leone</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzdS9DYMwEAXgF1G49AjeJFkMCSQWszfxCJQpEC93Nimg5RVcAegrfOJ+DF4Cz4UMIHAdk72RRFDs6FAMArnJYEUyGBgyRil4AjlYUbTg9ciYeCrQTWidK9dW3oQW5Tp0NyHHhfhYUfCy9onAi/x9Y6j+E0kEtLMBS8W9d04BPrOWZUTYIykCcva99W2IW5JB71z9z5gC2ozlOPs2DBRB2wb2xyID39s9bl5kLZR1qsG/lGAJ6unKuQv91vaVOIZOAEfnWHkUWQGXeCz8AIFcAxzt4IkGAAAAAElFTkSuQmCC"></div>
+  <div class="num">#113</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Gaborone</div>
+  <div class="country">Botswana</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADWSURBVEiJzdSxDYQwDAXQf6JImRGyCbcYEkgslmySESgpUHx2yJ1E2vzi3IBeQZD9HUhX+F+IAJwcS9AnAgmSftolBSdy0eBAUJjERSxUsAPooE3hgvUjYpVHgwahTi71oxyEWqkP3SBEvwve2hS8dHwksCScM/Q9tuBSQPtRMGUpv1EOQ/FipyzA7Gs/GGAhgP26i/4KNNCKXvI3Ywy4MyabbcMkJKjbUO5t2Glge1v8pePzXNCjsrM3JljGHlfOKNQbxm/hbBljQLth1iytyQzo6m/hA6WM9E7QOwrJAAAAAElFTkSuQmCC"></div>
+  <div class="num">#106</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Harare</div>
+  <div class="country">Zimbabwe</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADdSURBVEiJzdWxDYMwEAXQH1Fc6RG8SbKYJZBYzN7EI7ikQL6cDZESUvoXuAG9AsPdPwO9LNwXIgDRErxd4UmQ7NGSDER1p0GBN5hUIgIV2gZ0sKJwodUjYtafAg1C71y6tnIQ+krX0A1CdKviZUXBw9pHguo02y5rbh/hSZB0h9hWWeqnc+OgZc4bEICnOwpEgIopi726ZcL1ODCgL8tY/mSMAT1j0S1tGiYlQZ+GekzDSoN+GJQAqY4L0YIm7Y4JtWXs+8gZhX5q6+K3M2MMODpncdCzyAz4+xPeFN6C8P2f2813HwAAAABJRU5ErkJggg=="></div>
+  <div class="num">#100</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Johannesburg</div>
+  <div class="country">South Africa</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADJSURBVEiJzdQxDoQgEAXQbywoOQI38WQmbsLF4CYegdKCMDuMml1t/YVTKHmFQz44kFvhvZAAOH0EfSOQIOunXS5zcCKVBgXBmSbMVEgY+dB3TQXbtY9yCegh2Mn1kC9H+RCsWl//X7qHkHyFa7r1bTraEkDkE7ahWJcoJMhlXC1kDDxomKFdltX1fizwtf8NFgoNrHrSWqOQwO6YtsIGH1lwzAHo8e15UOA3DHylQrt3ocB+x0RYYFNbZMXkaXBOGJx5MOBWr4Uvm97YPQOEsBEAAAAASUVORK5CYII="></div>
+  <div class="num">#83</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Kampala</div>
+  <div class="country">Uganda</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzdSxDYQwDAXQf6JImRGyCbdYJJBYjGzCCCkpovxzDNIBbVzgAswriGQ7Bh+B98IKwFU/B3kjGEGSX7vVL3RkMYOMIFDkgWgKtZ1iDYmPU3qh1SNxDrcCdYJ2LuV4b2UnaKwtvw5dJ7RJwIiJ+OTBClp95ZSp6Tm4/VB9gWOOkh2dMwEM3L9cuI9e62EBEpvOGOBLsAPK9A7tZQY6Y1LkTbKBRqC3gRng9Xr0wn8ZeFtI0jnNLKF6nd5oBseG4YZzxizg2DCytuRrsYJHvBZ+KaMQaY8jDQkAAAAASUVORK5CYII="></div>
+  <div class="num">#94</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Khartoum</div>
+  <div class="country">Sudan</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADRSURBVEiJzdSxDYQwDAXQf6JwmRGyyd1iSCCxWLJJRqCkQPgcc0hH2vyCNFivSNC3E2iz8FxIAETXMdoXkQTZtpZsIKo7DVZEg0ElYaRCPYAOFgoXah4Jk94C6gTvXG5b2Qm+cjt0nZDCovhYKHhZ+0hwhDluVhdPmgQesupS5PjrXC+sk6rVwDt4HgxIYYdHIVZFElydK9eMMeCcMZ3rbRiUBB7yEc6kaVDvbQ3ZlAt2b4vUigl2QLk9Ob1wvjCI2zV0BPDO1V/XX8gMaNZj4QucuvQwVhGErQAAAABJRU5ErkJggg=="></div>
+  <div class="num">#108</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Kigali</div>
+  <div class="country">Rwanda</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdRBDoQgDAXQP3HhkiNwE09mIokXk5t4BA9A+NMWJ6Nu6cIukLwFYCkFH4H3wgZgrCFF+SI6QZalxy2sHMniBgeiQJEBsytU3cUbMh+79ILmIzPFW4I6wW4uH/P9KjvBYtP5teg6QSsBExbicwx+kKLssqi2f3GALGsDoYD1d5X9UCEHbkOwfHiA5UN2iTY4gYWen2eNeYDVmCR5l9lAJ7DXQCbw+jx64d8Mgi9opm3mCZR3y2vL6YXWtbljajXmAWeHsWawesEjXgtfCFHt+tEZzWwAAAAASUVORK5CYII="></div>
+  <div class="num">#95</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Kinshasa</div>
+  <div class="country">DR Congo</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdQxDsMgDAXQH3Vg5AjcJL1YpFbKxeAmOQIjA4prTFslWflDPAT0hhjZBsglcF+IAJx+gq4IJEj6a5fyEpxIpUFGcKYRCxUiHnxop6aCndqvcirQIFjnWpFPrRwEi73tj0M3CNFXuF2PXuZvWgJIfm1lypZlFRIkXazImKiwlaemUngHGsiGGYteXk8DiyS1TcNDSGAzpjOLAr+yoL8wrRTpX49xsMfAW/sqFUQTlOmQhQF7nzG7YhTo9Wgz4WnQXxjt3K8eDLjEbeED3EcBZDkvNe0AAAAASUVORK5CYII="></div>
+  <div class="num">#98</div>
+</div>
+</div></div>
+<div class="a4"><div class="hdr">GeoCheckr — Africa — Page 3</div><div class="grid">
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Lagos</div>
+  <div class="country">Nigeria</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADZSURBVEiJzdSxDYQwDAXQf6KgzAjZhFsMCSQWC5swAiUFyj/byklAaxekAOsVceQ4Bh8L74UCoK9pzvJHDoJVtu5LWtiTZxjsyAKnfDCGQtUs0bDykcULWo+Vc74VyAl2c+s+3q/SCbaKxtemc4J2AgZMxGfvokDry5qo2ho3AGRvIJ1g/V+lH4rG5MJjSK0efpCe3TDIa9BUOQhs6fnZeiwCrMcKpk2ijkFgr6GKHt/L8/CCDQNJYGMmEuzUGkVC1QT3OeYDm9pSZLQei4B2czYMlih4rNfCD+Hz4x4+fd79AAAAAElFTkSuQmCC"></div>
+  <div class="num">#84</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Lome</div>
+  <div class="country">Togo</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADWSURBVEiJzdUxEoMgEAXQ76Sg5AjcJLmYM2aGi8FNOIKlhePPQrCIKfmFNDqvcHH/iuBl4b6QADiuc7ArggiyPdplA0fuMlgRDB50CbMUagE5WFO0UPuRsPCnQYPQksvXKAehrXwdukFIPhIvawomi08EmTs2uy/1JYIIDr8DE2Ph8U1OAZmRVmWGOzwpgj5e9Wvw5zgMwze5dSnnjCmgz1gvJYL2NdRWWJUog1rAQqtN1oKVKm3/SrBdl8s5NgbthPHvsD3PoRuHntxS2JusgL8/4U3hA2uaAizHd9pGAAAAAElFTkSuQmCC"></div>
+  <div class="num">#112</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Luanda</div>
+  <div class="country">Angola</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADRSURBVEiJzdSxDYQwDAXQf6JImRGyCbdYJJBYjGzCCCkpED7bIB3Q5hekINYrINiOIY+F98IMIOxxTLojkaDoq8McJwkiGw0qksKmD2Qq7PYVNhR5fKUVLB9FxnRLUCN45UrN91I2gq/Z4mvTNYJ1AnoMgk/tWLBDt1IHUz86CRZ8a7Yos0C0HVbo+fUnjgQxQDwfVrm4JRqI5aOzjQZnjw2LRp2QwG+DyAi5Xo9W+A+DyAXPh0VM8FNfR04r+ITRJKM/eowBZ+V8GEwseKzXwg/6HQEK80mQpQAAAABJRU5ErkJggg=="></div>
+  <div class="num">#97</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Lusaka</div>
+  <div class="country">Zambia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzdQxDoQgEAXQv7Gw5AjcxL2YyZp4MbiJR7C0IMzODGtWbGcKKQRfITh8AN0angsJwFjDErlHdILMnx5TWGkkKm6wIzIUfmB2hSqzeEOm2yxWkHpkWmJXICPozuV97rfSCNqSjK+hM4IkARM+hNc++AHRoTD9/sUBMkkSQgHVc+fsIKU4AF51Dee5NQNxEvCWjNVQohvozg3SuYFmjCu9NfUBPQ28ftD1eFjhfxkEX5BM6MgTNF7dPWaEdmvThqllzAPaDcNB47fVC27tsfAFBML7efPXmIkAAAAASUVORK5CYII="></div>
+  <div class="num">#99</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Maputo</div>
+  <div class="country">Mozambique</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADYSURBVEiJzZSxDYUwDETviyJlRsgmTIYUJBZLNmGElBSI+47D1wfauMAFmFfg6O5i8FF4L0gA3OHnIG8EI5Dl1y75hY7czUBBELDLA5MpOOoUa5D5mNILqh6Zc7gJ1AnUuVymu5WdQCvV/hq6TlCTgBGR+JTBCrBEitKx0nZ0A9BM8zt4/JzrB5Q4yJSBG3wTyAAkz9VRnfMtDgZAq07hmTELcGYsrtINNAJ6G0QU8Ho9esF/GXhboKeunSXQeN32WCfQrY24YmwZswDNOVlb8rVYgUe9FnwBsGgDTmf9lPEAAAAASUVORK5CYII="></div>
+  <div class="num">#96</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Marrakech</div>
+  <div class="country">Morocco</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADYSURBVEiJzZSxDYQwDEX/iYIyI2QTWCwSSCxGNskIKSlQfLYvOgGtXeACrFfEkf/PBz0K7wU7gLGFNfIf0QlkPnrcw0Yj0ekGKiKDkz9IrqDJFG+Q6THFCmQfmdZ4W5ARqHK5pruURqC1S381nRGIEzBhIXzq4AWoLv38qV/dATQMBXNN0iUvwMqVQ259IOg+fMBWWDNRLnR/2IFWlv12j3mA7rGlcDeQE9DX0Jge8+V5WIGGAQ/QmPEEvGnSzhOovW45ZgS/hKGC6W86M1DlehhsXuBRrwVf3ND6JQcGO2oAAAAASUVORK5CYII="></div>
+  <div class="num">#86</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Mombasa</div>
+  <div class="country">Kenya</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzdQxDoQgEAXQv7Gg5AjcRC9m4iZeDG7CESwtDLPD4Ca7tPxCCjWvEPJnBki38FyIAJwca9A3AgmS/tolBSdy0eBAUJjERaxUqBvQQUPhQs0jYpO/gAbBKpf6Ug6CrdQ33SBEvwsWDQUvLR8JClacM6ZsSZPA8ii6lSutcgywKDRkYPaWBwNsZPXo2hPe2oECbZctf3uMAZbHPQ2TkMCmQdpjp0Gd2+KvVj4mRC/Z1S8m6Klzd4+Ngd3a8g7nT9ONQrthRLLcITOgW4+FD/og9uJniWcxAAAAAElFTkSuQmCC"></div>
+  <div class="num">#109</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Monrovia</div>
+  <div class="country">Liberia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzdUxDoMwDAXQjxgy5gg5Si8WCSQultyEI2RkQHFtt2pFO+YPMID0Bkx+HAP5uXBfKACCtJz0iUSCqq8OImfyGwsaUqhtkVCQqeBV2NDjygXLo2OWS0CD4DtXf7dyEPyykC9NNwiaAjC1bI22sKDbB/e4iS0ikUDavGu+m/UYDYoWOKYGS+ZkgbbDjodXiTT47FyosrLAe8wPgp0LEvhpKNHHzCYseE2YnFyZoD226yJmKlRrtOtwHAPLQxUH4jegQXjvnFaxgUiCvz/hTeEJu0j/xf9jFT8AAAAASUVORK5CYII="></div>
+  <div class="num">#114</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">N'Djamena</div>
+  <div class="country">Chad</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdUxDoQgEAXQv7Gg5AjcZE9mgokXg5t4BEoLw+zMuMlGt+QXUmjyTEQ+Mwi5DTwXCoAgbU56RyJB1VcHkSP5hQUNKdSWJRTMVPBZ2NDjwgXLo2OSS0CD4DtX71s5CD4s5EvRDYKmALzabIWWeZBlf2setohEAq+E2rjQkTfdvuV8RIISF4tCy6FEGviwUIJOxYKzxuyrrS9I4N1Qoh8zq7DA+tZa1pUJPa6bLmKiQpV1ux6Og2B5qGJH/AU0CN+d01nsQCTB35/wofABrtsF2HwG+doAAAAASUVORK5CYII="></div>
+  <div class="num">#116</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Nairobi</div>
+  <div class="country">Kenya</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADWSURBVEiJzZU9DoQgEIVfYkHJEbjJejETTbgY3IQjWFpsmJ3B/dG15BVOgeYrGHzvMUL+CvcFCYCrfgn6RCCBrFu7ikGcyJMGVgSXtItLmKig+ih0IOsUqMD0MClOAnWC5lzWLicrO0ErE/kUuk6gKtj+Q1FRZhqwBtXr6+P9LQSgVTCavokHLAQbMMvPuX7wjQPgaaBVllh0WVigZSyZc3YvSKAdXe3DNh706AX7hImlDUQmsMza+YUJ7N7KceT0AtPDFo1DFBLYndN4ffRggMuf8KbgBS1x3gVzSAqoAAAAAElFTkSuQmCC"></div>
+  <div class="num">#85</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Niamey</div>
+  <div class="country">Niger</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADQSURBVEiJzZWxDYQwDEWNUqT0CFk0EkgslmySEVJSIHy2D+kUrswvcBGkVwTx/G1IHkXvBYWIovSc9EkJBKpeHUXO5AcKdEqx9lVioQwF/hY0uHjDAvNxUZBB0CTwztVnKyeBl0keQjcJ1ALR0rMFbYUB3tux9CD2EQkE1G/TpoUGBSxNj83MnCgglrFicSiMA1aFNWhVNhTwjPkg2FyAgE/DvWZ2QQH3wbYMWKDg+sYhQIGld1g5s8BUFM3YQfwTNAnuzulI2EIEgb8/4UvBB2VV7KFF7HCxAAAAAElFTkSuQmCC"></div>
+  <div class="num">#117</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Ouagadougou</div>
+  <div class="country">Burkina Faso</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzZWxDYQwEAT3ReDQJbgTaAwJJBqzO6EEhwSI+7tD/y9IPvAGOABrAhZ29wzktvBckAEEqWPSOxIJFH10ENmTX1igIoVSJwkZIxW4ChscceYC8+NAJxeDGoEnV+5RNgJfZvKldI1AXQBedbSiTUSQth7dah+RSEBNXjHIQga6LzJjGz5RtoMc94Te6mA7EvgmF1SKBbxjLmBzQQI+Da4isggL2NxaJ1RKqOA4O9ZRQandejsc24D5kaN2DPFnUCM4k9NX9wORBP7/Gp8B3iWR8DT8p4T1AAAAAElFTkSuQmCC"></div>
+  <div class="num">#103</div>
+</div>
+</div></div>
+<div class="a4"><div class="hdr">GeoCheckr — Africa — Page 4</div><div class="grid">
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Tripoli</div>
+  <div class="country">Libya</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADUSURBVEiJzdWxDYQwDAXQj1KkzAgZhcWQQGKxZBNGSEmB8NnmioPmivyCFCC9gsC3HSCPhfdCARClTVnvyCSo+ugocmS/sKAhx9pmiQUTFXwXNpxp4YLlcSLILaBO8MrVZyk7wZeFfGu6TtAUgKFN1mgzCzSPbR9aEPuITIMjY5R1Y8KZdJexAft4VY4B3zy0HUqiga+StNGqLCzwHvNBsLkggU+DHwYiq7DA5taiiPb+TJAWrB0CFarC43DsA7mKhh3pJ6A+uCqX1s0PRBL8/zW+Az5VRv+nkHtcagAAAABJRU5ErkJggg=="></div>
+  <div class="num">#107</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Tunis</div>
+  <div class="country">Tunisia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADcSURBVEiJzZUxDoQwDAT3RJEyT8hPjo8hgcTHkp/wBEoKFJ8dOAmuucJbkIZokOJod+1AfhaeCzKAUOOU9ItEAkWPDhWdBJGdBlakkLVKyBiooMZZ6EDWIVGB6WFS3ARyguZc0So3K52gLRP5FjonUBXs/G5RUUYWKDLLhqjb9ze4fpCPRlDTMg9UjLL1pkR/OMcARSbgZXGokQZO5+bFfrFAy5iBYH1BAq0bjG79pT284JgwWsUGIhNYZrVUJ0xQ7NbXkeMFTQ/rBuhAJIHTuZaxaxxc4P/T+AzwATAeyZLY3RQuAAAAAElFTkSuQmCC"></div>
+  <div class="num">#88</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Windhoek</div>
+  <div class="country">Namibia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdS9DcMgEAXgF7mgZAQ2SRZDsiUWg00YgTKF5cvx4yK0vMI0tr7CmHfcQaaF50IEYKR4p084EiT9tEkKRuSkQYFT2MREeCrUDeigoXCh5hGxy19Ai9Aql+ZSLkJbab50ixBtEHw0FLy0fCQQOWooQeohHAl6Hgrm6pWjgA1ZdzmBt73zWAZthNx3iXa02Dr0ypU933eMASOPo3bDJiRo3SCldUOgQRsGxcNclgstj/rGBP3rPM2xNehTG+573zECjAmzZxkhM2Baj4Uf2mcXhRomEoAAAAAASUVORK5CYII="></div>
+  <div class="num">#105</div>
+</div>
+<div class="card" style="background:#FFF0D8;border:2px solid #c48800">
+  <div class="city">Zanzibar</div>
+  <div class="country">Tanzania</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADZSURBVEiJzdQxDoMwDAXQXzF4zBG4SXsxJCpxseQmOULGDgjXDmEga/6Ah1K9AaNvJ9Cu8FyIAETLMtsTMwmSvVqSgajuNCiYDSaViIUK3oAOFgoXPI+IVW8BDUKdXOpHOQi1Ur90gxDDpvhYKHjZ+EigumXrYj/x+vRxODB5lynLcU6OAVpW77JDjnAGRIBUVgUsFImhHbFxqGU7lq8dY0DdsRi+fhomJUE9DR6FddloUC+DsnjIXLBWWfwfE9R37HaPDUK9YSzk37vtGAHa5DRrC5kBXT0W/sI6EDzOm9NfAAAAAElFTkSuQmCC"></div>
+  <div class="num">#110</div>
+</div>
+</div></div>
+<div class="a4"><div class="hdr">GeoCheckr — North America — Page 1</div><div class="grid">
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">Anchorage</div>
+  <div class="country">USA</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADaSURBVEiJzZUxDoQwDAT3RJEyT8hPjo8hgcTHkp/whJQpTvhso5OA5opsgYtEmoKE9a4DuRWeCzKAIHVKuiORQNFPB5FP8oUFKlIodZaQMVGBn8IGe1y4wPTYMchFoE7gnSv3VnYCLxP5YrpOoCoArzqZ0WYW0FujjXXY7CcSCezwzq1bIAKVYmtvFbiNvzT0gxxXwdsWRBrwytCIFVlY4PCY3dpyQQKeBh8GIquwwDFhJs1tFCrQA8xjAxUUcY+dhmMncD1kQUM8CdQHvHPZ0mADkQT+P43PAF9BEPOuHhbX1QAAAABJRU5ErkJggg=="></div>
+  <div class="num">#141</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">Boston</div>
+  <div class="country">USA</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADOSURBVEiJzZUxDsMgDEV/lYGRI3DRSInExeAmOQJjhwjXtqKqpCN/iIcQvQHD97eB3ALPBQVAkLYmXZFIoOrWQeRM/mGBhhRq2yQUrFTgWdigx50LTI+ORQaBJoFXrt5LOQk8TOTBdJNAVQBebTWjbSzQ9cRvqB52iUQCtbm++WACrZdlgdXwZAHbWz2WtRsiDXiUqEarsrPA12PeFyTg3XCNmSwsYH1rUgQ7PxNcdlioQP+PYeTMAtejWUvEH4HmgFfOs9hAJIG/l/Ch4AMXiu9OhbvGPAAAAABJRU5ErkJggg=="></div>
+  <div class="num">#137</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">Chicago</div>
+  <div class="country">USA</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzZQxDsQgDAQdpaDkCfzk8rFId1I+Bj/hCZQUUXxruBRHyxZxkaApcLK7tuhQ8lwQRcRp2QPeEkgg4WqXAJzqSQNFAsCqLspOBdaADiAKF5geUd76J9AkaM6l0cpJ0CqNoZsE0R8qG0SRBfaRwOVV61bWbD8RSKAnAa306s4xgN1dl7JDYn/P7TSwLjgfyIQ/Aw105/KdMQboGdOPTcOqJNCmQUubhoMGbG4vfwoeXND0sBMT4KvzsMfmQNvaELm+esYYoDmHtZX1JzIDDPVY8AUgkg1Tsu3BMgAAAABJRU5ErkJggg=="></div>
+  <div class="num">#123</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">Denver</div>
+  <div class="country">USA</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADUSURBVEiJzdQ9DoQgEAXgZ7aYkiNwE/diJph4MbgJR6Dcwvh2AC20ZQop1HwmgvMHPhbeCxGAsCxe7/BGkPTTkhSE3M2gwCt8KBGLKdQNzEGDYgs1HhGBtwANQstceqZyENpKz6IbhOg24qtBwaTpswKE3LT+hLcCx4yJG+XombOAxBU83A7RV7SCEogZtRvc2WLj0DNXQr5qzAJajUW31m740AhaN7BfNjNow6AskMPZgm6VpT5Zgm6QbyNnFNrU5up/81V049AnjB6dZ5At4LFeC3+sWRDIflvPSwAAAABJRU5ErkJggg=="></div>
+  <div class="num">#135</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">Guatemala City</div>
+  <div class="country">Guatemala</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzdQ9DoQgEAXgt6Gg9AjcxL2YiZt4MbgJR6C0MM4+RiykZQppNF8h8c0PpDt4L0QAXsoS+EQwgsRP+0TwIocZFASCEx+xmEK9wBwYii3UPCJWeQQ0CFq51JdyEPSkvukGIU6b4MtQ8GH5jEDKmnfA5foTwQgSo8Vc4bwrNw5x+gXmcMDHqeUxDlJ77GQohCNYgVaOodw9ZgHaY20anBiBTsPJKHjLZgaaBxZoKJbAuc2+vlmCFJefe2wQrq2NsM9Xj1lA2zBrlhayBXTntfAHaoj4cveNSxkAAAAASUVORK5CYII="></div>
+  <div class="num">#132</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">Havana</div>
+  <div class="country">Cuba</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADMSURBVEiJzdQxDoQgEAXQ2VhQcgRuslzMxMKLwU04AqUF8e/AuJssrb+QAs0zkeT/UcG05LmQRMShrkGvEkiQ9dUuKzig0aBKUFjgkqxU6AfQQUPhQs8jyYa/gG7CaC7PVd6EsfI8dDch+R0SNRR5aX00QDliXcpImgT4zdhpzTEg+RaOiKYR+ysPAkgvTUNx/REJrLm6le+MMeCasfE1LCDB+Bpg206DfsDpm+jGhZFHv2MCbHBXGtgfRsLxthljgDUHFFwhM2Baj4UPr2P2lxZtPEAAAAAASUVORK5CYII="></div>
+  <div class="num">#129</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">Honolulu</div>
+  <div class="country">USA</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADaSURBVEiJzdWxDYQwDAXQjyhSZoRsciyGxEkslmySEVJSoPgcAwVcmV+QhtMrsO7bMZDHwXshAnBS5qBPBBIkfbVLCk5kp0FBUBjFRcxUaAXooKFwoeURscgtoE6wzqVnKzvBTnoOXSdEvwomDQWDto8ESb5hA8bc/kQgQfU7tMqYXT06x4BUFtmmMgMfb3kwQLQABtFQ4G0cKNCOzli+ZowBNmPnbRiFBHYb6nEbVhrYMtCQXfVc0PZl134xQQvk28rpBdswXq/ENXQEODfMkuUMmQF/X8KXwg8ZTeyXmdHyDwAAAABJRU5ErkJggg=="></div>
+  <div class="num">#140</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">Kingston</div>
+  <div class="country">Jamaica</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADRSURBVEiJzdSxDYQwDAXQjyhSZoRscrcYEkgslmzCCJRXoPhshysubX6BG9ArgvC3A+kKz4UMIMi5JH0ikaDo0aEoBJGLBieSwiwhY6GCfYAO2hQuWD8yVvlr0CB4cqWPchC8Sj90g5DjLnhrUzBpfCTwUj3sJxIJKmbBJAq1JccAsXcNDXjFu0HjoGfDtwGIVyJBS+5cj9+MMaDNmGy2DbOQwLehtm3YaWB7602pkQveD3tjgg7a8XfljILfMHFLn3vGGODJ5Sg2vTsLunosfAHn5gZ4OC5j5gAAAABJRU5ErkJggg=="></div>
+  <div class="num">#142</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">Los Angeles</div>
+  <div class="country">USA</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzdU9DoQgEAXgt7Gg5AjcZL0YiZtwMbgJR7C0MMwOP1volrxCCyVfIfHNDEJuF54LEYCR3Tt9wpEg6atNUjAiJw12OIVFTISnQt2ADhoKF2oeEZtcApqEVrl0L+UktCvdm24Sog2CVUPBS8tHgoIlH9Bb/QhHBJMkZF15FkT7cccbXiO2Iw8C1PUqQXvCjnaYh165fcu/HmNA67ExDYuQoE1D6dMQaFDnVosGUywXWh51xQTdIF+OnFnoJwy00XqPMaCfMCJZRsgM+PsTPhS+8hniJGc/gLwAAAAASUVORK5CYII="></div>
+  <div class="num">#122</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">Mexico City</div>
+  <div class="country">Mexico</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdSxDYQwDAXQf0qRMiNkk2MxJJBYLNmEESgpED7buSsubX5BGqJXgPT9DaQ7eC4UAFGOOesTmQRVXx2rQhS5aHAgKwSJBTMV7AN00FC4YHkULPIX0CD45Go/ykHwU/vSDUJJm2DSUPDS8bEAQU4g7J40Ce4kdle42+QYYCU4kS6NOH33dhy0BMAkm3YiXZkGbXL7r2MM8I6VtNo2BCGBb4Mmbduw0cD2VocGVS54HnZjwt2KO9PA/9qy5vPdOsaANjksu3xDZkB3HgsfTXTn3TH8OhEAAAAASUVORK5CYII="></div>
+  <div class="num">#128</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">Miami</div>
+  <div class="country">USA</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzZS9DcMgFIQvckHJCGySLGYphReDTRjBpYuIlwNjKaHlCr/G0lcAvp8HGwb3BRGAs30N/CKIQOLRLhE4s48M7AgEi7mIVQrqBXJAUbSg6hHxtj+BJkFzLo1WToI2aQzdJIh+M7woCh60TwT6BZvVnwgiULxltmHJrpzOKQDjgANYKbFvekgAX8041Db4no95cDmXr4wpQM9Ya8NiItDaUM42bDLQlwFc8VrA3ub2fiUoYMZ+V84sOLc2wvG8MjYPmnORlbAusgIMc1vwBWFIBGb/r/N9AAAAAElFTkSuQmCC"></div>
+  <div class="num">#124</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">Montreal</div>
+  <div class="country">Canada</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADbSURBVEiJzZQxDoUgEETXUFByBG7yvZiJJl4MbsIRKC2M+wfw/0RapnALJK9wyczsinYl7wVBRKzmxeMrngQifm0jgFU9aSCLBzBqgyxUUBrQAUThgqJHkFUfAg2C6lzsrRwEtWIfukEQ3K4yQxSZYB8JXO70x1zuoT2dAfDqJB8xSa+/c8Og+HVMeREb3C0QA2xwTndkwp2eBlBokH4ZY4CaseC2Mg1GSaBOwwUp0GWngTK3yITg4IKY12TLjQk0m/TcY4OgbRjxx6dljAHahsFI6C0yA3T1WvAFyygJtoF0XLMAAAAASUVORK5CYII="></div>
+  <div class="num">#136</div>
+</div>
+</div></div>
+<div class="a4"><div class="hdr">GeoCheckr — North America — Page 2</div><div class="grid">
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">Nassau</div>
+  <div class="country">Bahamas</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzdQ9DoQgEAXgt6Gg5AjcZL2YyZp4MbgJR7C0MMzOgBba8gppNF8h8c0P5HHwXkgAvGxz1CciCbJ+2mcFL3LQYENUcOITZirYBXTQULhgeST85BbQILTK5WcpB6Gd/Gy6QUhhFUwaCj5aPhbAlX2y93T9yzjUIHaLK772ylEAzvI4gG9oeTBARPP4WigIR6RBr1y5eowBrcdSWGwanJCgTUPt07DS4FwG8DVwQee2eHtjgl5QbitnFNrWliXuZ48xoG8YbQc5Q2bA47wW/nHxA9+mf/xZAAAAAElFTkSuQmCC"></div>
+  <div class="num">#144</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">New Orleans</div>
+  <div class="country">USA</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADbSURBVEiJzZQxDoQgEEX/hoKSI3AT92ImbuLF4CYcgdKCOPsB3Y22TOEUQl7hn3xmPuRWeC4IAOzuiucJrwQif22jrGJFihrI8FQhDZhVQVPRBlI/mkCOri8GDYL2cjHP16ccBL3Y+nXoxgBVKOAKtsmtasCtiSr0Nx5+KACanGiySZhgRAmIfDy75hlOk8dBwJLsToFOdUArTi/OwdUAbcbqHe9sRAm0baApzC4saqCHQalO/2NLA4R6j30b1ABjK23TpfUx0BNmke2V1cCRMCZt+C3yMLjVY8EXJk7/7S7RN0sAAAAASUVORK5CYII="></div>
+  <div class="num">#133</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">New York</div>
+  <div class="country">USA</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADUSURBVEiJzdS7DYQwDAZgnyhSZgRvcrcY0iFlsWSTjJCSIsJnG64gbf4CN6CvSMAvkiHouZCJKEhbWZ/EICh6dCgKQaTDoBErLBIyrVCwC+CgScGC5SPTV24JmgSvXBlLOQkeZWy6ScgxCX00KfTS8sFgYz09VfsJBoG0pYaDtMeOs3IIOGK38nVNcfR8YCBZO9g0xM4g8MhR6r/HEOA9dk3DIiDwaZDm05BgcC0DCpYZJOhVNdgbErzRbntsEnxry8b7++wxBJwbRj9driQjYIjHwg/PnQw7CMLHLgAAAABJRU5ErkJggg=="></div>
+  <div class="num">#121</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">Panama City</div>
+  <div class="country">Panama</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzdUxDoQgEAXQv7Gg5AjcRC9m4iZeDG7CESwtjLMz41osW/ILaTCvEPkzIKQZeC5kAEG2OemMRIKirw5FIYgcNNiQFAYJGTMVbAE6aChcsDwyFvkJqBO8cqUtZSf4KG3TdUKOq2DSUPDS8pFAQ3attolEg6ECCuG8S9kPOmGfthkhR8+DA4tghJ2GeCQS+NAeq3ePMeDqMXnbaRiEBH4aTo1CV1lp4JeBhXxGLnge9sQE/era3GN9cN3aSPt49RgDvHLas1W+ITPg70/4UPgAZd/v0HfaeTgAAAAASUVORK5CYII="></div>
+  <div class="num">#130</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">Phoenix</div>
+  <div class="country">USA</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzdW7DYQwEATQORE4pAR3Ao0hEdCY3YlLcEiAmFsvXAAXMgEOAD1LLNqPAW8L74UEILBO0e6IIsj26pANArnJoCIadAwJkxRaADlYUrTQ8pEw85Kgh+CVy/dSPgRf+d50DyH1CzFaUvCx8okgcynrWLvimRZB6lkwWKiwH5XTgNXLnhFsiyJgbZWjRfEtEXjl6lx+PaaAs8d8GjqKwKeB1adhkUELsPcb7KIFm9vi368EC1AuR85TOE5txHU4ekwBZ+XmwjPJCvj7E74UvsuX+6t1BV25AAAAAElFTkSuQmCC"></div>
+  <div class="num">#139</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">San Francisco</div>
+  <div class="country">USA</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADbSURBVEiJzdW9DYMwEAXgi1K49AjeJCyGBBKL2Zt4BJcUEZd3BxSQ0q+ABvQVWLz7QfR2yXMhi0jQNibcJZGg4NWhAILqlwZNEuCtIctIBTuADgiFC5ZHlkkvAXWCV67cS9kJfpV703VCjovKgFDkhfKRAJ1QXe0jEgnUKrcJemzbK8eAorOsQxsRcfQ8GIADKubWpiF6OzBgr1yb6tljDPAey3G2aXgrCXwatPk0LDTwZYCQwxa5kKPWYE9MQOXqdY91gm8YhLx+zqbrh2PDTFWPkBnw9yd8KPwAW638mxDOaQ4AAAAASUVORK5CYII="></div>
+  <div class="num">#125</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">San Jose</div>
+  <div class="country">Costa Rica</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdQxDoMwDAXQX3XwmCPkJu3FkKiUiyU3yREYGRCuY9JKsOYPeAD0Biy+TaCXwn0hAxBdpmh3RBIUe7UUA1HdaLAgGjxVMiYqtAZ0sFC40PLImPUU0CD45Mp1lIPgVa5LNwg5JMXbQsHDxkeC0lJQTbV9RCRBDps10KSyH5NjwB42rMAEycHzYIDlWz0Kaf1I4GUN6m/HGOA71v+Gp5LA/wY9LokG/TCA7IELnkd7YoI1qKcjZxT8hAmfuL7+OzYM/YSZq/aQGXCp28IXY7UEiSQfmzcAAAAASUVORK5CYII="></div>
+  <div class="num">#131</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">San Juan</div>
+  <div class="country">Puerto Rico</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzdWxEYMwEATAYwgUUoI6sRtjhoDGpE5UgkIChvfxyIFxqAsgAGYDEPevB3Y78FxIAILVOfKKKILMR4dMCGa7DCoiYbSQMEvhfIEcGIoWzjwSFvsJqBO8cvleyk7wI9+brhPStBreDAUDyycDsw3gfWrfIgCrzOFFCMdVOQUcXDpPO3XyPBSQMBYMxlAwtXboh6tydSnfHlNA6zHfDaOJwHeDVd8Nqwx8GNQZweMWAhut+PqVwFWX2xzrg2vCIG6txxTglePYKtZCVsDfn/Ch8AFY1+0UuzKD6QAAAABJRU5ErkJggg=="></div>
+  <div class="num">#145</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">Santo Domingo</div>
+  <div class="country">Dominican Republic</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADQSURBVEiJzdS9DYQwDAVgn1KkZIRscrcYEgWLJZswQsorUN7ZBk4ibV5BCkBfEQv/Cbojz4UsIhF1TvqWRIKiV8eiEIGdBlWSQkDMMlPBAtBBk8IFy0eWBbcEDYJXrvSlHAQ/pW+6QcjTCvloUuSl5SMBatj09nWzn0gswK6J0FBoR+UoYFHypPqeABIU69kmARrq7I9xuCq3XT3GAO+xcxoCSODTgOrTsNLA5rZpkvXBBc+HfTHBeuK+xwbh2NqSvv8eG4dzwyw+ZyzozmPhB6C2ECjYYc0SAAAAAElFTkSuQmCC"></div>
+  <div class="num">#143</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">Seattle</div>
+  <div class="country">USA</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADPSURBVEiJzdSxDYMwEAXQH1G49AjeJFkMiYLF7E08AmUKxOX7YhTFLb/giiC9Ipj754MNhftCBhBsmxOfSCIo/OtQCMFsl8GGRJgsZMxSaC+QA5uihdaPjMX+GnQRPLkyRnkRvMo4dBchx9XwYlPwYHxCYPEn928RQEsOiGsNxy9KAbT4doQcvR8KOKJVbwXBx0EBZ3L1nDEF9Bnz2zCZCPw28PztNqwy6MsAVC2Ubal+fiXw1HXYY9fgu2GQ3s8+dALw5Li2qvUmK2Co28IHQnYGoKPi4p4AAAAASUVORK5CYII="></div>
+  <div class="num">#134</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">Toronto</div>
+  <div class="country">Canada</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzdSxDYQwDAVQn65ImRGyybEYEkgs5mySESgpEL7vAAVp8wtSgPUKgr7jiDVL3gsqIsHWMeEtiQQZnw4ZEMx2GqySAF8LKiMVfAM6IBQueB4qkz0C6oTaudy2shPqyu2h6wSNi8mAUOSD9pHAbE7b4LXev94Phzct21JQjSyo/dK4I+J4BdQPqNE0hBK8IkFdGq3cZ4wB9YxpnH0avkaCOg3HOQ0LDXxuD4SMBxcwtyV4xQRsUB5XTi+ct7ak7XeeMQZcN8xU7AqZAc16LfwBal70rUjA4GMAAAAASUVORK5CYII="></div>
+  <div class="num">#126</div>
+</div>
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">Vancouver</div>
+  <div class="country">Canada</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdSxDYMwFATQi1K49AjeJCyGlEgsZjZhBEoKxOVsSBG3voLfYL0CW/+fDTaF+0IGELiOSV8kE8z6dZgFgdxtsCIJngwZoxXKBnZQU7xQ+pHx5l+DOqFObm5H2Qm15jZ0nZDjRAxqCh4anwmUWWyA1vk6ugPIJZSteJyTs4D6K9zV4kj6ABg4KRNxTy4opYwtv4w54MpYvQ1PmqDeBq71Nkw2KBtoaAhH9EKOykRZOUGnXpp3rA/qCxM/aXudGXNAnVw5Oq8mO6Cp28IXyokHwuLKL+0AAAAASUVORK5CYII="></div>
+  <div class="num">#127</div>
+</div>
+</div></div>
+<div class="a4"><div class="hdr">GeoCheckr — North America — Page 3</div><div class="grid">
+<div class="card" style="background:#E8FFE8;border:2px solid #2a8c2a">
+  <div class="city">Washington DC</div>
+  <div class="country">USA</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzdWxDYMwEAXQH1FcyQjeJCyGRCQWszfxCC4pEJfzAYogpX+BG9ArsPT/2UBvC8+FCEC0jMGeCCRI9mlJBqK60qAgGHQqESMV6gZ0sFC4UPOImPQSUCN4c+leZSP4Sveha4TYz4rBQsHL6iNBKpMuQJc9aRrYBoPOWbZfla3gQ2AhQ2J/nFsC9J8gm4VisI8DAc7m8jljDPAZ860iOiWBn4ZtPw0zDeq5tdLgoTDBSstS35igdcau91gb+A1jIS/vfcYYcDSnWY+QGfD3J3wofAHPTu19XDRKFwAAAABJRU5ErkJggg=="></div>
+  <div class="num">#138</div>
+</div>
+</div></div>
+<div class="a4"><div class="hdr">GeoCheckr — South America — Page 1</div><div class="grid">
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Asuncion</div>
+  <div class="country">Paraguay</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzdQxDoQgEAXQv7Gg5AjcZL2YiYUXg5twBEqKDbPjoIW0/EIKNa9Q8+cDZFh4L0QATsoW9I5AgqSvdknBifxoUBAUFnERGxXOD9BBQ+HCmUfELo+AJsEml8ZRToKtNJZuEqI/BKuGgo+OjwRJDqmAPse7uPMQ/VlcVdf65BjQ9NfrWja45i0PBkjRJlgo8FYHCtjkyp7vjjHg6pjthkVIYLtB+uWggR0GPWQu6Key/T8TGpb8OHJmoZ/aCPXbO8YAm5xuiSxXyAwY1mvhD90xD3niJG7ZAAAAAElFTkSuQmCC"></div>
+  <div class="num">#155</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Bogota</div>
+  <div class="country">Colombia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADRSURBVEiJzdSxDcQgDAXQf0pByQjZ5G4xpJyUxWCTjECZIorPdkhxtPwiLgh6BUjfJpCu8FzIAILUNOsXMwmKHh2KQhA5aFAxK0wSMhIV7AI6aChcsDwyFvkLaBC8c6Vv5SB4lX7oBiHHVfDRUPDS9pHAJkFr3TxpEkjVHOyCcF6do4DIJroH3vEOaBjsbL1gEiD6ODDg6lxdtnvGGOAzluPXXsMkJPDXINey0sDe7RkP6MIFz8N2TGiDm2jgfxgNeW8zxoDWOZ3eFjIDunos/ACP5f7QmsUKlAAAAABJRU5ErkJggg=="></div>
+  <div class="num">#149</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Buenaventura</div>
+  <div class="country">Colombia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADbSURBVEiJzdUxDoQgEAXQbygoOQI3cS9mookXg5twBEqLDbMDYqFb8gtpNK8Q/TODkMfCeyEAsJIXr1d4EkR9tI0KVuRLgwyvYMQGLFSoG9BBQ+FCzSNglVtAg9AqF5+lHIS24rPpBiG4XfDRUDBp+UhQ31p32VP9CE8DkzDDJClXKcehuA3HlBeN2LU8GKCvrnMrGgpcH7FxOCuX13T1GANajwW31WkwQoI2DeWchp0GdW61aLDFcSE4SbbeMUE3SLcjZxTOUxv+mHuPEaBXTpL0kBnw9yd8KfwA/VjyoF9c04cAAAAASUVORK5CYII="></div>
+  <div class="num">#162</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Buenos Aires</div>
+  <div class="country">Argentina</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzdQ9DsMgDAXgF2Vg5AjcpL0YUitxMbgJR8iYocI1Lh3CyhviIZG+SDHxTyBT4L6QATg5YtA7AgmKvtoVBSfyocGBoLCLy4hU6AnooEXhQq9HxksuBVoE61yZW7kIFmUeukXIPgmeWhRs2j4SNMSeKkn/iEADjU1S7Y9YkL3Uczsi8PCjHuvQvM5swy6At3FggEVP9Z8xBowZs23YhQS2De23DYkGPYEWBXrhgu5ttfMzQTtXL7+cVbC/trzDOWaMAda5fnQZRWbAFLeFL4Cj6yrb+GUiAAAAAElFTkSuQmCC"></div>
+  <div class="num">#146</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Caracas</div>
+  <div class="country">Venezuela</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADOSURBVEiJzdS9DYQwDAXgd6JImREyCotFAonFkk0YISUFis/2ne4EbV6BC0BfkQj/QW6B50IBEKTlpG8kElQ9OoicyR8saEihtkVCQaaC38KGHlcuWD46JrkkaBC8cvVeykHwsCRfmm4QNAvAq2VrtIUFHcuup2+7/UQigVUOMxn0AjnmBvs6WaDtBcxtEiDS4Fe5UGVlgfeYD4JlhgQ+Dd81swkLbG7tllCiUKFHb4eJCkXhsnJGwVJRtCcOxH+CBuGzYXQafCGS4BaPhTcuoP801vzZgwAAAABJRU5ErkJggg=="></div>
+  <div class="num">#153</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Cartagena</div>
+  <div class="country">Colombia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzdU7EoQgEATQ3iIg5AjcZPdiVhl4MbgJRzA02GK2RQx0QzqQBOsFfnpmEHZbeC4kAN7WKXJHFEHmrX0meLOvDFZEgjOfMElhf4AcGIoW9jwSZrsENAitcvleykFoK9+bbhBSWAwfhoIXyycC47bxuuwfEUWQGS0QluLrWblxaE1AZcShz60CXGEezgi9HcahLfZYOXtMAb3H2jQ4E0GbhnpMwyKDdhisE3wNWkjBSnt/JVSW73LkjMJxaiNu76PHFNArNxfrISvg70/4UPgB8w7qqAISPBcAAAAASUVORK5CYII="></div>
+  <div class="num">#160</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Cordoba</div>
+  <div class="country">Argentina</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzZUxDoQwDAQXUaTME/LRSCDxseQnPCElBcLY5k46aK7IFrgAaQo2Wa8N5FF4LygAgrSc9I1EAlU/HUT25A8WaEihtklCQaYCV2GDI85cYH4cGOVmUCfwztVnKzuBl5l8C10nUBeAoWUL2sQDo6rIInaJRAJVdhWQZSWDJBoHbMO3lf3gQHYVASINeJWoQasys8CVMTu1zQUJ+DT4MrDzs4DNbYm2DKJQgbRxvdJGBBrc9b4cO8HlB7Ah/hrUBT6dUxVbiCTw/9f4DnAC+4QSNWspZJ8AAAAASUVORK5CYII="></div>
+  <div class="num">#167</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Curitiba</div>
+  <div class="country">Brazil</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzdWxDYMwEAXQH1G49AjeJCyGRCQWw5t4BEoKxOX7ApFCSv8CN0avAOvfnYFdFu4LM4Bgy5C4I4kg89UhE4LZJoMFidBZmDFIoX5ADgxFCzWPGaP9BNQIXrl8LWUj+MrXpmuEOU6GnqHgwfKJgD1bQ5mKJy0Cnrqgr7B/K9cM3LD2tjHi6HlIIG6cW2MoiN4OCjgrV84eU4D32DENnYnAp2FnFH5+FdS5rUlTtcC5LaE+KWFHV36unFbwGya+0vr89JgCjhtmLHaErIC/P+FN4Q1AxvZlihc29gAAAABJRU5ErkJggg=="></div>
+  <div class="num">#168</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Cusco</div>
+  <div class="country">Peru</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADWSURBVEiJzdSxDYQwDAXQf6JImRGyybEYEkgslmySEVJSoPh+DBSXNi5wA3oFQd92IF3hvRABOClL4BPBCBI/7RLBiZxmUBAIk7iIxRTaAebAUGyh5RGxyl9Ag6CdS30rB0Er9UM3CNHvgpmh4MP2WQGjYO1Zk7YCz5Arj3L16pwFsPIxywnqE9AwcMbAPCYB/LNiw3B1rqz5mTEL0BmLfmvbMIkR6DZI0W3YzaDtbfUasi1w0LJrb5ZQMeW/K2cU9NaWLRzfe8YM4Oocf13ukC2gq9fCD/zh/8DiZBFmAAAAAElFTkSuQmCC"></div>
+  <div class="num">#159</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Georgetown</div>
+  <div class="country">Guyana</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzdWxDcMgFATQs1JQMgKbJItZwlIWg00YgdKFZXJ8J5KdlitMgaVXAPrcx2h/A/eFBMBxCvwiiCBzaZf8ElxrmwwqgtvxoGLWQt9FDZmnlkKvR66xXQo0CHZzuc7XqxwEG4lFvoRuEBJi6RkDprYEEVgVWo1lneqsgsy1MREghN1zF0tCbwkRMA6lx4FTk8Hv5grgNxVYxthiWHF0gwK+3cBdnt4yJoHjhbGMvbXADZixKIX+GDBjCCqwevSWyO1UoDE4/i88Ol6nZ2sQ/sZt4QPqXua7q4H+UQAAAABJRU5ErkJggg=="></div>
+  <div class="num">#164</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Guayaquil</div>
+  <div class="country">Ecuador</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADYSURBVEiJzdUxDoQgEAXQ2VhQzhG4ye7FTDTxYnATjmBpYZz9jFosW/ILKSR5heCfAcWaIc+FJCLB1jFilkiCjFeHDAhmOw1WiYDBQpKRCnUBOiAULtQ8kkz2E1AneOVyW8pO8JHbpuuEpIvJB6HIC+UjQbZZ7NCl1I+IJEi6R6yCBY6zcgw4kO32lhGTeh4U0NqzNRRRbwcG3JUrd48x4OoxPw2DkcBPg61+GhYa1AUQiuDBBZzb4vtnAnZdmnusD/yG0Tlu77PHGHBVbip2hcyAvz/hQ+ELsV7ytKhrWdUAAAAASUVORK5CYII="></div>
+  <div class="num">#163</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Iquique</div>
+  <div class="country">Chile</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADYSURBVEiJzZUxEsMgDAQv44KSJ/CT5GOeSZGPwU94AqWLDMoBThFScoVVYM8WSD6dZNgUuC6IAJyVPfCJIAKJV7tE4MzeMlAQCDZzEbsUtARyQFG0oOkR8bQfgRZB71yaW7kIeqTZdIsg+pfhQVFwY/tEoFKKg++5fUSQgS1zGnjU0TkFaCY4gB0u+nNu14EVOoGpDPDdDhLQgh7LX48pwOmxPg2biUCfhkopmOUlA30ZFIpcvRYwVe71KwGrztMeWwNjwyAc9+ExBRidY+l2iqwAf3/Ci4IP1Aj4Nt0RkcIAAAAASUVORK5CYII="></div>
+  <div class="num">#170</div>
+</div>
+</div></div>
+<div class="a4"><div class="hdr">GeoCheckr — South America — Page 2</div><div class="grid">
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">La Paz</div>
+  <div class="country">Bolivia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzdSxDYQwDAXQf0qRMiNkk7vFkEBisWSTjJCSAsXnmCDdpbULXID0CgzfJqCp8FxIADzVJfId0QgyP9pnBk90mkFFZHDkExZT6A3MgUOxhZ5Hwkp/ASlBJpfnUSpBKs9Lp4QUdsKHQ8GLx2cEVNFb7dQ/IhqBhNzgCrWfySkhBSp8OeFbGHnoIdMGzsMREMZ+6EGqt7p3zALGjsnf4MgIrpA5Ci/jM4LeoF0h20Kua5H3twR+6zKdYzqQEyZs8XjfO6YHmZxs7wjZAqZ6LHwBnZcNF7Z9P3MAAAAASUVORK5CYII="></div>
+  <div class="num">#156</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Lima</div>
+  <div class="country">Peru</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADRSURBVEiJzdSxDcQgDAVQnygoGYFN7haLlJOyGGzCCJQpovwzDimOll/ETaJXBOXbWDCUPBeSiHjUJepTIgmyftpnBQ8cNKgSFRx8koUK7QA6aChcaHkkWfEX0CRY5/LYykmwyuPQTUIKG+SjochL20eDI+4irrSfiCS4xitsxZ93KxmwAmc4xJ/B8mCATYKFIqGPwzxYqZZ7xhhgM9ZvgwMJ7Da0KPSUjQa2DOrSQuaC5dHemIDqyv8emwTb2vjG/d2HjgDXhgEKesgMGOqx8AMh9PgJBsl73wAAAABJRU5ErkJggg=="></div>
+  <div class="num">#150</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Medellin</div>
+  <div class="country">Colombia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADOSURBVEiJzdSxDYQwDAXQf0qRMiNklFssEkgslmySEVJeccJnG4qDNr/ABUivwOLHMeRWeC5UAFFGyfpGJkHTT0eRb/YHCwZybGORWFGo4F3YsKeVC5bHjiCXgCbBT67dj3ISvCzky9BNgqYAvEaxQVtY4CnUtIn9RCZBG6HjLVtnQk2Wh6xnPw7s+m09syBAooGXtYraigU+Y9Ua2L0ggd+Gc81swgK7t9YletxEkGMcAhV0cPtl5czCkceKD9J/QFNwbpjQfSGS4FaPhR+b0QWc8GxNFwAAAABJRU5ErkJggg=="></div>
+  <div class="num">#157</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Mendoza</div>
+  <div class="country">Argentina</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADRSURBVEiJzdQxDoQgEAXQv7Gg5AjcRC9m4iZeDG7CESgtjLPD4BbS8gspwLxCyJ8BSDfwXogAnJQ16IpAgqS/dknBiZw0KAgKk7iIlQp1AzpoKFyoeURs8ghoEKxyqS/lINhIfdMNQvS7YNFQ8NHykUDkG+Tye7akSVAXzLqVu1rlGHD5Ewd0ArzlwQC7XRaKaiBBq1zZ8r/HGNB6TJPWkCchgd0GadNOg3pva9I6cSF6ya5+MUHKlJ/v2CC0VxvhmO8eI4BVrh5d7pAZ0I3Xwg+Li+3/ngfK2wAAAABJRU5ErkJggg=="></div>
+  <div class="num">#169</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Montevideo</div>
+  <div class="country">Uruguay</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADZSURBVEiJzdWxDcMgEAXQH1FQMoI3iRdDcqQsBpswAqWLyJc7jCPZKfmFaYxeYax/xxlyWbgvJABeapz0iYkEWV/ts4IX+dCgYlJw4hMiFewAOmgoXLA8EhY5BTQIrXL5WspBaCtfm24QUngLZg0FDy0fCXJdyjrbPvXGpYDmoUcVv/1KOQwbnKxAhN9Cy4MBKUjRTtBQEPZ2IMBRuXL0GANaj6XwstvghATtNlgU7ftZ0IeBhcwFazRvOyZIdeU8xwahTRgNeX3uPcaAPmGWIj1kBvz9CW8KXxVYA+n0/6xuAAAAAElFTkSuQmCC"></div>
+  <div class="num">#154</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Paramaribo</div>
+  <div class="country">Suriname</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdQxDoQgEAXQbygoPQI32b0YiZt4MbiJR6C02DA7jGwhLb+QBvMKNf8PQIaF50IC4KXEoDsCCbK+2mcFL/KlQUFQcOITIhXaB+igoXCh5ZGwyS2gSbDm8ljlJNjK49BNQlp3wVtDwaL1kaBqtKc9p+vXGdA2LLKLr1dzDBD5hBOIGvHaAyJAcYfm4UTBxoEC1lzZjv+MMcBmrJ8GJySw0yDFTsNOA7sMSoSvKxcsj/bEhFbf/R6bBLu126C9rhljQG9uO6SHzIBhPRZ+rjzqK+5LeloAAAAASUVORK5CYII="></div>
+  <div class="num">#165</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Quito</div>
+  <div class="country">Ecuador</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzdQxDoQgEAXQv6Gg9AjcxL0YiZt4MbgJR7C0MPydQd1kaZlCGs0rRP7MAHYLz4UEwHOLQZ4IRpDl0z4LePIwgw1BwNEnRFPQDcxBQrEFzSNh4V9Ag9Aql/tSDkJbuW+6QUjTSrwlFLykfEZQBVSLHiIYQeYBX+EK6125cSDXss+IotMV0Dhoj0nNHIHpN2KjcFZuW8rdYxZw9hg/Og2ORtCmQaOQXVYz0LmtZ8i2IHNbvL5ZgvZEd4+NQbu1JeR9vnrMAFrl9Nd5hWwB3XosfAEVTPmjcpfqZgAAAABJRU5ErkJggg=="></div>
+  <div class="num">#152</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Rio de Janeiro</div>
+  <div class="country">Brazil</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzdQxDoMwDAXQXzFkzBFyE3oxpFbiYslNcoSMDBWubWAga/6Al6I3NOBvB9IVngsZQJC2JP1FIkHRvw5FIYj8aNCQFCYJGQsV7AA6aFO4YP3I+MitQYPgyZU+ykHwKv3QDUKOq+CtTcFL4yPBHr/J1T4ikcDfFwb7kRwDNLS6zViAOZ57Ow4aGnwb9KhzxcbBy466ZowBPmNZO63TOwkJfBuk+TasNLC91dAQ9siFHKUGe2KCtKne77FBOG4YpO2aMQIcN4xIlbPJDOjqsfAHSarzGE7nxzsAAAAASUVORK5CYII="></div>
+  <div class="num">#147</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Salvador</div>
+  <div class="country">Brazil</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADWSURBVEiJzdS9DcQgDAVgRxSUHoFN7haLdCdlMdiEEShTRPE9CFeEllfERX6+IijPBrGh5LkQRcRbWQPuEkiQ8GmfAN7soEGRAHDmo6xUqAvQAaFwoeYR5WO3gCahdS6NrZyEVmkcukmIupm8EYosaB8JUHl/icv1JwIJIp5lsc38eXWOAop+nXogYu15zINhAbw4XPQINEBFtfyfMQa0GYv6rbvBGQnabrDSdsNGg34YiD+VC9i32dcnJlhx+X6OTUI7YRDy/rpmjAG9c5ath8yAoR4LP0lT9CYSAY0vAAAAAElFTkSuQmCC"></div>
+  <div class="num">#161</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Santiago</div>
+  <div class="country">Chile</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADUSURBVEiJzdWxDYMwEAXQH1G49AjexCyGFCQWw5tkBJcUiMv3gZSElo8UF2C9grPs7wN2GvhfmAGEYmviG0kEhZ8Oc5wsGFUFFSmwVHsMUih10MN2rnIV2n54le8Nugj7yRF+j/Ia3JPTuMJXveSjrAC2yDkwAA+bTARWO0MmLEKY27xnJniGYxIBlw70tXshRxn4aOnlpnQmAs/YxmYAxEkFx214vkLZMyYBbwa27qWUwOC2jI1JCtUz9ln6VfCuzdu15CgDPzn/FfAGJxHc0qVugDdPON6bM6LTuQAAAABJRU5ErkJggg=="></div>
+  <div class="num">#151</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Sao Paulo</div>
+  <div class="country">Brazil</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADRSURBVEiJzdWxDcMgEAXQH7mgZAQ2SRZDcuHFYBNGcJnC4nIcOFKckl+YxtYrQPr3sSGXhftCAuBkj0GfCCTIurXLCk7koMGOoLCIS4hUaAfQQUPhQssjYZWfgCbBJpevo5wEW/lauklIfhO8NBQ8dHwk0ANK02JJk6B63RpYiqt9cgyQfS3aiQg8fQ+IAFkO2G0A/OjHPJyTK2fHGDA6ZrdhERLYbWhJ6ykbDdoBOjSocsHyaG9MqL24kQb9q43w/nZsHsbktL0jZAb8/QlvCh/qGQbNdvssvQAAAABJRU5ErkJggg=="></div>
+  <div class="num">#148</div>
+</div>
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Sucre</div>
+  <div class="country">Bolivia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADQSURBVEiJzdSxDYQwDAXQf6JImRGyCbcYEgWLJZtkBEqKCJ9tgk6ktQvcgF5BxLcd0FB4L2QAgfYl8RPJCQp/OhSGQNTcYEdimChkLK4gB7gDh+ILkkfGSo+AjKCdK2MrjaBVxqEzQo4b4cuh4MPtcwOqdLLKTyQnkM5hxsT6b6UZqEkojSOOmocT8HhJKIh9PuygJaHcM+YBOmN9GyZyAt2G89qGzQ1kb8/YEHQmHIGPqkHePIEPqI8rxwrXDYN0zPeM2aF3bq3UQ/aAoV4LP7Nf9GfYBH0NAAAAAElFTkSuQmCC"></div>
+  <div class="num">#166</div>
+</div>
+</div></div>
+<div class="a4"><div class="hdr">GeoCheckr — South America — Page 3</div><div class="grid">
+<div class="card" style="background:#FFE8FF;border:2px solid #8c2a8c">
+  <div class="city">Valparaiso</div>
+  <div class="country">Chile</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdUxDoQgFATQ2VBQcgRusl7MxE28GNyEI1BaGP5+QDfRLZlCCjWv0GTmg5DbwnMhALCSZ693eBJEfbWNClZkp0GGVzBiA2Yq1A/QQUPhQs0jYJFLQIPQmov3KgehrXgfukEIbhVMGgpeWh8PUru0pEmgzeluEIXyq3IYJC9pg9thi+sBEaC4Ty3NCFQ9Cc7m0jljDDhmrO0GIyRou6H03bDSoH5AS6shcyE4zaM+MUGySddzbBD6CQO/vfuMMaA3p+MgR8gM+PsTPhS+HUruItqFn1QAAAAASUVORK5CYII="></div>
+  <div class="num">#158</div>
+</div>
+</div></div>
+<div class="a4"><div class="hdr">GeoCheckr — Oceania — Page 1</div><div class="grid">
+<div class="card" style="background:#E8FFFF;border:2px solid #2a8c8c">
+  <div class="city">Adelaide</div>
+  <div class="country">Australia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzdSxDYMwEAXQjyhcegRvkiyGBBKL2ZswAiVFxM+dIZGg9S+4wqBXYPHvbPBWeC5kAIHrkOyJJIJinw7FIJAfGaxIBj1DxiAF30AOFooWPI+MkZeAGqF2rtxb2Qi1yn3oGiHHmXhbKOisfSIo6+i7zPSfSCJg7Zxtxf3onAIsX2ydLaakDCyKl4eC+D9irVDLZmz5zZgCjhnj5KehpwjqaeCxzDLwzlnTEPaohZqHvylhR79crpxWqDdMnNL2OmdMAOcNMy48Q1bArR4LX55T+aOVUMfHAAAAAElFTkSuQmCC"></div>
+  <div class="num">#177</div>
+</div>
+<div class="card" style="background:#E8FFFF;border:2px solid #2a8c8c">
+  <div class="city">Apia</div>
+  <div class="country">Samoa</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzdQ9DoQgEAXgMRSUHIGb7F6MRBMuBjfhCJQWxrcDuoW0vEIKNR+JP29mFAxL3gtJRCxq8HoWT4Kst7ZZwQIHDap4BQObJFChPYAOGgoXWh5JVjwCmoReuTyWchL6ymPTTUJyEfLVUGTR8pHgFFP2BRHtIzwL3KZ5IBbdCjw4NJQaRD6u58GAe8R0GnTLk+BfufLvMQZcPYatTYMBCfqrn9c0RBq0uW1J64ELua7FtismoJry/I9NQm8HDXl/9Ngc9Molh4I7ZAYM67XwAwI2FOyOFtosAAAAAElFTkSuQmCC"></div>
+  <div class="num">#186</div>
+</div>
+<div class="card" style="background:#E8FFFF;border:2px solid #2a8c8c">
+  <div class="city">Auckland</div>
+  <div class="country">New Zealand</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADUSURBVEiJzdQ9DoQgEAXgt9liSo7ATXYvZqKJF4ObcARKC+Ps8LOFtLxCCp18hZg3A9Bh4bkQAIjmxdsbngTRPi3RQFRPGmR4g7dKwEKFsgEdLBQulDwCVr0FNAm1c3Fs5STUFcehm4TgdsXXQsHL2kcCtfqodei/zgDVJBdsxq7WOQ5s3vI4IcH1gOahTkLZBXB9HOahdS6v6T9jDKgz1k/DW0lQT4O2x06DehnkBXI5LljSSUrFBNsg3a6cWag3jNv88WkzxoDWOadJe8gMGNZj4QcHW/7V4SYx5QAAAABJRU5ErkJggg=="></div>
+  <div class="num">#175</div>
+</div>
+<div class="card" style="background:#E8FFFF;border:2px solid #2a8c8c">
+  <div class="city">Brisbane</div>
+  <div class="country">Australia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzdQxDoQgFATQMRaUHoGb7F7MRBMvBjfxCJRbGGY/qMkuLVNIgckrROePgs3CcyEAcEyztyu8CKLd2kUDRx4ySPAGI13ALIVygBwsFC2UPAIW/gXUCXVysR1lJ9QV29J1Qpg24m2hYLDxyeAA87Tt5SW8CJjG3ZWjmM/JKSBbtpbDAdOahwIiV2CghYLp6kc/3JPb744p4OpY/RpGiqB+DTy3TQblgGydsE0LMS17fX4lZJSi/fxyeqH+tbn6z+vuWD+ck7M68ApZAc16LHwBaA8N1ZD5CEQAAAAASUVORK5CYII="></div>
+  <div class="num">#173</div>
+</div>
+<div class="card" style="background:#E8FFFF;border:2px solid #2a8c8c">
+  <div class="city">Cairns</div>
+  <div class="country">Australia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADYSURBVEiJzZS9DcMgEIVfREHJCGySLIbkSF4MNmEElykiLnfgRAotr/A1Rl9h7PdzkGlwXZABeDlS1CciCRR9tS8KvMibBg5EBU58RqICu4AOVBQuMD0yNvkTaBF058ps5SLoU+bQLYIcdsFDRcFN7SOBfkGDq/YTkQQakrXBVd+Gcwxg7dJMJOAehkAEYM7peRffwi8Oq2A4d2z1mzEG6BnL4WltcEICvQ1ttGGngb4MVGTVgwu0t9XbiQn0q+u0x9ZA3zAq8uvMGAOMDSNS5RSZAaa5LPgA8xr6osca2GMAAAAASUVORK5CYII="></div>
+  <div class="num">#180</div>
+</div>
+<div class="card" style="background:#E8FFFF;border:2px solid #2a8c8c">
+  <div class="city">Canberra</div>
+  <div class="country">Australia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzdUxDoMwDAXQXzFkzBFyk3IxpCJxseQmOQIjQxXXNnRoOuYPZAD0Boi+7QDpFu4LGUCQfUl6RyJB0VeHohBE3jTYkRQmCRkLFewDdNBQuGB5ZLzkJ6BB8MqVvpSD4Kv0TTcIOW6CWUPBQ8tHgiIrjmfcqidNgmb5Zkw1tLNyDNB8ccx6wTN6HgxoUewDOg0tejswwFc2vXqMAWePyWrTMAkJfBp0/zYNGw1sbrVoUOWC52FPTNBd1+4cG4Pz1EY6vk1HgKtyUuUKmQF/f8Kbwgc8KflnEEagDAAAAABJRU5ErkJggg=="></div>
+  <div class="num">#188</div>
+</div>
+<div class="card" style="background:#E8FFFF;border:2px solid #2a8c8c">
+  <div class="city">Christchurch</div>
+  <div class="country">New Zealand</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzZVBDoMgEEW/ccGSI3CT9mIkmngxuIlHYOmicToMpq12yV/IApNn4sD/f0bIZeG+IAFwUmLQJwIJZP20E3kF21igILhcJnEJkQqsChvsfuaCqseOUU4CdQJzLl+t7AS2qsin0HUCVQEYSqxBm1ggl3FtWzqCSwDVNDz8sjoi0O5qSm/P5hwFiFYZZNFMeCI4nHNZX5HAJ2PWFyRg3WBVRM/PAm3CRO1bL1Swaxz0EiMVpJax78jpBaaHzNjgfwTqA+acnnq1gUgCf3/Cm4I32dP2g5dkz/sAAAAASUVORK5CYII="></div>
+  <div class="num">#181</div>
+</div>
+<div class="card" style="background:#E8FFFF;border:2px solid #2a8c8c">
+  <div class="city">Darwin</div>
+  <div class="country">Australia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdUxDsMgDAVQVwweOQI3SS+GlEq5GNyEI2TsUOEaE4bSkT+EIYneEKJvm5BMi+4LiYhYzhj0TgEEWV/NWYFFPjA4KSg44UQRCm0DOGgoWGh5JNrlJ6BFsMrluZSLYCvPTbcIyR9CTw2FHlo+EFT9Yt3lKJY0DlrRXOHaK4eB2C+cvAgIsrwCbS0U8ld/rMOoXBk9hgDrsWsanIDApqH2aThg0ObWQq4eC/ncC7cnJEhv3AgDO7W1J97b6LF16CeMtoNcISPg7094U/gCba/oLQcnW0EAAAAASUVORK5CYII="></div>
+  <div class="num">#178</div>
+</div>
+<div class="card" style="background:#E8FFFF;border:2px solid #2a8c8c">
+  <div class="city">Gold Coast</div>
+  <div class="country">Australia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADQSURBVEiJzdQxDoQgEAXQbywoOQI32b2YiSZeDG7CESwpzM4OI7uJtPxCCjSvEPNnBki38FyIAJwcS9AnAgmSftolBSdy0uBAUJjFRSxUqAfQQUPhQs0jYpVbQINglUt9KQfBVuqbbhCi3wVvDQWTlo8E9a/LJHu2pEkgsuHqsc9VOQYkOVGABXh5y4MCxyrtFN9GbBxsaY/lX48xwHqsTcMsJLBpkGvbaVDnVqOAblywPOobE/SAfLtyRsFuGL+F8m+6cWiVW7O0kBnQrcfCF0V08HWLjvI8AAAAAElFTkSuQmCC"></div>
+  <div class="num">#189</div>
+</div>
+<div class="card" style="background:#E8FFFF;border:2px solid #2a8c8c">
+  <div class="city">Hobart</div>
+  <div class="country">Australia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdSxDcMgEAXQb7mgZAQ2SRZDciQvBpswAmWKyJc7zilC61/4Clt6hS39+wCZBveFAiBIz0nfSCSo+ulQFYLIhwYdSWGVUJCpYD+gg4bCBcujYJO/gC7C2FydV3kRxtS5dBehxF3w1FCw6PpIcERN4Yh7G0mTQKd5xw7fHAP0L9aJjFCiCAtsY4toKIijDgzwzfWt/TrGAO+YvOw0rEKCcRqkj9Ow08DOrSWtDy5U7wQSE87iZhr4DYP0fnjHGDA2p9dWkzNkBkxzW/gCp977v8QjTwAAAAAASUVORK5CYII="></div>
+  <div class="num">#179</div>
+</div>
+<div class="card" style="background:#E8FFFF;border:2px solid #2a8c8c">
+  <div class="city">Melbourne</div>
+  <div class="country">Australia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzdUxDoQgEAXQv7Gg5AjcxL2YiSZeDG7CESi3MMzOwFrolvxCG80rhPw/KOR24bkQATgpS9A7AgmSvtolBSdy0KAgKEziIhYq2AJ00FC4YHlErHIJaBBac+le5SC0K92HbhCi3wVvDQUvrY8FtuEke+5PHKheJ6FB7c1xYLP9H3DRtzwooBvGbKHAt3FgQG+urPmcMQa0GYt+s9NwNjcM7TRUjUJX2Wlg51ZLgyoXdKns7IkJUqZ8/Y4NQv/CIHzmPmMM6M1hzfILmQF/f8KHwhe0bu1urzauNQAAAABJRU5ErkJggg=="></div>
+  <div class="num">#172</div>
+</div>
+<div class="card" style="background:#E8FFFF;border:2px solid #2a8c8c">
+  <div class="city">Ngerulmud</div>
+  <div class="country">Palau</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADTSURBVEiJzdUxEoQgDAXQ7FhQcgRu4l6MGQsvBjfhCJQWDn8TpNEt+YU0OK+Q8SdBwWPJeyGJiEONQXcJJMj6apcVHHDSoEpQWOCSRCrYAXTQULhgeSTZcAtoEnrl8rOUk9BXfjbdJCS/Q74ainy0fCRoHjhWVfuIQAJUzdeOQrsqxwDdLOkosvqeBwe24proNDR/BhJclauqo8cY0HtsTMMCEvRp6EkDOw1sbi1pzYMLelRx9sQErVy5XTmzcN0wEo7RYwwYN8xWMEJmwN+f8KXwA4bz+Xtti8eBAAAAAElFTkSuQmCC"></div>
+  <div class="num">#187</div>
+</div>
+</div></div>
+<div class="a4"><div class="hdr">GeoCheckr — Oceania — Page 2</div><div class="grid">
+<div class="card" style="background:#E8FFFF;border:2px solid #2a8c8c">
+  <div class="city">Noumea</div>
+  <div class="country">New Caledonia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADSSURBVEiJzdQxDsMgDAXQX3Vg5AjcpL0YUiPlYnATjsCYIeqvIekQVv4QD4n1hlixDeAQuC8kAI41BnsjiCDbp102cOQug4pg8KRLiFJoBeRgTdFC60fCh5cGTUKfXB5HOQk98rh0k5D8SrytKXjY+GSwBH5heTr/RQDkAtfAHlEFrcoGvwMvT4qAFS1frYrv6yCBFrZj5b9jCjh2jEs7DU+KoJ8G1n4aVhn0y6BGG5/XgpUqrmVKsALlcuXMwnHDIGznjimgTy55Fp5NVsAQt4UftKzrORJd1QEAAAAASUVORK5CYII="></div>
+  <div class="num">#185</div>
+</div>
+<div class="card" style="background:#E8FFFF;border:2px solid #2a8c8c">
+  <div class="city">Nuku'alofa</div>
+  <div class="country">Tonga</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzdWxDYQwDAXQjyhSZoRswi2GdCexWLJJRqCkQPHZ5ijgyvyCFIBeQcS3HSC3hedCBhBknZPekUhQ9NWhKASRnQYrksIoIWOmgm1ABw2FC5ZHxlsuAXWCV67cS9kJvsq96Tohx0Xw0lAwaPlIoD2LbZCl2kckIgTbStpROQZoO2Cb4g5M0fNgQIs+YjoNLXo7MMBXjlLPHmOA91iOH5uGUUjg0yCrT8NCA5tbjQJ64YLnYU9MaBjr5cjphePURtrOpiPAccKIVPmFzIC/P+FD4QstSQLRR/mZGwAAAABJRU5ErkJggg=="></div>
+  <div class="num">#183</div>
+</div>
+<div class="card" style="background:#E8FFFF;border:2px solid #2a8c8c">
+  <div class="city">Perth</div>
+  <div class="country">Australia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADUSURBVEiJzdQxDoQgEAXQv7Gg5AjcZPdiJm7ixfAmHMHSwjD7AS2Wll9Io3kFkD/DwLqF50IE4GyfA78IIti4tdsIzuyUwY5AmMxFzFIoB8iBoWih5BGx2F9Ag1Art/WlHIS6tr7pBiH61fBhKHixfCJgCjje4H+8rz4OuRTN9im53CqnAOOtLfsTLvoWkALMUn0NgD+DDmrl0t1jCmg9Zt/yGiYTQX0NmVHwlFUG1zAAVQssWkkaQQm8derm2Bi0qY1wvFuPKeCaMEuyK2QFdOux8AOiCg9gcXtxcAAAAABJRU5ErkJggg=="></div>
+  <div class="num">#174</div>
+</div>
+<div class="card" style="background:#E8FFFF;border:2px solid #2a8c8c">
+  <div class="city">Port Moresby</div>
+  <div class="country">Papua New Guinea</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADXSURBVEiJzdUxDoQgEAXQv7GYkiNwk/ViJprsxeAmHIHSwjg7IBbLlvxCGskrEP8MCO0GngsBgGhevD3hSRBtaYkGonrQIMMbTCoBCxXKC+hgoXCh5BGw6k9Ag1ArF/tSDkIdsW+6QQjuo5gtFLysfCzAUpK2ebi/ZRzOmm+ekpxX5RhQ1t5nPYC3u8/tOLjNotCPyumudiBAHcFpunuMAbXH2mmYlAT1NFxJ2/5Z0C4DWB5ciHlNUmZMsF2n7h4bg3pr6+b31mMMaDfMmrSFzIC/P+FD4QtBcvqdZ+FW0gAAAABJRU5ErkJggg=="></div>
+  <div class="num">#184</div>
+</div>
+<div class="card" style="background:#E8FFFF;border:2px solid #2a8c8c">
+  <div class="city">Queenstown</div>
+  <div class="country">New Zealand</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADUSURBVEiJzdWxDYQwDAXQf6JImRGyyd1iSCCxWLJJRkhJgfDZBorjyvyCNKBXEPh2DOS28FzIAIK0MekViQRFHx2KQhDZaNCQFAYJGSMVbAM6aChcsDwyJvkJqBO8cuVeyk7wVe5N1wk5LoKPhoKXlo8IsmOo9hGJBEV0F8Slhv2qXD/Y6VoRN4Q9HgGRQDthEYUtscAr16Z69RgDvMdynO00DEICPw0Whb8/C3wYtNFC5oLnYXdMsMb9GTm94FNb5rS+jx5jwDlhpipnyAz4+xM+FL5M8Ab/5n0F4gAAAABJRU5ErkJggg=="></div>
+  <div class="num">#190</div>
+</div>
+<div class="card" style="background:#E8FFFF;border:2px solid #2a8c8c">
+  <div class="city">Suva</div>
+  <div class="country">Fiji</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADVSURBVEiJzdSxDYQwDAVQI4qUGSGb3C2GBBKLJZtkhJQUKP8cwxWkzS9wA3oFgW8bQVfyXogi4lCWoFcJJEj6aJcUHHDSoEhQmOGiLFRoB9BBQ+FCyyPKikdAg2CdS30rB8Eq9UM3CNHvkK+GIpO2jwTAFo6P33P7iECCqqe4BIV6dY4BCZscE06Rj7c8KFDW7KroNlR/r9g4WOmM5f+MMeCeMduGGSSwbajXNuw0aAdo08S1HjLB8mh3TECZ8/M/Ngj2h/G2EgAJrHPt1XGHzICuXgs/YvL4Dr297E8AAAAASUVORK5CYII="></div>
+  <div class="num">#182</div>
+</div>
+<div class="card" style="background:#E8FFFF;border:2px solid #2a8c8c">
+  <div class="city">Sydney</div>
+  <div class="country">Australia</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADUSURBVEiJzdQxDoQgEAXQv7Gg5AjcRC9mookXg5twBEoL4+ww0EjrL5zCTV6h2T8fIMPguxABOClr0F8EEiR9tUsKTuSiQUFQmMRFrFSoH6CDhsKFmkfEJo+AXoJtLo2rfAk2aSzdS4j+ECwaCn66PhLc/sjnjCnXPxFIYE24oR272+YYEP0VzqWscNH3PBgg2U4D4FsdCGBj2jvGAOtY9Hs9DZOQwE6DtMdBg34ZwGkxqJDKVpNGYEJt7+PKeQt2a8sezrl1jAFtc9iy9JAZMMxn4Q9ttP/UjyHaoQAAAABJRU5ErkJggg=="></div>
+  <div class="num">#171</div>
+</div>
+<div class="card" style="background:#E8FFFF;border:2px solid #2a8c8c">
+  <div class="city">Wellington</div>
+  <div class="country">New Zealand</div>
+  <div class="qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAB9AQMAAAC1Tv5mAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAADWSURBVEiJzdUxDoQgEAXQbywoOQI3cS9mspt4MbiJR7C0IPwd0C10S34hjeYVin9mELwtPBciAMdtDnZFEEGyR7tk4Mgsgw3BYKSLmKVQXyAHC0ULNY+INy8BdUKrXLqXshPaSvem64ToF+JloWCw8okgcVlZTOtHBBEUz9UdelROAYkZ+4QZLnpSBMV/gIEWCnwOImgr1v2fPaaA1mPnNIwUQZsGS7pOwyKDOrfFZ7jWE0JoedQ7JXAb1+s51gnHqY2wT7+m64ejcrZ1niEr4O9P+FD4AqM3AMR4v5reAAAAAElFTkSuQmCC"></div>
+  <div class="num">#176</div>
+</div>
+</div></div>
+</body></html>
