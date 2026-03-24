@@ -251,7 +251,7 @@ export default function App() {
         </View>
         <Text style={{ color: C.outline, fontSize: 11, fontWeight: '600', letterSpacing: 1.5, alignSelf: 'flex-start', marginTop: 24, marginBottom: 12 }}>TIMER</Text>
         <View style={{ flexDirection: 'row', gap: 10, width: '100%' }}>
-          {[15, 30, 50].map(t => <TouchableOpacity key={t} style={{ flex: 1, paddingVertical: 14, borderRadius: 9999, borderWidth: 1.5, borderColor: timerSeconds === t ? C.accent : C.border, backgroundColor: timerSeconds === t ? 'rgba(189,194,255,0.1)' : C.surface, alignItems: 'center' }} onPress={() => setTimerSeconds(t)}><Text style={{ color: timerSeconds === t ? C.accent : C.outline, fontSize: 15, fontWeight: '600' }}>{t}s</Text></TouchableOpacity>)}
+          {[5, 15, 30].map(t => <TouchableOpacity key={t} style={{ flex: 1, paddingVertical: 14, borderRadius: 9999, borderWidth: 1.5, borderColor: timerSeconds === t ? C.accent : C.border, backgroundColor: timerSeconds === t ? 'rgba(189,194,255,0.1)' : C.surface, alignItems: 'center' }} onPress={() => setTimerSeconds(t)}><Text style={{ color: timerSeconds === t ? C.accent : C.outline, fontSize: 15, fontWeight: '600' }}>{t}s</Text></TouchableOpacity>)}
         </View>
         <Text style={{ color: C.outline, fontSize: 11, fontWeight: '600', letterSpacing: 1.5, alignSelf: 'flex-start', marginTop: 24, marginBottom: 12 }}>ROUNDS</Text>
         <View style={{ flexDirection: 'row', gap: 10, width: '100%' }}>
