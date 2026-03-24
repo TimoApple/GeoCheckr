@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// GeoCheckr — Game Engine v4 (QR-Code + Voice + New Design)
+// GeoCheckr V1 — QR Card Game Engine
 // Street View: UNVERÄNDERT (Vorlage 2 — 6 Tage Arbeit!)
 // ═══════════════════════════════════════════════════════════════
 
@@ -9,28 +9,17 @@ const LOCATIONS = ALL_LOCATIONS.map((l, i) => ({...l, id: i+1}));
 // STATE
 // ═══════════════════════════════════════════════════════════════
 const state = {
-  screen: 'home',
-  phase: '',
-  players: [],
-  currentPlayer: 0,
+  screen: 'setup',        // setup | scan | view | answer | score
+  players: [],            // [{name: 'Anna'}, ...]
+  scores: [],             // [3, 1, 0, 2]
+  currentPlayer: 0,       // index of active player
   round: 1,
-  maxRounds: 5,
-  difficulty: 'leicht',
-  scores: [],
-  usedLocations: [],
-  currentLocation: null,
-  timer: 30,
+  currentLocation: null,  // {city, country, lat, lng, ...}
+  timer: 60,
+  timerSeconds: 60,       // user-selected timer duration
   timerInterval: null,
   streetViewLoaded: false,
-  guessCity: '',
-  guessLat: null,
-  guessLng: null,
-  distance: 0,
-  points: 0,
-  history: [],
-  tutorialStep: 0,
-  gameMode: 'classic', // 'classic' or 'qr'
-  playerCount: 2,
+  usedLocations: [],
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -74,15 +63,6 @@ function calcDistance(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-function calcPoints(dist) {
-  if (dist <= 50) return 5;
-  if (dist <= 200) return 4;
-  if (dist <= 750) return 3;
-  if (dist <= 2500) return 2;
-  if (dist <= 7500) return 1;
-  return 0;
-}
-
 function normalizeName(s) {
   return s.toLowerCase().trim()
     .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
@@ -90,35 +70,6 @@ function normalizeName(s) {
     .replace(/[òóôõ]/g,'o').replace(/[ùúû]/g,'u').replace(/[ýÿ]/g,'y')
     .replace(/[ñ]/g,'n').replace(/[ç]/g,'c').replace(/[š]/g,'s').replace(/[ž]/g,'z')
     .replace(/[^a-z]/g,'');
-}
-
-function findCity(input) {
-  if (!input || !input.trim()) return null;
-  const n = normalizeName(input);
-  if (n.length < 2) return null;
-  let match = LOCATIONS.find(l => normalizeName(l.city) === n);
-  if (match) return match;
-  match = LOCATIONS.find(l => {
-    const cn = normalizeName(l.city);
-    return cn.includes(n) || n.includes(cn);
-  });
-  if (match) return match;
-  if (n.length >= 4) {
-    match = LOCATIONS.find(l => normalizeName(l.city).startsWith(n.substring(0,4)));
-  }
-  return match || null;
-}
-
-function getTimerForDiff(d) {
-  return d === 'schwer' ? 20 : 30;
-}
-
-function getUnusedLocation() {
-  const avail = LOCATIONS.filter(l => !state.usedLocations.includes(l.id));
-  const pool = avail.length > 0 ? avail : (state.usedLocations = [], LOCATIONS);
-  const loc = pool[Math.floor(Math.random() * pool.length)];
-  state.usedLocations.push(loc.id);
-  return loc;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -169,41 +120,11 @@ function loadPanorama(lat, lng) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// LEAFLET MAP (UNVERÄNDERT)
-// ═══════════════════════════════════════════════════════════════
-function renderLeafletMap(containerId, realLat, realLng, guessLat, guessLng, realCity, guessCity) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  if (typeof L === 'undefined') {
-    el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#8E8E93;">Loading map...</div>';
-    setTimeout(() => renderLeafletMap(containerId, realLat, realLng, guessLat, guessLng, realCity, guessCity), 500);
-    return;
-  }
-  el.innerHTML = '';
-  const hasGuess = guessLat != null && guessLng != null;
-  const center = hasGuess ? [(realLat+guessLat)/2, (realLng+guessLng)/2] : [realLat, realLng];
-  const map = L.map(el, { attributionControl: false }).setView(center, hasGuess ? 3 : 10);
-  // Dark Theme Tiles — kein Label-Stroke nötig (weiße Labels auf dunklem Hintergrund)
-  L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map);
-  L.circleMarker([realLat, realLng], { radius: 10, fillColor: '#a6d700', fillOpacity: 1, color: '#fff', weight: 2 })
-    .addTo(map).bindPopup('<span style="color:#fff;background:#1a1a2e;padding:4px 8px;border-radius:4px;font-family:Space Grotesk,sans-serif;font-size:13px;">'+realCity+'</span>');
-  if (hasGuess) {
-    L.circleMarker([guessLat, guessLng], { radius: 8, fillColor: '#FF3B30', fillOpacity: 1, color: '#fff', weight: 2 })
-      .addTo(map).bindPopup('<span style="color:#fff;background:#1a1a2e;padding:4px 8px;border-radius:4px;font-family:Space Grotesk,sans-serif;font-size:13px;">'+guessCity+'</span>');
-    L.polyline([[guessLat, guessLng], [realLat, realLng]], { color: '#a6d700', weight: 3, opacity: 0.8 }).addTo(map);
-    map.fitBounds([[realLat, realLng], [guessLat, guessLng]], { padding: [30, 30] });
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// QR CODE — NEU
+// QR CODE (UNVERÄNDERT)
 // ═══════════════════════════════════════════════════════════════
 let qrScanner = null;
 
 function getLocationByQR(code) {
-  // Support both formats:
-  // "GEOC-123" (legacy)
-  // "https://timoapple.github.io/GeoCheckr/?loc=123" (URL deep link)
   let id;
   if (code.includes('loc=')) {
     id = parseInt(new URL(code).searchParams.get('loc'));
@@ -238,18 +159,18 @@ function startQRScanner() {
         try { qrScanner.stop(); } catch(e) {}
         state.currentLocation = loc;
         state.usedLocations.push(loc.id);
-        state.timer = getTimerForDiff(state.difficulty);
-        state.phase = 'view';
+        state.timer = state.timerSeconds;
         state.streetViewLoaded = false;
+        state.screen = 'view';
         render();
       } else {
         const status = document.getElementById('qr-status');
         if (status) status.textContent = '❌ Unbekannter QR-Code';
       }
     },
-    (errorMessage) => { /* ignore scan errors */ }
-  ).catch(err => {
-    container.innerHTML = '<div style="text-align:center;padding:40px;"><p style="color:#FF3B30;">Kamera nicht verfügbar</p><p style="color:#8E8E93;font-size:13px;margin-top:8px;">Bitte Kamera-Berechtigung erlauben oder Classic Mode nutzen.</p></div>';
+    () => {}
+  ).catch(() => {
+    container.innerHTML = '<div style="text-align:center;padding:40px;"><p style="color:#FF3B30;">Kamera nicht verfügbar</p><p style="color:#8E8E93;font-size:13px;margin-top:8px;">Bitte Kamera-Berechtigung erlauben.</p></div>';
   });
 }
 
@@ -261,63 +182,11 @@ function stopQRScanner() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// VOICE INPUT (NEU — Animated Mic)
-// ═══════════════════════════════════════════════════════════════
-let voiceRecognition = null;
-
-function startVoiceInput() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) return;
-  if (voiceRecognition) { try { voiceRecognition.stop(); } catch(e) {} }
-  
-  voiceRecognition = new SR();
-  voiceRecognition.lang = 'de-DE';
-  voiceRecognition.continuous = false;
-  voiceRecognition.interimResults = false;
-  
-  const btn = document.getElementById('voice-btn');
-  const bars = document.getElementById('voice-bars');
-  const status = document.getElementById('voice-status');
-  const result = document.getElementById('voice-result');
-  
-  btn.classList.add('listening');
-  bars.classList.add('active');
-  status.textContent = 'Listening...';
-  result.textContent = '';
-  result.classList.remove('show');
-  
-  voiceRecognition.onresult = (e) => {
-    const transcript = e.results[0][0].transcript;
-    btn.classList.remove('listening');
-    bars.classList.remove('active');
-    status.textContent = '';
-    result.textContent = transcript;
-    result.classList.add('show');
-    
-    const inp = document.getElementById('answer-input');
-    if (inp) inp.value = transcript;
-    setTimeout(() => submitAnswer(), 1500);
-  };
-  
-  voiceRecognition.onerror = () => {
-    btn.classList.remove('listening');
-    bars.classList.remove('active');
-    status.textContent = 'Not recognized — type instead';
-  };
-  
-  voiceRecognition.onend = () => {
-    btn.classList.remove('listening');
-    bars.classList.remove('active');
-  };
-  
-  voiceRecognition.start();
-}
-
-// ═══════════════════════════════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════════════════════════════
-function navigate(screen) {
+function goTo(screen) {
   stopQRScanner();
+  clearInterval(state.timerInterval);
   state.screen = screen;
   render();
 }
@@ -328,143 +197,60 @@ function navigate(screen) {
 function render() {
   const app = document.getElementById('app');
   switch (state.screen) {
-    case 'home': renderHome(app); break;
-    case 'tutorial': renderTutorial(app); break;
     case 'setup': renderSetup(app); break;
     case 'scan': renderScan(app); break;
-    case 'game': renderGame(app); break;
-    case 'summary': renderSummary(app); break;
+    case 'view': renderView(app); break;
+    case 'answer': renderAnswer(app); break;
+    case 'score': renderScore(app); break;
   }
 }
 
-// ===== HOME =====
-function renderHome(el) {
-  el.innerHTML = `
-    <div class="screen screen-home">
-      <div class="logo-container">
-        <div class="logo-icon purple">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>
-        </div>
-        <h1 class="logo-title">GeoCheckr</h1>
-        <p class="logo-subtitle">Find the place. Win the game.</p>
-      </div>
-      <div class="menu-buttons">
-        <button class="btn btn-primary btn-lg" onclick="chooseMode()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          Play
-        </button>
-        <button class="btn btn-secondary btn-lg" onclick="navigate('tutorial')">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          How to Play
-        </button>
-      </div>
-    </div>
-  `;
-}
-
-// ===== MODE SELECT =====
-function chooseMode() {
-  playClick();
-  state.players = [];
-  state.scores = [];
-  state.round = 1;
-  state.currentPlayer = 0;
-  state.usedLocations = [];
-  state.history = [];
-  navigate('setup');
-}
-
-// ===== TUTORIAL =====
-function renderTutorial(el) {
-  const steps = [
-    { icon: 'pin', color: 'green', title: 'Welcome to GeoCheckr!', text: 'You\'ll be dropped into a random place on Google Street View. Your job: figure out where you are!' },
-    { icon: 'eye', color: 'blue', title: 'Look Around', text: 'Move through the streets. Click arrows to walk. Look at signs, buildings, nature — anything that helps!' },
-    { icon: 'mic', color: 'purple', title: 'Make a Guess', text: 'When you know where you are, tap "Make a Guess" and say the city name. Or type it!' },
-    { icon: 'star', color: 'orange', title: 'Score Points', text: '≤50km = 5pts · ≤200km = 4pts · ≤750km = 3pts · ≤2500km = 2pts · ≤7500km = 1pt' },
-    { icon: 'qr', color: 'cyan', title: 'QR Code Mode', text: 'Print location cards with QR codes. Scan them with your camera to start each round. Perfect for parties!' },
-  ];
-  const s = steps[state.tutorialStep] || steps[0];
-  const icons = {
-    pin: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>',
-    eye: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
-    mic: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>',
-    star: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
-    qr: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><line x1="20" y1="14" x2="20" y2="20"/><line x1="14" y1="20" x2="20" y2="20"/></svg>',
-  };
-  el.innerHTML = `
-    <div class="screen screen-tutorial">
-      <div class="tutorial-card">
-        <div class="tutorial-icon ${s.color}">${icons[s.icon]}</div>
-        <div class="tutorial-content">
-          <h2>${s.title}</h2>
-          <p>${s.text}</p>
-        </div>
-      </div>
-      <div class="tutorial-dots">${steps.map((_,i) => `<div class="dot ${i===state.tutorialStep?'active':''}"></div>`).join('')}</div>
-      <div class="tutorial-buttons">
-        ${state.tutorialStep > 0 ? '<button class="btn btn-ghost" onclick="state.tutorialStep--;render()">← Back</button>' : '<div></div>'}
-        ${state.tutorialStep < steps.length-1
-          ? '<button class="btn btn-primary" onclick="state.tutorialStep++;render()">Next →</button>'
-          : '<button class="btn btn-success" onclick="state.tutorialStep=0;navigate(\'home\')">Got it!</button>'}
-      </div>
-    </div>
-  `;
-}
-
-// ===== SETUP =====
+// ═══════════════════════════════════════════════════════════════
+// SETUP — Spieler-Namen eingeben
+// ═══════════════════════════════════════════════════════════════
 function renderSetup(el) {
   if (state.players.length === 0) {
-    state.players = [{ name: '' }, { name: '' }];
-    state.scores = [0, 0];
-    state.playerCount = 2;
+    state.players = [{ name: '' }, { name: '' }, { name: '' }, { name: '' }];
+    state.scores = [0, 0, 0, 0];
   }
   
   el.innerHTML = `
-    <div class="screen screen-setup">
-      <h2>Players</h2>
-      <div class="setup-card">
-        ${state.players.map((p,i) => `
-          <div class="player-setup">
-            <label>
-              <span class="player-dot ${i%2===0?'green':'blue'}"></span>
-              Player ${i+1}
-            </label>
+    <div class="screen screen-setup" style="padding:24px;max-width:420px;margin:0 auto;">
+      <div style="text-align:center;margin-bottom:32px;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#a6d700" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>
+        <h1 style="font-size:28px;font-weight:700;margin-top:12px;">GeoCheckr</h1>
+        <p style="color:#8E8E93;font-size:14px;margin-top:4px;">QR Card Game</p>
+      </div>
+      
+      <div style="margin-bottom:24px;">
+        <label style="display:block;color:#8E8E93;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;">Spieler</label>
+        ${state.players.map((p, i) => `
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <div style="width:28px;height:28px;border-radius:50%;background:${['#34C759','#007AFF','#AF52DE','#FF9500'][i]};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0;">${i+1}</div>
             <input type="text" class="input" value="${p.name}" 
                    onchange="state.players[${i}].name=this.value"
-                   placeholder="Enter name..." maxlength="20">
+                   placeholder="Spieler ${i+1}" maxlength="20"
+                   style="flex:1;">
           </div>
         `).join('')}
-        
-        <div style="display:flex;gap:8px;">
-          ${state.players.length < 5 ? `<button class="btn btn-ghost" style="flex:1;font-size:13px;" onclick="addPlayer()">+ Add Player</button>` : ''}
-          ${state.players.length > 2 ? `<button class="btn btn-ghost" style="flex:1;font-size:13px;color:#FF3B30;" onclick="removePlayer()">− Remove</button>` : ''}
-        </div>
-        
-        <div class="diff-section">
-          <label>Difficulty</label>
-          <div class="diff-row">
-            ${['leicht','mittel','schwer'].map(d => `
-              <button class="diff-btn ${state.difficulty===d?'active':''}" onclick="setDiff('${d}')">
-                <span class="ico">${d==='leicht'?'●○○':d==='mittel'?'●●○':'●●●'}</span>
-                ${d==='leicht'?'Easy':d==='mittel'?'Medium':'Hard'}
-              </button>
-            `).join('')}
-          </div>
-        </div>
-        
-        <div class="rounds-section">
-          <label>Rounds</label>
-          <div class="diff-row">
-            ${[5,10,15].map(r => `
-              <button class="diff-btn ${state.maxRounds===r?'active':''}" onclick="state.maxRounds=${r};render()">${r}</button>
-            `).join('')}
-          </div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          ${state.players.length < 5 ? `<button class="btn btn-ghost" style="flex:1;font-size:13px;" onclick="addPlayer()">+ Spieler</button>` : ''}
+          ${state.players.length > 2 ? `<button class="btn btn-ghost" style="flex:1;font-size:13px;color:#FF3B30;" onclick="removePlayer()">− Entfernen</button>` : ''}
         </div>
       </div>
       
-      <button class="btn btn-primary btn-lg" onclick="startPlaying()">
+      <div style="margin-bottom:24px;">
+        <label style="display:block;color:#8E8E93;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;">Timer (Sekunden)</label>
+        <div style="display:flex;gap:8px;">
+          ${[30, 60, 90, 120].map(t => `
+            <button class="diff-btn ${state.timerSeconds===t?'active':''}" onclick="state.timerSeconds=${t};render()" style="flex:1;">${t}s</button>
+          `).join('')}
+        </div>
+      </div>
+      
+      <button class="btn btn-primary btn-lg" onclick="startGame()" style="width:100%;margin-top:8px;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        Start Game
+        Start
       </button>
     </div>
   `;
@@ -472,7 +258,6 @@ function renderSetup(el) {
 
 function addPlayer() {
   playClick();
-  const num = state.players.length + 1;
   state.players.push({ name: '' });
   state.scores.push(0);
   render();
@@ -487,112 +272,99 @@ function removePlayer() {
   }
 }
 
-function setDiff(d) { state.difficulty = d; render(); }
-
-function startPlaying() {
+function startGame() {
   playClick();
-  // Fill default names
   state.players.forEach((p, i) => {
-    if (!p.name.trim()) p.name = 'Player ' + (i+1);
+    if (!p.name.trim()) p.name = 'Spieler ' + (i+1);
   });
-  startRound();
-  navigate('game');
+  state.round = 1;
+  state.currentPlayer = 0;
+  state.usedLocations = [];
+  goTo('scan');
 }
 
-// ===== SCAN (QR) =====
+// ═══════════════════════════════════════════════════════════════
+// SCAN — QR-Code scannen
+// ═══════════════════════════════════════════════════════════════
 function renderScan(el) {
+  const cp = state.currentPlayer;
   el.innerHTML = `
-    <div class="screen screen-answer">
-      <div class="answer-card">
-        <div class="answer-title">Scan a <span>QR Card</span></div>
-        <div id="qr-reader" style="width:100%;border-radius:12px;overflow:hidden;"></div>
-        <div id="qr-status" class="voice-status" style="margin-top:12px;">Point camera at QR code</div>
-        <div class="answer-divider"><span>or</span></div>
-        <button class="btn btn-secondary" onclick="skipToRandom()">Skip — Random Location</button>
+    <div class="screen" style="display:flex;flex-direction:column;align-items:center;padding:20px;height:100%;">
+      <div style="display:flex;gap:16px;align-items:center;margin-bottom:20px;width:100%;">
+        <span style="color:#a6d700;font-size:14px;font-weight:600;">Runde ${state.round}</span>
+        <span style="color:#8E8E93;font-size:13px;">·</span>
+        <span style="color:#fff;font-size:14px;font-weight:600;">${state.players[cp].name} ist dran</span>
+      </div>
+      
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:48px;margin-bottom:8px;">📷</div>
+        <p style="color:#8E8E93;font-size:14px;">QR-Code scannen</p>
+      </div>
+      
+      <div id="qr-reader" style="width:100%;max-width:320px;border-radius:12px;overflow:hidden;"></div>
+      <div id="qr-status" style="color:#8E8E93;font-size:13px;margin-top:12px;text-align:center;">Kamera auf QR-Code richten</div>
+      
+      <div style="margin-top:auto;width:100%;">
+        <button class="btn btn-ghost" onclick="viewScore()" style="width:100%;font-size:13px;">
+          📊 Score anzeigen
+        </button>
       </div>
     </div>
   `;
   setTimeout(startQRScanner, 300);
 }
 
-function skipToRandom() {
-  playClick();
-  stopQRScanner();
-  state.currentLocation = getUnusedLocation();
-  state.timer = getTimerForDiff(state.difficulty);
-  state.phase = 'view';
-  state.streetViewLoaded = false;
-  render();
-}
-
-// ===== GAME =====
-function startRound() {
-  state.currentLocation = getUnusedLocation();
-  state.timer = getTimerForDiff(state.difficulty);
-  state.phase = 'view';
-  state.streetViewLoaded = false;
-  state.guessCity = '';
-  state.guessLat = null;
-  state.guessLng = null;
-}
-
-function renderGame(el) {
-  if (state.phase === 'view') renderView(el);
-  else if (state.phase === 'answer') renderAnswer(el);
-  else if (state.phase === 'result') renderResult(el);
-}
-
+// ═══════════════════════════════════════════════════════════════
+// VIEW — Street View + Timer (UNVERÄNDERTER STREET VIEW CODE)
+// ═══════════════════════════════════════════════════════════════
 function renderView(el) {
-  const cp = state.currentPlayer;
-  
   el.innerHTML = `
-    <div class="screen screen-game fullscreen-view">
-      <div id="streetview-container" class="streetview-box"></div>
+    <div class="screen" style="position:absolute;top:0;left:0;right:0;bottom:0;">
+      <div id="streetview-container" style="position:absolute;top:0;left:0;right:0;bottom:0;z-index:0;"></div>
       
-      <div class="game-topbar">
-        ${state.players.map((p,i) => `
-          <div class="player-badge ${i===cp?'active':''}">
-            <span class="pb-dot ${i%2===0?'green':'blue'}"></span>
-            <span class="pb-name">${p.name}</span>
-            <span class="pb-score">${state.scores[i]} pts</span>
-          </div>
-        `).join('')}
-        <div class="game-center-info">
-          <span class="round-badge">Round ${state.round}/${state.maxRounds}</span>
-        </div>
+      <!-- Timer -->
+      <div style="position:absolute;top:40px;right:16px;z-index:10;background:rgba(0,0,0,0.7);backdrop-filter:blur(10px);border-radius:20px;padding:8px 18px;">
+        <span id="timer-display" style="font-size:22px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;">${state.timer}</span>
       </div>
       
-      <div class="timer-overlay">
-        <span class="timer-value ${state.timer<=5?'timer-danger':state.timer<=10?'timer-warn':''}">${state.timer}</span>
+      <!-- Round + Player -->
+      <div style="position:absolute;top:40px;left:16px;z-index:10;background:rgba(0,0,0,0.7);backdrop-filter:blur(10px);border-radius:12px;padding:8px 14px;">
+        <span style="font-size:12px;color:#a6d700;font-weight:600;">Runde ${state.round}</span>
+        <span style="font-size:12px;color:#8E8E93;margin:0 6px;">·</span>
+        <span style="font-size:12px;color:#fff;font-weight:600;">${state.players[state.currentPlayer].name}</span>
       </div>
       
-      <div class="guess-btn-wrap">
-        <button class="btn-guess" onclick="skipTimer()">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-          Make a Guess
+      <!-- Skip Button -->
+      <div style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);z-index:10;">
+        <button onclick="skipTimer()" style="background:rgba(0,0,0,0.7);backdrop-filter:blur(10px);border:2px solid #a6d700;border-radius:24px;padding:12px 28px;color:#a6d700;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;">
+          ⏭ Fertig
         </button>
       </div>
     </div>
   `;
   
+  // Street View laden
   setTimeout(() => {
-    if (state.currentLocation) loadPanorama(state.currentLocation.lat, state.currentLocation.lng);
+    if (state.currentLocation) {
+      loadPanorama(state.currentLocation.lat, state.currentLocation.lng);
+    }
   }, 100);
   
+  // Timer starten
   clearInterval(state.timerInterval);
   state.timerInterval = setInterval(() => {
     if (state.timer > 0) {
       state.timer--;
-      const te = document.querySelector('.timer-value');
+      const te = document.getElementById('timer-display');
       if (te) {
         te.textContent = state.timer;
-        te.className = 'timer-value ' + (state.timer<=5?'timer-danger':state.timer<=10?'timer-warn':'');
+        te.style.color = state.timer <= 10 ? '#FF3B30' : state.timer <= 20 ? '#FF9500' : '#fff';
       }
       if (state.timer <= 5 && state.timer > 0) playTick();
       if (state.timer === 0) {
         playWarning();
         clearInterval(state.timerInterval);
-        state.phase = 'answer';
+        state.screen = 'answer';
         render();
       }
     }
@@ -602,248 +374,142 @@ function renderView(el) {
 function skipTimer() {
   playClick();
   clearInterval(state.timerInterval);
-  state.phase = 'answer';
+  state.screen = 'answer';
   render();
 }
 
+// ═══════════════════════════════════════════════════════════════
+// ANSWER — Stadt + Land zeigen, Punkt zuweisen
+// ═══════════════════════════════════════════════════════════════
 function renderAnswer(el) {
+  const loc = state.currentLocation;
   const cp = state.currentPlayer;
-  const name = state.players[cp].name;
-  const hasVoice = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
   
   el.innerHTML = `
-    <div class="screen screen-answer">
-      <div class="answer-card">
-        <div class="answer-title"><span>${name}</span>, where are you?</div>
-        
-        ${hasVoice ? `
-        <button class="voice-btn" id="voice-btn" onclick="startVoiceInput()">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-        </button>
-        
-        <div class="voice-bars" id="voice-bars">
-          <div class="voice-bar"></div>
-          <div class="voice-bar"></div>
-          <div class="voice-bar"></div>
-          <div class="voice-bar"></div>
-          <div class="voice-bar"></div>
-        </div>
-        
-        <div class="voice-status" id="voice-status">Tap the mic to speak</div>
-        <div class="voice-result" id="voice-result"></div>
-        ` : ''}
-        
-        <div class="answer-divider"><span>or</span></div>
-        <div class="answer-input-wrap">
-          <input type="text" id="answer-input" class="input input-answer" 
-                 placeholder="Type city name..." autofocus
-                 onkeydown="if(event.key==='Enter')submitAnswer()">
-        </div>
-        <div class="answer-buttons">
-          <button class="btn btn-primary" onclick="submitAnswer()">✓ Answer</button>
-          <button class="btn btn-skip" onclick="submitAnswer(true)">Skip</button>
-        </div>
+    <div class="screen" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;height:100%;background:#1a1a2e;">
+      
+      <div style="text-align:center;margin-bottom:32px;">
+        <div style="font-size:48px;margin-bottom:12px;">📍</div>
+        <h2 style="font-size:28px;font-weight:700;color:#a6d700;margin-bottom:4px;">${loc.city}</h2>
+        <p style="font-size:18px;color:#8E8E93;">${loc.country}</p>
       </div>
-    </div>
-  `;
-  setTimeout(() => {
-    const inp = document.getElementById('answer-input');
-    if (inp) inp.focus();
-  }, 100);
-}
-
-function submitAnswer(skip) {
-  const input = skip ? '' : (document.getElementById('answer-input')?.value || '');
-  const loc = state.currentLocation;
-  
-  let dist = 20000;
-  state.guessCity = '';
-  state.guessLat = null;
-  state.guessLng = null;
-  
-  if (input.trim()) {
-    const match = findCity(input);
-    if (match) {
-      dist = calcDistance(loc.lat, loc.lng, match.lat, match.lng);
-      state.guessCity = match.city;
-      state.guessLat = match.lat;
-      state.guessLng = match.lng;
-    } else {
-      state.guessCity = input;
-    }
-  }
-  
-  const pts = calcPoints(dist);
-  state.distance = Math.round(dist);
-  state.points = pts;
-  state.scores[state.currentPlayer] += pts;
-  
-  state.history.push({
-    round: state.round,
-    playerIdx: state.currentPlayer,
-    city: loc.city,
-    distance: state.distance,
-    points: pts,
-  });
-  
-  if (pts >= 3) playPerfect();
-  else if (pts > 0) playSuccess();
-  else playError();
-  
-  state.phase = 'result';
-  render();
-}
-
-function renderResult(el) {
-  const loc = state.currentLocation;
-  const p = state.points;
-  const label = p >= 3 ? 'Perfect!' : p >= 2 ? 'Good!' : p >= 1 ? 'Not bad!' : 'Miss!';
-  const color = p >= 3 ? 'var(--green)' : p > 0 ? 'var(--orange)' : 'var(--red)';
-  const cp = state.currentPlayer;
-  const nextCp = (cp + 1) % state.players.length;
-  const isLastTurn = (state.round >= state.maxRounds) && (nextCp === 0);
-  
-  el.innerHTML = `
-    <div class="screen screen-result">
-      <div class="result-card">
-        <div class="result-header">
-          <div class="result-emoji">${p>=3?'<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>':p>=2?'<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#FF9500" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>':p>=1?'<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>':'<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'}</div>
-          <h2 class="result-title" style="color:${color}">${label}</h2>
-        </div>
-        
-        <div class="result-map-wrap">
-          <div id="result-map" class="result-map"></div>
-          <div class="city-overlay">
-            <span class="city-big-name">${loc.city}</span>
-            <span class="city-country">${loc.country}</span>
-          </div>
-        </div>
-        
-        <div class="result-info-bar">
-          <div class="result-info-item">
-            <span class="ri-label">Guess</span>
-            <span class="ri-value">${state.guessCity || '?'}</span>
-          </div>
-          <div class="result-arrow">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </div>
-          <div class="result-info-item">
-            <span class="ri-label">Actual</span>
-            <span class="ri-value">${loc.city}</span>
-          </div>
-        </div>
-        
-        <div class="result-distance">
-          <span class="rd-number">${state.distance.toLocaleString('de-DE')}</span>
-          <span class="rd-unit">km</span>
-        </div>
-        
-        <div class="result-points">+${p} pts</div>
-        
-        <button class="btn btn-primary btn-continue" onclick="${isLastTurn ? 'navigate(\"summary\")' : 'nextTurn()'}">
-          ${isLastTurn ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> Results' : state.players[nextCp].name + ' is next →'}
-        </button>
-        
-        <button class="btn btn-ghost" style="font-size:13px;margin-top:4px;" onclick="shareLocation(${loc.id})">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          Challenge a friend
+      
+      <p style="color:#8E8E93;font-size:14px;margin-bottom:16px;text-align:center;">
+        Wer hat richtig geraten?
+      </p>
+      
+      <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px;">
+        ${state.players.map((p, i) => `
+          <button onclick="givePoint(${i})" style="
+            display:flex;align-items:center;gap:12px;
+            background:${i === cp ? 'rgba(166,215,0,0.15)' : 'rgba(255,255,255,0.06)'};
+            border:2px solid ${i === cp ? '#a6d700' : 'rgba(255,255,255,0.1)'};
+            border-radius:14px;padding:14px 18px;
+            color:#fff;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;
+          ">
+            <span style="width:28px;height:28px;border-radius:50%;background:${['#34C759','#007AFF','#AF52DE','#FF9500','#FF3B30'][i]};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;flex-shrink:0;">${i+1}</span>
+            <span style="flex:1;text-align:left;">${p.name}</span>
+            ${i === cp ? '<span style="font-size:11px;color:#a6d700;font-weight:600;">DRAN</span>' : ''}
+            <span style="font-size:13px;color:#8E8E93;">${state.scores[i]} Pkt</span>
+          </button>
+        `).join('')}
+      </div>
+      
+      <div style="margin-top:24px;display:flex;gap:10px;width:100%;max-width:320px;">
+        <button onclick="noPoint()" class="btn btn-ghost" style="flex:1;font-size:14px;">
+          ❌ Niemand
         </button>
       </div>
     </div>
   `;
-  
-  setTimeout(() => {
-    renderLeafletMap('result-map', loc.lat, loc.lng, state.guessLat, state.guessLng, loc.city, state.guessCity);
-  }, 200);
 }
 
-function nextTurn() {
+function givePoint(playerIdx) {
+  playPerfect();
+  state.scores[playerIdx]++;
+  
+  // Nächster Spieler dran
+  state.currentPlayer = (state.currentPlayer + 1) % state.players.length;
+  if (state.currentPlayer === 0) state.round++;
+  
+  goTo('score');
+}
+
+function noPoint() {
   playClick();
-  const nextCp = (state.currentPlayer + 1) % state.players.length;
-  if (nextCp === 0) state.round++;
-  state.currentPlayer = nextCp;
-  startRound();
-  navigate('game');
+  
+  state.currentPlayer = (state.currentPlayer + 1) % state.players.length;
+  if (state.currentPlayer === 0) state.round++;
+  
+  goTo('score');
 }
 
-function shareLocation(locId) {
-  const url = `https://timoapple.github.io/GeoCheckr/?loc=${locId}`;
-  if (navigator.share) {
-    navigator.share({ title: 'GeoCheckr Challenge', text: 'Can you find this place?', url });
-  } else {
-    navigator.clipboard.writeText(url).then(() => {
-      alert('Link copied! Share it with a friend.');
-    });
-  }
-}
-
-// ===== SUMMARY =====
-function renderSummary(el) {
-  const sorted = [...state.players].map((p,i) => ({...p, idx:i, score:state.scores[i]||0}))
-    .sort((a,b) => b.score - a.score);
+// ═══════════════════════════════════════════════════════════════
+// SCORE — Zwischenstand + nächste Runde
+// ═══════════════════════════════════════════════════════════════
+function renderScore(el) {
+  const sorted = state.players.map((p, i) => ({ ...p, idx: i, score: state.scores[i] }))
+    .sort((a, b) => b.score - a.score);
+  const maxScore = Math.max(...state.scores, 1);
   
   el.innerHTML = `
-    <div class="screen screen-summary">
-      <div class="summary-card">
-        <h2>Game Over</h2>
-        <p class="summary-sub">${state.maxRounds} rounds played</p>
-        
-        <div class="leaderboard">
-          ${sorted.map((p,i) => `
-            <div class="lb-item ${i===0?'lb-first':''}">
-              <span class="lb-rank">${i===0?'<svg width="22" height="22" viewBox="0 0 24 24" fill="#FFD700" stroke="#FFD700" stroke-width="1"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>':i===1?'<svg width="22" height="22" viewBox="0 0 24 24" fill="#C0C0C0" stroke="#C0C0C0" stroke-width="1"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>':i===2?'<svg width="22" height="22" viewBox="0 0 24 24" fill="#CD7F32" stroke="#CD7F32" stroke-width="1"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>':'#'+(i+1)}</span>
-              <span class="lb-name">${p.name}</span>
-              <span class="lb-score">${p.score} pts</span>
-            </div>
-          `).join('')}
-        </div>
-        
-        <h3 class="history-title">Round History</h3>
-        <div class="history-list">
-          ${state.history.map(h => `
-            <div class="history-row">
-              <span class="h-round">R${h.round}</span>
-              <span class="h-player">${state.players[h.playerIdx]?.name||'?'}</span>
-              <span class="h-location">${h.city}</span>
-              <span class="h-points">+${h.points}</span>
-            </div>
-          `).join('')}
-        </div>
-        
-        <div class="summary-buttons">
-          <button class="btn btn-primary" onclick="startGame()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Play Again</button>
-          <button class="btn btn-secondary" onclick="navigate('home')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Menu</button>
-        </div>
+    <div class="screen" style="display:flex;flex-direction:column;align-items:center;padding:24px;height:100%;background:#1a1a2e;">
+      
+      <h2 style="font-size:24px;font-weight:700;margin-bottom:4px;">Scoreboard</h2>
+      <p style="color:#8E8E93;font-size:13px;margin-bottom:24px;">Runde ${state.round}</p>
+      
+      <div style="width:100%;max-width:360px;">
+        ${sorted.map((p, i) => `
+          <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:${i < sorted.length-1 ? '1px solid rgba(255,255,255,0.06)' : 'none'};">
+            <span style="font-size:${i===0?'22':'16'}px;${i===0?'color:#FFD700;':''}${i===1?'color:#C0C0C0;':''}${i===2?'color:#CD7F32;':''}width:28px;text-align:center;font-weight:700;">
+              ${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)}
+            </span>
+            <span style="flex:1;font-size:16px;font-weight:600;color:#fff;">${p.name}</span>
+            <span style="font-size:20px;font-weight:700;color:#a6d700;font-variant-numeric:tabular-nums;">${p.score}</span>
+          </div>
+          <div style="height:4px;background:rgba(255,255,255,0.04);border-radius:2px;margin-bottom:12px;overflow:hidden;">
+            <div style="height:100%;width:${(p.score/maxScore)*100}%;background:${i===0?'#a6d700':'rgba(255,255,255,0.15)'};border-radius:2px;transition:width 0.5s;"></div>
+          </div>
+        `).join('')}
+      </div>
+      
+      <div style="margin-top:auto;width:100%;max-width:360px;">
+        <button onclick="nextRound()" class="btn btn-primary btn-lg" style="width:100%;">
+          Nächste Runde → Runde ${state.round}
+        </button>
       </div>
     </div>
   `;
 }
 
-function startGame() {
-  state.players = [];
-  state.scores = [];
-  state.round = 1;
-  state.currentPlayer = 0;
-  state.usedLocations = [];
-  state.history = [];
-  navigate('setup');
+function nextRound() {
+  playClick();
+  goTo('scan');
 }
 
-// Init — check for deep link
+function viewScore() {
+  playClick();
+  goTo('score');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT — Check for deep link
+// ═══════════════════════════════════════════════════════════════
 (function init() {
   const params = new URLSearchParams(window.location.search);
   const locParam = params.get('loc');
   const locId = locParam ? parseInt(locParam) : NaN;
+  
   if (!isNaN(locId) && locId > 0) {
     const loc = LOCATIONS.find(l => l.id === locId);
     if (loc) {
+      // Deep Link: sofort Street View anzeigen
       state.players = [{ name: 'Player 1' }];
       state.scores = [0];
       state.currentLocation = loc;
       state.usedLocations = [loc.id];
-      state.timer = getTimerForDiff(state.difficulty);
-      state.phase = 'view';
-      state.screen = 'game';
+      state.timer = state.timerSeconds;
+      state.screen = 'view';
       render();
       return;
     }

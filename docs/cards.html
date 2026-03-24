@@ -3,122 +3,119 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GeoCheckr — Print QR Cards</title>
+  <title>GeoCheckr — QR Cards (Test)</title>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
   <script src="locations_db.js"></script>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:'Space Grotesk',sans-serif; background:#F9F9F9; color:#1C1C1E; padding:24px; }
-    h1 { font-size:28px; font-weight:700; margin-bottom:8px; }
-    .subtitle { color:#8E8E93; margin-bottom:24px; }
-    .controls { display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap; align-items:center; }
+    body { font-family:'Space Grotesk',sans-serif; background:#1a1a2e; color:#fff; padding:24px; }
+    h1 { font-size:24px; font-weight:700; margin-bottom:4px; }
+    .subtitle { color:#8E8E93; font-size:14px; margin-bottom:24px; }
+    .controls { display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap; }
     .controls button { padding:12px 20px; border-radius:12px; border:none; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; }
-    .btn-gen { background:#34C759; color:white; }
+    .btn-gen { background:#a6d700; color:#1a1a2e; }
     .btn-print { background:#007AFF; color:white; }
-    .controls select { padding:12px 16px; border-radius:12px; border:1.5px solid #E5E5EA; font-family:inherit; font-size:14px; }
-    .cards-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:16px; }
-    .card { background:white; border-radius:16px; padding:20px; box-shadow:0 2px 12px rgba(0,0,0,0.06); text-align:center; page-break-inside:avoid; }
-    .card-city { font-size:18px; font-weight:700; margin-bottom:4px; display:none; }
-    .card-country { font-size:13px; color:#8E8E93; margin-bottom:12px; display:none; }
-    .card-qr { margin:0 auto 8px; }
-    .card-code { font-size:11px; color:#8E8E93; font-family:monospace; }
-    .card-diff { display:inline-block; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; margin-top:8px; }
-    .diff-leicht { background:#E8F8EC; color:#34C759; }
-    .diff-mittel { background:#FFF3E0; color:#FF9500; }
-    .diff-schwer { background:#FFE8E8; color:#FF3B30; }
+    .btn-shuffle { background:#2a2a4e; color:#fff; border:1px solid #3a3a5e !important; }
+    .cards-grid { display:grid; grid-template-columns:repeat(6, 1fr); gap:10px; }
+    .card { background:#0d0d1a; border:2px solid #2a2a4e; border-radius:12px; padding:14px 10px; text-align:center; page-break-inside:avoid; }
+    .card-num { font-size:28px; font-weight:700; color:#a6d700; line-height:1; }
+    .card-qr { margin:8px auto; display:flex; justify-content:center; }
+    .card-id { font-size:10px; color:#555; font-family:monospace; margin-top:4px; }
     .header { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
-    .header-icon { width:40px; height:40px; border-radius:10px; background:#F3E8FF; display:flex; align-items:center; justify-content:center; }
+    .count { color:#8E8E93; font-size:13px; margin-bottom:16px; }
+
+    /* === CITY CARDS (separate page) === */
+    .city-section { margin-top:40px; page-break-before:always; }
+    .city-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; }
+    .city-card { background:#0d0d1a; border:2px solid #3a3a5e; border-radius:16px; padding:24px; text-align:center; page-break-inside:avoid; }
+    .city-name { font-size:24px; font-weight:700; color:#fff; margin-bottom:4px; }
+    .city-country { font-size:14px; color:#8E8E93; }
+    .city-label { font-size:10px; color:#555; text-transform:uppercase; letter-spacing:0.1em; margin-top:12px; }
+
     @media print {
-      body { background:white; padding:12px; }
+      body { background:#fff; color:#000; padding:12px; }
       .controls { display:none; }
-      .cards-grid { gap:12px; }
-      .card { box-shadow:none; border:1px solid #E5E5EA; border-radius:12px; }
+      .card { border-color:#ccc; background:#fff; }
+      .card-num { color:#000; }
+      .card-id { color:#999; }
+      .city-card { border-color:#ccc; background:#fff; }
+      .city-name { color:#000; }
+      .city-country { color:#666; }
+      .subtitle, .count { color:#666; }
+      h1 { color:#000; }
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <div class="header-icon">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#AF52DE" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>
-    </div>
-    <h1>GeoCheckr Cards</h1>
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#a6d700" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><line x1="20" y1="14" x2="20" y2="20"/><line x1="14" y1="20" x2="20" y2="20"/></svg>
+    <h1>GeoCheckr — QR Cards</h1>
   </div>
-  <p class="subtitle">Print QR cards for the physical game. Scan with your phone to start each round.</p>
+  <p class="subtitle">Scan mit der App → Street View → errate die Stadt.</p>
   
   <div class="controls">
-    <select id="region-filter">
-      <option value="all">All Regions</option>
-      <option value="EU">Europe</option>
-      <option value="ASIA">Asia</option>
-      <option value="NA">North America</option>
-      <option value="SA">South America</option>
-      <option value="AF">Africa</option>
-      <option value="OC">Oceania</option>
-    </select>
-    <select id="diff-filter">
-      <option value="all">All Difficulties</option>
-      <option value="leicht">Easy</option>
-      <option value="mittel">Medium</option>
-      <option value="schwer">Hard</option>
-    </select>
-    <select id="count-select">
-      <option value="10">10 Cards</option>
-      <option value="20">20 Cards</option>
-      <option value="30" selected>30 Cards</option>
-      <option value="50">50 Cards</option>
-      <option value="all">All Cards</option>
-    </select>
-    <button class="btn-gen" onclick="generateCards()">Generate</button>
-    <button class="btn-print" onclick="window.print()">Print</button>
+    <button class="btn-shuffle" onclick="generate()">🔄 Shuffle</button>
+    <button class="btn-print" onclick="window.print()">🖨️ Print</button>
   </div>
   
-  <div class="cards-grid" id="cards-grid"></div>
+  <div class="count" id="count"></div>
+  
+  <!-- QR CARDS (Deck — verdeckt, zum Ziehen) -->
+  <div class="cards-grid" id="qr-grid"></div>
+  
+  <!-- CITY CARDS (jeder Spieler kriegt eine) -->
+  <div class="city-section">
+    <h1 style="margin-bottom:4px;">City Cards</h1>
+    <p class="subtitle">Jeder Spieler kriegt EINE Karte. Legt sie offen auf den Tisch.</p>
+    <div class="city-grid" id="city-grid"></div>
+  </div>
   
   <script>
-    function generateCards() {
-      const region = document.getElementById('region-filter').value;
-      const diff = document.getElementById('diff-filter').value;
-      const count = document.getElementById('count-select').value;
-      
-      let pool = ALL_LOCATIONS.map((l, i) => ({...l, id: i+1}));
-      if (region !== 'all') pool = pool.filter(l => l.region === region);
-      if (diff !== 'all') pool = pool.filter(l => l.difficulty === diff);
-      
-      // Shuffle
+    function generate() {
+      const pool = [...ALL_LOCATIONS].map((l, i) => ({...l, id: i+1}));
       pool.sort(() => Math.random() - 0.5);
-      if (count !== 'all') pool = pool.slice(0, parseInt(count));
+      const selected = pool.slice(0, 18);
       
-      const grid = document.getElementById('cards-grid');
-      grid.innerHTML = '';
+      document.getElementById('count').textContent = selected.length + ' QR-Karten + ' + selected.length + ' Stadt-Karten';
       
-      pool.forEach(loc => {
+      // QR CARDS
+      const qrGrid = document.getElementById('qr-grid');
+      qrGrid.innerHTML = '';
+      selected.forEach((loc, i) => {
         const card = document.createElement('div');
         card.className = 'card';
-        const qrDiv = document.createElement('div');
-        qrDiv.className = 'card-qr';
-        
-        const code = 'https://timoapple.github.io/GeoCheckr/?loc=' + loc.id;
-        const shortCode = 'GC-' + String(loc.id).padStart(3, '0');
+        const num = i + 1;
+        const url = 'https://timoapple.github.io/GeoCheckr/?loc=' + loc.id;
         
         card.innerHTML = `
-          <div class="card-city">${loc.city}</div>
-          <div class="card-country">${loc.country}</div>
+          <div class="card-num">${num}</div>
           <div class="card-qr" id="qr-${loc.id}"></div>
-          <div class="card-code">${shortCode}</div>
-          <span class="card-diff diff-${loc.difficulty}">${loc.difficulty === 'leicht' ? 'Easy' : loc.difficulty === 'mittel' ? 'Medium' : 'Hard'}</span>
+          <div class="card-id">GC-${String(loc.id).padStart(3,'0')}</div>
         `;
-        grid.appendChild(card);
+        qrGrid.appendChild(card);
         
-        // Generate QR
-        QRCode.toCanvas(code, { width: 160, margin: 1 }, (err, canvas) => {
+        QRCode.toCanvas(url, { width: 120, margin: 1, color: { dark: '#000', light: '#fff' } }, (err, canvas) => {
           if (!err) document.getElementById('qr-' + loc.id).appendChild(canvas);
         });
       });
+      
+      // CITY CARDS
+      const cityGrid = document.getElementById('city-grid');
+      cityGrid.innerHTML = '';
+      selected.forEach(loc => {
+        const card = document.createElement('div');
+        card.className = 'city-card';
+        card.innerHTML = `
+          <div class="city-name">${loc.city}</div>
+          <div class="city-country">${loc.country}</div>
+          <div class="city-label">City Card</div>
+        `;
+        cityGrid.appendChild(card);
+      });
     }
     
-    // Auto-generate on load
-    generateCards();
+    generate();
   </script>
 </body>
 </html>
