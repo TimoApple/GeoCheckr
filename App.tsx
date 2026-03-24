@@ -82,7 +82,7 @@ export default function App() {
   const [listening, setListening] = useState(false);
   const [voiceText, setVoiceText] = useState('');
   const [voiceCountdown, setVoiceCountdown] = useState(0);
-  const voiceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const voiceTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Animations
   const timerPulse = useRef(new Animated.Value(1)).current;
@@ -522,7 +522,7 @@ function stop(){on=false;document.getElementById('mic').classList.remove('on');d
                 backgroundColor: listening ? C.green : C.surface,
                 borderWidth: 3, borderColor: listening ? C.green : C.accent,
                 justifyContent: 'center', alignItems: 'center',
-                transform: [{ scale: listening ? micPulse : new Animated.Value(1) }],
+                transform: [{ scale: micPulse }],
               }}>
                 <Text style={{ fontSize: 44, color: listening ? C.bg : C.accent }}>
                   {listening ? '■' : '🎤'}
@@ -734,8 +734,6 @@ function stop(){on=false;document.getElementById('mic').classList.remove('on');d
 // ═══════════════════════════════════════════════════════════════
 // STYLES
 // ═══════════════════════════════════════════════════════════════
-import { StyleSheet } from 'react-native';
-
 const ss = StyleSheet.create({
   c: { flex: 1, backgroundColor: C.bg },
   scroll: { padding: 24, alignItems: 'center', paddingTop: 60 },
