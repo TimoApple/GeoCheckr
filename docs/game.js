@@ -810,8 +810,9 @@ function startGame() {
 // Init — check for deep link
 (function init() {
   const params = new URLSearchParams(window.location.search);
-  const locId = parseInt(params.get('loc'));
-  if (locId) {
+  const locParam = params.get('loc');
+  const locId = locParam ? parseInt(locParam) : NaN;
+  if (!isNaN(locId) && locId > 0) {
     const loc = LOCATIONS.find(l => l.id === locId);
     if (loc) {
       state.players = [{ name: 'Player 1' }];
