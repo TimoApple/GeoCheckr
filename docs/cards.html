@@ -27,6 +27,8 @@
     .diff-leicht { background:#E8F8EC; color:#34C759; }
     .diff-mittel { background:#FFF3E0; color:#FF9500; }
     .diff-schwer { background:#FFE8E8; color:#FF3B30; }
+    .header { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+    .header-icon { width:40px; height:40px; border-radius:10px; background:#F3E8FF; display:flex; align-items:center; justify-content:center; }
     @media print {
       body { background:white; padding:12px; }
       .controls { display:none; }
@@ -36,8 +38,13 @@
   </style>
 </head>
 <body>
-  <h1>🎴 GeoCheckr QR Cards</h1>
-  <p class="subtitle">Print these cards for the physical game. Each card has a QR code that loads a location.</p>
+  <div class="header">
+    <div class="header-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#AF52DE" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>
+    </div>
+    <h1>GeoCheckr Cards</h1>
+  </div>
+  <p class="subtitle">Print QR cards for the physical game. Scan with your phone to start each round.</p>
   
   <div class="controls">
     <select id="region-filter">

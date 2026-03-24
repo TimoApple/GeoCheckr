@@ -737,6 +737,11 @@ function renderResult(el) {
         <button class="btn btn-primary btn-continue" onclick="${isLastTurn ? 'navigate(\"summary\")' : 'nextTurn()'}">
           ${isLastTurn ? '🏆 Results' : state.players[nextCp].name + ' is next →'}
         </button>
+        
+        <button class="btn btn-ghost" style="font-size:13px;margin-top:4px;" onclick="shareLocation(${loc.id})">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Challenge a friend
+        </button>
       </div>
     </div>
   `;
@@ -753,6 +758,17 @@ function nextTurn() {
   state.currentPlayer = nextCp;
   startRound();
   navigate('game');
+}
+
+function shareLocation(locId) {
+  const url = `https://timoapple.github.io/GeoCheckr/?loc=${locId}`;
+  if (navigator.share) {
+    navigator.share({ title: 'GeoCheckr Challenge', text: 'Can you find this place?', url });
+  } else {
+    navigator.clipboard.writeText(url).then(() => {
+      alert('Link copied! Share it with a friend.');
+    });
+  }
 }
 
 // ===== SUMMARY =====
