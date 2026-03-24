@@ -1,4 +1,4 @@
-const CACHE_NAME = 'geochekr-v4';
+const CACHE_NAME = 'geochekr-v5';
 const ASSETS = [
   '/',
   '/index.html',

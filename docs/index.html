@@ -15,9 +15,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI&libraries=streetView" async defer></script>
   <script src="locations_db.js"></script>
-  <script src="game.js?v=8"></script>
+  <script src="game.js?v=9"></script>
+  <script>
+    // Load Google Maps async — don't block UI
+    var gmapsScript = document.createElement('script');
+    gmapsScript.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI&libraries=streetView&callback=__gmapsLoaded';
+    gmapsScript.async = true;
+    gmapsScript.onerror = function() { console.warn('Google Maps API failed to load'); };
+    window.__gmapsLoaded = function() { console.log('Maps API ready'); };
+    document.head.appendChild(gmapsScript);
+  </script>
 </head>
 <body>
   <div id="app">
