@@ -163,7 +163,7 @@ function loadPanorama(lat, lng) {
     });
     state.streetViewLoaded = true;
   } catch(e) {
-    container.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1a1a2e;color:#8E8E93;font-family:Space Grotesk,sans-serif;"><div style="text-align:center;"><div style="font-size:48px;">🌍</div><div style="margin-top:10px;">Street View nicht verfügbar</div></div></div>';
+    container.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1a1a2e;color:#8E8E93;font-family:Space Grotesk,sans-serif;"><div style="text-align:center;"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><div style="margin-top:10px;">Street View not available</div></div></div>';
     state.streetViewLoaded = false;
   }
 }
@@ -180,10 +180,10 @@ function renderLeafletMap(containerId, realLat, realLng, guessLat, guessLng, rea
   const map = L.map(el, { attributionControl: false }).setView(center, hasGuess ? 3 : 10);
   L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map);
   L.circleMarker([realLat, realLng], { radius: 10, fillColor: '#34C759', fillOpacity: 1, color: '#fff', weight: 2 })
-    .addTo(map).bindPopup('📍 ' + realCity);
+    .addTo(map).bindPopup(realCity);
   if (hasGuess) {
     L.circleMarker([guessLat, guessLng], { radius: 8, fillColor: '#FF3B30', fillOpacity: 1, color: '#fff', weight: 2 })
-      .addTo(map).bindPopup('🎯 ' + guessCity);
+      .addTo(map).bindPopup(guessCity);
     L.polyline([[guessLat, guessLng], [realLat, realLng]], { color: '#AF52DE', weight: 3, opacity: 0.8 }).addTo(map);
     map.fitBounds([[realLat, realLng], [guessLat, guessLng]], { padding: [30, 30] });
   }
@@ -439,7 +439,7 @@ function renderSetup(el) {
           <div class="diff-row">
             ${['leicht','mittel','schwer'].map(d => `
               <button class="diff-btn ${state.difficulty===d?'active':''}" onclick="setDiff('${d}')">
-                <span class="ico">${d==='leicht'?'😊':d==='mittel'?'🤔':'🔥'}</span>
+                <span class="ico">${d==='leicht'?'●○○':d==='mittel'?'●●○':'●●●'}</span>
                 ${d==='leicht'?'Easy':d==='mittel'?'Medium':'Hard'}
               </button>
             `).join('')}
@@ -701,7 +701,7 @@ function renderResult(el) {
     <div class="screen screen-result">
       <div class="result-card">
         <div class="result-header">
-          <div class="result-emoji">${p>=3?'🎯':p>=2?'👍':p>=1?'😐':'😅'}</div>
+          <div class="result-emoji">${p>=3?'<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#34C759" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>':p>=2?'<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#FF9500" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>':p>=1?'<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>':'<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'}</div>
           <h2 class="result-title" style="color:${color}">${label}</h2>
         </div>
         
@@ -735,7 +735,7 @@ function renderResult(el) {
         <div class="result-points">+${p} pts</div>
         
         <button class="btn btn-primary btn-continue" onclick="${isLastTurn ? 'navigate(\"summary\")' : 'nextTurn()'}">
-          ${isLastTurn ? '🏆 Results' : state.players[nextCp].name + ' is next →'}
+          ${isLastTurn ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> Results' : state.players[nextCp].name + ' is next →'}
         </button>
         
         <button class="btn btn-ghost" style="font-size:13px;margin-top:4px;" onclick="shareLocation(${loc.id})">
@@ -779,20 +779,20 @@ function renderSummary(el) {
   el.innerHTML = `
     <div class="screen screen-summary">
       <div class="summary-card">
-        <h2>🏆 Game Over!</h2>
+        <h2>Game Over</h2>
         <p class="summary-sub">${state.maxRounds} rounds played</p>
         
         <div class="leaderboard">
           ${sorted.map((p,i) => `
             <div class="lb-item ${i===0?'lb-first':''}">
-              <span class="lb-rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</span>
+              <span class="lb-rank">${i===0?'<svg width="22" height="22" viewBox="0 0 24 24" fill="#FFD700" stroke="#FFD700" stroke-width="1"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>':i===1?'<svg width="22" height="22" viewBox="0 0 24 24" fill="#C0C0C0" stroke="#C0C0C0" stroke-width="1"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>':i===2?'<svg width="22" height="22" viewBox="0 0 24 24" fill="#CD7F32" stroke="#CD7F32" stroke-width="1"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>':'#'+(i+1)}</span>
               <span class="lb-name">${p.name}</span>
               <span class="lb-score">${p.score} pts</span>
             </div>
           `).join('')}
         </div>
         
-        <h3 class="history-title">📊 Rounds</h3>
+        <h3 class="history-title">Round History</h3>
         <div class="history-list">
           ${state.history.map(h => `
             <div class="history-row">
@@ -805,8 +805,8 @@ function renderSummary(el) {
         </div>
         
         <div class="summary-buttons">
-          <button class="btn btn-primary" onclick="startGame()">🔄 Play Again</button>
-          <button class="btn btn-secondary" onclick="navigate('home')">🏠 Menu</button>
+          <button class="btn btn-primary" onclick="startGame()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Play Again</button>
+          <button class="btn btn-secondary" onclick="navigate('home')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Menu</button>
         </div>
       </div>
     </div>
