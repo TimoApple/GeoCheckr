@@ -1,261 +1,252 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GeoCheckr — QR Cards</title>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
-  <script src="locations_db.js"></script>
-  <style>
-    :root {
-      --bg: #F9F9F9;
-      --card-bg: #FFFFFF;
-      --card-border: #E5E5EA;
-      --text: #1C1C1E;
-      --muted: #8E8E93;
-      --accent: #a6d700;
-    }
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(--text); }
+<meta charset="UTF-8">
+<title>GeoCheckr — QR Karten</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Space Grotesk',sans-serif; background:#f5f5f5; }
+.controls { text-align:center; padding:16px; }
+.controls button { font-family:inherit; padding:12px 24px; border-radius:9999px; border:none; font-size:14px; font-weight:600; cursor:pointer; margin:0 4px; }
+.btn-shuffle { background:#e5e5ea; }
+.btn-print { background:#007AFF; color:#fff; }
 
-    /* ═══ A4 LANDSCAPE ═══ */
-    .a4 {
-      width: 297mm;
-      height: 210mm;
-      background: #fff;
-      margin: 20px auto;
-      padding: 14mm 18mm;
-      border-radius: 4px;
-      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
-      display: flex;
-      flex-direction: column;
-    }
-    .a4-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 6mm;
-    }
-    .a4-header .logo {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 16px;
-      font-weight: 700;
-      color: #111;
-    }
-    .a4-header .logo-icon {
-      width: 22px; height: 22px;
-    }
-    .a4-header .geocheckr-dot {
-      display: inline-block;
-      width: 8px; height: 8px;
-      background: var(--accent);
-      border-radius: 50%;
-      margin-right: 2px;
-    }
-    .a4-header .page-num {
-      font-size: 11px;
-      color: #999;
-    }
+.a4 {
+  width: 297mm; height: 210mm;
+  background: #fff; margin: 16px auto;
+  padding: 12mm 16mm;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  page-break-after: always;
+  display: flex; flex-direction: column;
+}
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6mm;
+}
+.header .brand {
+  font-size: 14px; font-weight: 700; color: #111;
+  display: flex; align-items: center; gap: 6px;
+}
+.header .brand .dot { width: 6px; height: 6px; background: #a6d700; border-radius: 50%; display: inline-block; }
+.header .page { font-size: 10px; color: #999; }
 
-    /* 4×4 GRID */
-    .qr-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: repeat(4, 1fr);
-      gap: 4mm 6mm;
-      flex: 1;
-    }
-    .qr-cell {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .qr-box {
-      background: #111;
-      border-radius: 12px;
-      padding: 10px;
-      width: 38mm;
-      height: 38mm;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow: hidden;
-    }
-    .qr-box canvas {
-      border-radius: 4px;
-    }
-    .qr-label {
-      margin-top: 3mm;
-      font-size: 16px;
-      font-weight: 700;
-      color: #111;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .qr-label .dot {
-      width: 6px; height: 6px;
-      background: var(--accent);
-      border-radius: 50%;
-      display: inline-block;
-    }
+.qr-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 4mm 8mm;
+  flex: 1;
+}
+.qr-cell {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.qr-box {
+  width: 36mm; height: 36mm;
+  border: 1.5px solid #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  padding: 4px;
+}
+.qr-box img { width: 100%; height: 100%; object-fit: contain; }
+.qr-num {
+  margin-top: 2mm;
+  font-size: 14px; font-weight: 700; color: #111;
+  display: flex; align-items: center; gap: 3px;
+}
+.qr-num .dot { width: 5px; height: 5px; background: #a6d700; border-radius: 50%; display: inline-block; }
 
-    /* ═══ A4 PORTRAIT — City Cards ═══ */
-    .a4-portrait {
-      width: 210mm;
-      height: 297mm;
-      background: #fff;
-      margin: 20px auto;
-      padding: 16mm 20mm;
-      border-radius: 4px;
-      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
-      page-break-before: always;
-    }
-    .city-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: repeat(4, 1fr);
-      gap: 6mm;
-      margin-top: 8mm;
-    }
-    .city-card {
-      border: 2px solid #111;
-      border-radius: 16px;
-      padding: 16px 12px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .city-name {
-      font-size: 20px;
-      font-weight: 700;
-      color: #111;
-    }
-    .city-country {
-      font-size: 12px;
-      color: #888;
-      margin-top: 2px;
-    }
+/* City Cards Page */
+.a4-portrait {
+  width: 210mm; height: 297mm;
+  background: #fff; margin: 16px auto;
+  padding: 14mm 16mm;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  page-break-after: always;
+}
+.city-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 6mm;
+  margin-top: 6mm;
+}
+.city-card {
+  border: 2px solid #111;
+  border-radius: 14px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 12px 8px;
+}
+.city-name { font-size: 18px; font-weight: 700; color: #111; }
+.city-country { font-size: 11px; color: #888; margin-top: 2px; }
 
-    /* ═══ Controls (screen only) ═══ */
-    .controls {
-      text-align: center;
-      padding: 20px;
-    }
-    .controls button {
-      font-family: 'Space Grotesk', sans-serif;
-      padding: 14px 28px;
-      border-radius: 9999px;
-      border: none;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      margin: 0 6px;
-    }
-    .btn-shuffle { background: #F2F2F7; color: #1C1C1E; }
-    .btn-print { background: #007AFF; color: #fff; }
-    .count { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+.footer { font-size: 8px; color: #ccc; text-align: center; margin-top: auto; padding-top: 4mm; }
 
-    @media print {
-      body { background: #fff; }
-      .controls { display: none !important; }
-      .a4, .a4-portrait { box-shadow: none; margin: 0; }
-    }
-  </style>
+@media print {
+  body { background: #fff; }
+  .controls { display: none; }
+  .a4, .a4-portrait { box-shadow: none; margin: 0; }
+}
+</style>
 </head>
 <body>
+<div class="controls">
+  <button class="btn-print" onclick="window.print()">🖨️ Drucken</button>
+</div>
 
-  <div class="controls">
-    <div class="count" id="count"></div>
-    <button class="btn-shuffle" onclick="generate()">🔄 Shuffle</button>
-    <button class="btn-print" onclick="window.print()">🖨️ Drucken</button>
+<!-- PAGE 1: QR CODES -->
+<div class="a4">
+  <div class="header">
+    <div class="brand"><span class="dot"></span>GeoCheckr</div>
+    <div class="page">1/2</div>
   </div>
-
-  <!-- PAGE 1: QR CODES (A4 Landscape) -->
-  <div class="a4" id="page-qr">
-    <div class="a4-header">
-      <div class="logo">
-        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2">
-          <rect x="3" y="3" width="7" height="7" rx="1"/>
-          <rect x="14" y="3" width="7" height="7" rx="1"/>
-          <rect x="3" y="14" width="7" height="7" rx="1"/>
-          <rect x="14" y="14" width="3" height="3" rx="0.5"/>
-          <line x1="20" y1="14" x2="20" y2="20"/>
-          <line x1="14" y1="20" x2="20" y2="20"/>
-        </svg>
-        GeoCheckr<span class="geocheckr-dot"></span>
-      </div>
-      <div class="page-num">1/2</div>
+  <div class="qr-grid">
+    <div class="qr-cell">
+      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGvSURBVGiB7do7ssIwDAVQzWQBWVK2niV5AZkRtnTlD1BAZRVXRcgLJzRCimye6M8hpKSkf9EiiKv9fZXDD3pLPUMcpFnogcS50kdM4Zq9FNJE1FI3X46ot7eMkyakfllaI23ZPUkz0wZMfdxOmoiOkqv9cn3ijdIkTUH7e+XQ9wOCNAud4qlXT6QTxTeCNAMtSJ291Afb4wdU5YmHHWkOOqb7Mk8lcwVG0yRNQT27XoGPE7uGnPaKJU1BtVfbNE3W+CxD0q10GR9RgQO0PF9KmoVqPM4QvSoFKV6aJuleaulspy2dALHj4Su18R0g3U1DoV+24rMKbApnJ2kaGnU3Vs7YrrJ4a5qke2mUoU7tc2maWFKTpqAxkHhOY1Wmfc32ZXYh3UgxL0ofJNvxlhhS5mGfNAPV2Ei0hfSJ1fSoRdIcdEQrSMvu7QVpcz48aQ4aXXI83TA5St9htA8iTUHXVumrsr587skmzUJFIomqY87vM+Q8PpKmoXO/9CW1KrZCSBNSbFcJfrNELOMj6WZqARp3+mf4viJpHhrpQ2IfGf8Z8GWvmHQr/TVISUn/oC9xvbxvkFw/PwAAAABJRU5ErkJggg==" alt="QR 1"></div>
+      <div class="qr-num"><span class="dot"></span> 1</div>
     </div>
-    <div class="qr-grid" id="qr-grid"></div>
-  </div>
-
-  <!-- PAGE 2: CITY CARDS (A4 Portrait) -->
-  <div class="a4-portrait" id="page-cities">
-    <div class="a4-header">
-      <div class="logo">🌍 City Cards</div>
-      <div class="page-num">2/2</div>
+    <div class="qr-cell">
+      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGrSURBVGiB7dpLbsQgEATQlnyAHImrcyQOYIlAf2icSZSZFbUoFpaDH9mUgIZE+ttNSElJP6JNvBV9+7rn8Nt+R3y6SFHo5cGV+ayjewy64k0/NVIgqtGN7hFn1WCVfs3hTRMnBaRz3g2qLSImRabb8vlfsKRHaCyaPg1t0Hr8ur6SHqIiEafvbtvDGykKzTYG2UN3tzkN90aKQNvazvqqRSLO12lIepZ2XSXv3evKqcFqn0VMikDbXjlmzj1P06WTAtGsSuKbh71NTVIYuh3DprVg25qBpFC026IZNaRVk/2O6lFIUeh8rp4A16OvkaLQSNLS7XEqy4qfFIj27uul+mqDYqm0+2BDpADUdjKvHO3NMtVBuc+RQlCfgZILZLVTmdhV8FaQkALQvJDKYKP5fTApDi0xFyVrkbWQPqYh6VmarcWBzM7Q9uPa8UgR6Mpvu02U/XBNikQvfy1dy5CsTzxnvwUhBaEij0sqi7NG4I9gSWFohPhzBrbXYElP08hU8r9Fq/hXUhhq06y01W0tDtelkcLQWBxtGm5/YRb5s3wkPUTfbaSkpB/Qb0Hpygd7nxoBAAAAAElFTkSuQmCC" alt="QR 2"></div>
+      <div class="qr-num"><span class="dot"></span> 2</div>
     </div>
-    <p style="color:#888; font-size:12px;">Jeder Spieler legt EINE Karte offen auf den Tisch. Wer die Stadt errät, kriegt die Karte!</p>
-    <div class="city-grid" id="city-grid"></div>
+    <div class="qr-cell">
+      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGnSURBVGiB7dlBjsMgDAVQJA6QI+XqHMkHQGKC7Y9pFqN2hRefRdTCy2xcO46njK9XISUl/YlK8XVLHaM9H579bn8DR5U0C60euFvUF9srt+7pkZAmoho6O/MQP77pniDipAnpPTOwXf3ZugZpYqrl83Lvd5Kmoyia8xE3Y2qV89/6SnqIloJSWcf74os0C421EnLmYkTcF2kGqmVxePKhK1HfPaZt/w2QHqcayVZw01zWPvoBaRqq2dbht0tfESdNQws6kGhDcDumIIM0CcVZJJ/nnXw+7EhT0O7ABok28fDLq2iSHqeCIK6uBGrVSyHNQqMDuSLE3kPGV9IkFB9Xs2+RjPZxr6+kx2kk34g2ZBVNCzFpCmpDKn9z3pv9ue19JWkWOlaBvDCk38Ipr6JJepZi7LEBrZc3JsMWZ9IUNJZUvENH8tlrdiVNQhG/GEhFG/J+LyA9Tr0s2rY1jeVT2TlpDupnNvaoWzdpRZM0JR0D/1zx/uRdNEnzUAGwDmQ951ohTUSjaMZNmIL0zzQkPUxRHK1Ubm9lKwNXGpKept8uUlLSH+gfZdzOIVlnnZ8AAAAASUVORK5CYII=" alt="QR 3"></div>
+      <div class="qr-num"><span class="dot"></span> 3</div>
+    </div>
+    <div class="qr-cell">
+      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGmSURBVGiB7dlBjsMgDAVQSxyAI+XqORIHiOQJxh+TTBftCi++F1HbPGbzBRhG9OsSUlLSn2gTr0Ov/rWonlXHA68KaRZaPLjD1P3iVlcf2X+zV400EbXobooQzfvwnjhpQnpPQ5GqyJk0NZ0T0keSpqSeZLP1UrFywn9cX0k3UfHq+b0fXqRZaFQPVptvdpG4F2kGislnu1t0/Ai2qG97pCnoo18c3jK13W0e10hTUL0EnaMfyCLscUibwZKmoF1hlbxGLxIP0lzUwlwyHcEKpuEphTQP9WDtE5ZPB1GkSejq0T6i47fBhTQJjb7Dqs0L4JiQS6dJupdqNI2C3a1eEi0laSa6diBxkYi/8Wr2SfdSNI1rQ4ID2VgvZ0NCup1afvallWVCokhTUdwcjmB9d1vvfj1x0gw0as7AOEjHXCRNQeeUGy2+zi2u+S3ws9Mk3UtjGl7/djd9Hs1IE9BYG8ct8EutwZJmoThS+0Wi/XvMijQh7T+cVZdPI92jfZqGpJuolTeN1W+Bx3Cp+nGLI91F8SYuOw7sc7izIs1Cvy1SUtIf6B//eacam1mB8AAAAABJRU5ErkJggg==" alt="QR 4"></div>
+      <div class="qr-num"><span class="dot"></span> 4</div>
+    </div>
+    <div class="qr-cell">
+      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGmSURBVGiB7dpBjsMwCAVQJB+gR8rVcyQfoBIzAT4mGWnUrszie+FGyUs3CBvcin48hJSU9Cs6Jcahb39TjjlUTxmKR4O0Cx0KIPILbMp79jFJG1ELnQVW5KVl2OseZ9Jm1AL7slx8X1eknSki+XidtBdFymUu+o733/pKuokKnhm9TzFIu9DHmCshx+0BaQc6I3SIbuxzZcc7X6SNqJf4qlGL+MZWMrAsmqR7qQE8s5f8yr9j1f6kHejM0KE1k6wmn2lIupteswO/bT6BZaWSdqEo8T0XozWzTIz+7NYXkO6nmXwlzgf2vntgSffSPPa1vLuCaFfr3t/ykXQjReeMDMyfWfSxaJJup+iXvSEr1eQ6VxykjaiXIdlNX0P9zD4LSdIu1EN3GrHdzeLsXuuiSdqBSmZgeJzZlxqStANdA5tdFI3eYYcn7UFxPhVVCaIb66XXJ0rahaIh8zu5huqaSDtRkRLErPOzhqzlI2kbWtdL/FEq6krSdjTqRQsoGoBr3MpH0s3UgQd2HS5OvH6S9qEIXwQ2fmGJyR4oaRf66SAlJf2C/gD01X9/ynFwaQAAAABJRU5ErkJggg==" alt="QR 5"></div>
+      <div class="qr-num"><span class="dot"></span> 5</div>
+    </div>
+    <div class="qr-cell">
+      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGfSURBVGiB7dlBjsMgDAVQSzlAjtSrc6QcIJIn2P4Gqo7UrvDiexG14dGNZTBU9OsQUlLSn+glEa/+vT+0nfHA0EFahR6RuNdl/pZH3fNMJ6RFqKXuoTFJ2/Nink5akPacTnkmLU3xGjNJS1KUHGrRyrDBf1xfSTdRiUg6PSJIq9ARNnZG8Y2MR5BWoP21N/bW4kuoafm0AdISVBVro/X5o5HM3j8XTdL99DmGST+L2drYJBRO0zaqpEXoNcZu39Dc54O0EF3vOXqKY6agDFs2JKS7aZacRTNqn+TfhoR0GwWIRRPtIzp+iQHSEhRvNDe7qErv+DPtpFWoH8hUce1hXiTTTlqFekQ6lzyPHe8gLULHedn7xSjIMTA1JKS7qRXadCobGxt2N9I6dEps7Glvd79xKUJagY7Aafo9z0unSbqVZsl5i686XdejP1HSKvTwtC7XHplOTCctQ7E23n4rNSnf4k7SetRTfOMi0f4esyAtSJFTrztPJ/oT0jLUAheJktF/49SPWxzpLoqRqSHJP5fbumiS7qbfBikp6Q/0D0rxCqgEyxqDAAAAAElFTkSuQmCC" alt="QR 6"></div>
+      <div class="qr-num"><span class="dot"></span> 6</div>
+    </div>
+    <div class="qr-cell">
+      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGfSURBVGiB7dlBjsMwCAVQJB+gR8rVfaQcIBJTAx8cdRbtKiw+i6iNX7pBYJyKfh1CSkr6Ez0l4ljf10XnKy5YGqRd6IjEHaf5S97q2p90QtqEWureNB7S+b6xP07akK6cbnkmbU1xG0+StqQoOdSileGE/7e/kj5EJSLpdokg7UIrbO0VxVcZjyDtQNdtH+xtxJdQW/u0BdI2NPyFVmk5zdl/b5qkz9IVdhaz3jglFE7TawGJJX2cev5Ua7NznxfSRlRRfOKd80JVCspw5kBC2oBGYlGQ8Uk+ZxfSBhSTYzTI7Uh9eGkO0iY0546ZZegvgLdJRUmbUEUmo18OxSApOa6QtqE2OQrWUHz+G/U4aQvqx7AFtNKZjbQOAKQdqOVPMOJnYhGkrShy6l5zFkkawyVpB1qR+1wdpKsWSVvQLLmj2udZm93Q+6RJ+iwdnlacpm+7WxwFSBvRrTfWq2DNM/SeWNIu9IzJcT9XW5A2pJovqTzFijI8B2kfauGJnVIxNP56/tziSJ+iWDmwnXkZ2m/Me9MkfZp+G6SkpD/QP/5u8nXhM8UCAAAAAElFTkSuQmCC" alt="QR 7"></div>
+      <div class="qr-num"><span class="dot"></span> 7</div>
+    </div>
+    <div class="qr-cell">
+      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGgSURBVGiB7dkxDsMgDAVQSzlAjpSr50g5ABIF+38gUod2wsP3gNrwmCwTQ6z+HCYqKvoXfQxx9f99qPeJgVOHaBZ6IHHX475YU2VdGUQ0CfXUNYpF9W4P1uWiCWnP6ZJn0dSUj7lSNCVlybEWvQxv+q/7q+gmaohBlwEhmoXO8LkTxTczjhDNQPvjaOy9xTeoZfv0CdEslAeywq3Sczp6/9emKbqV9nHm7zYonqbbIW0kVnQ7jQ3ScHzuEX4Moolo3HNg02xD4UpjGd6jIRHdTePwhbnYOT0CzBDNQKsX34FD82gf2fFbzIrmoNHio/jiV1wAL7tpFU1CPZjTaBXRSBoLUjQPLWPTnDcexr7yfDX7orvp69DMdBbW52gkRVNQLzQHz5pYhmgqGlccHVS+55BnUNzZi2agMx42+/MgPWtRNAUdJXe9ynBW5dJpim6nR6Q1viv3WNPpVVlFE9G5N/rOuah4xZ2i+Sjfc7hIPCvfc6IJaX/gYPya/YloGuqBJxVfWGK55/TLK050F+UMyrCOtp89pGge+muIior+QT//WdVHrEvwAwAAAABJRU5ErkJggg==" alt="QR 8"></div>
+      <div class="qr-num"><span class="dot"></span> 8</div>
+    </div>
+    <div class="qr-cell">
+      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGxSURBVGiB7doxksMgDAVQzXAAHylX95E4ADOskb4EtrdIKlR8FST2PldagcCR/nUIKSnpT7QK4jOuP7XY0E+5viEKaRZakDhTvYkq3NOPSpqIaurW2x7X4yPjpAmp3ZYxkY7sHqSZ6QCqXo+TJqKz5K758r7izdIkTUHjb7X054AgzUKXaNfdA+lE8c0gzUArUqcf18LWbEBVHljsSHPQMYpe1LUrWSuwFtIk1KqtxZrWjGjGkdMoQ9LdtN8nyKWbvOJdhqRbacVty6dV4ASecdIkVLwr8YK8LXu3SZN0Oy3dNmTYmpWOHjJ2auv/AGkG6l5bE63AcYlvB2kaKgjNHzLZYs/2mDRJt9Pel9NEeU6aaFdIU1A/i4oDYA178oxGkjQL9TeVzc8VvSCtEt/zK+lGqt29VZueT+klInpI0gx0hu+hvZvUPh+eNAedDYmfJqJztNVN/u1dSHfRYmnFElejA4nhXCqWdDsV8STaGSKqEhX4bB9Jc9B1vsQLF+smSRNSTJCaULQmGrf2kXQz1UCfH10Jps94H0aagnr6jPa2/DLgeQBMupt+G6SkpD/QP/6dioOEczFwAAAAAElFTkSuQmCC" alt="QR 9"></div>
+      <div class="qr-num"><span class="dot"></span> 9</div>
+    </div>
+    <div class="qr-cell">
+      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGfSURBVGiB7dhBjsMgDAVQpBwgR8rVOVIOgOQW2984VRftCi++F4yGPGbjwRia/ByNlJT0L3o3j2v+Pgfppw/4dJBWoYcn7rrVj/ZWI680QlqEaure1BdJf0/k5aQF6cxpyjNpaYpprCQtSbHlsBd1G3b4r/WVdBNtHkHT4EFaha7Qb6dvvpVxD9IKdE5bY68tfnOVyqd+IK1BtUrO4RwolZrT6P0f9ZV0L51VEXcxWxTJtkta/h8g3Utl5OvzDM8zBtJqdFXJc6CQNmzDHg0J6W56o7vX0Mopa0OuIK1ADQgae7SPSLZOHqRFaPT01pBgQMePw460Bl3NPlpFbyRbSjtpDSpr2qnnVB7LSUtQ24bDaqOWyLSoRSNJWoJa/uYPPE3hYMPpRlqHxhNH+I+3X3+zJ61AV8TVbF2k114kLUFjy1mLL5Ke6+1xMfcupJupN/v6xKGR04nlpGVoS7URrQky/pFY0ir09s4R78GSnkJIq9Ho+DXF/dGfkJahGimxHoffAr4ccaS7KL5cj8PO/kZ/Fk3S3fTXICUl/YO+AHYXPhoK6JLvAAAAAElFTkSuQmCC" alt="QR 10"></div>
+      <div class="qr-num"><span class="dot"></span> 10</div>
+    </div>
+    <div class="qr-cell">
+      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGoSURBVGiB7djLbQQhDAZgSxSwJdH6lDQFjOQEP0F5aPdkH34Ooyx8nBwbA/Hbg0BBQT+iN9mY/Kyfg/l6sX58aYB2ocMCN1nWFpX1l80ZAW1CBdBcIZ7+UxdiDrQb/U5DCecWZ9C+lDdvaQjajnokH+1PrHL+W19BiyjZmFolj48N0C40h6YcWSN50dgXQVvQAFI56fVs3gspaBcqM7dXSTvYhsc5rmugLWhMryE7/eM7z4s0aDGV5NNN10pD2SRvH+wRB+1B2dYsfjdpIdW3j+2wA+1C54rcJeH0Fw+N+C/1FbSY2vR9vk8xsyUkgXajedhp5ZyZkFvRBK2lfsR5EP2T7WMEFrScMrMFUSpntCFRNPNJEbScRmAz77KQ6uPij/8B0Cp6XKSzadSdmpV7sw9aSo9exPtFijHYBmgHmuM806Ltp3j2AC2nEcSZZ5p7z0XQNtQSzR7p42OXNNBulLRe6qZnU/rXeTUD7UH9uWrv/ekomqB9qCekRNfPOfJMBW1CZdhx5g8gup3kArClIWgx9ZUsmtGGyPwfvQtoBX13gIKCfkC/AEQ6gQXWEoJHAAAAAElFTkSuQmCC" alt="QR 11"></div>
+      <div class="qr-num"><span class="dot"></span> 11</div>
+    </div>
+    <div class="qr-cell">
+      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGtSURBVGiB7dlNjsMgDAVgSzlAj8TVcyQOgEQbP/+QjmbUbgYvHgvUwJeVZcdQmR8PISUl/Yp2sdHmuB6POc/HxORbB2kVeljg2tS9i+r+w9aMkBahCqRdIW7+iI1YI61GX2mo4VziTFqXzsVbGpKWox7Jgf7EKuef9ZV0ExUbDVXyNtkgrUJzIOXEGslTjnWTtAQNoJVTHmPxXkhJC1Ht7vFsH7bD4xzHNdIaNKuk+hGTv7kepEn3Uh3dAvtqQwa+arj70JjiF2kFGu0jTmX6kqfm+rEjrUD1AcfnWO42vRVN0u0UkfTT9HI/pcHWhBTSMtTjd/o9Bypny4RciibpXnrNdjU1rJHUKdvHLJqkFahmG35FGxIRzytF0u00mn3cAmfH72tvRZN0J50j8i6uPaYXTWRlFE3S3bTfm33EVGLYLmkNmiMy8Mzki1wkLUEjiK3H5N5zkbQM9TTUvuOMl+yQRlqNyr0XSYVft1McaRGq0UWIrfdHLmbRJK1Du/m5fufEM5W0CNVhRdP/XMHr2lL+bPZJt1HfiV4k2xBd/7V3If1/+ukgJSX9gj4By2zabyPA6L8AAAAASUVORK5CYII=" alt="QR 12"></div>
+      <div class="qr-num"><span class="dot"></span> 12</div>
+    </div>
+    <div class="qr-cell">
+      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGVSURBVGiB7dkxEoMwDARAz/AAnsTXeRIP8IwC0p2lIkVSoeJUkATWlUf2mQz7uYaoqOhf9Bqo4/n9XOzcceGjTbQL3TBxx+V+jlvNOjKIaBPqU3dTDLLzvlGHizakz5yWeRZtTXmbI0VbUrYce9Hb8KT/ur6KvkQHatFyQYl2oVn+bEfz5YyjRDvQ53YEe4/4A6osn/5AtAVluse3DJIr+69FU7QDZfP57gbF0zSeivagDvyHDxrIInkR7URHab779lz32IZnyS6i71KbxXP5NDZklmgLauvQjIYsR+ojjgKbaBMaG9tAKlkXJn5udqItqM1yhuaONwdivzekaC8aid8smy/6EzveJtqE+qeh7yI+Gg9ksV6eQ7QLzUZbYA0S7UYzhqzZjdhPinf2oh1o1sWjWR6ksxdFW9DVcrmxITkypGTSFH2dbgZgNYFgOr0rTbQR5dqIIFlUbHG7aD+aQXJl/yjRhpQve6PvYjqZT0TbUC8kR8M/LDHc5/TLFif6FuWTEkh4SOMrfNEu9NcSFRX9g34AWWp67E9RDO8AAAAASUVORK5CYII=" alt="QR 13"></div>
+      <div class="qr-num"><span class="dot"></span> 13</div>
+    </div>
+    <div class="qr-cell">
+      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAG2SURBVGiB7Zo9ssMgDIQ1wwE4kq+eI3EAZnhGPyDjVySVVKwKjPHnNDuIlRwaXwcBBQr0J7SRxjXvr1ZkGB+6ZxoFaBa0qHBCjU5M6RpfGtBEKEvnly3u16fiQBOiskwzkU51K9DM6ASYer0ONBG6t9ydL58n3t6aQFOg61kr4xw0gGZBXfR7taqcuvl2AM2ANpWOL/fB1mXQXVn1sAOaBNWTbM9kcDvQn4ZAQ9EZHzP77EpE4iHCnjsWaDxaV/ns3OR6UIFmQiVzWqrkmWnaST0k0Azo8h0sopZmmi/f+RVoOCqasnMUwDoeUql5YYEGo+pFtD9fWeI5kB1x3mkCDUZXvSzCspLdsumZNIEGo6RNw9XxPZKmaykCDUeL029XZWPYR7HTkAANRjU3dpWTn32EH8+kCTQeHavPIYV07Xa/PSTQDOgOq6HVNLrfAJoF3Zq2Ik0qdY5yutFhSIDGolpIyw68eNZW+WxVANA0KDmXuH3+8pDePgJNg64+R7OSWj5m/iMs0HDUNiSRfrPUeLY9gMaiAsgRt1zJaEtsoHlQk0/Q0d0/A94NYKCx6LcBFCjQH9A/0cRuYxgux6AAAAAASUVORK5CYII=" alt="QR 14"></div>
+      <div class="qr-num"><span class="dot"></span> 14</div>
+    </div>
+    <div class="qr-cell">
+      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGkSURBVGiB7Zk9soMwDIQ1wwE4ElfPkXwAZvSw/s1rksoqVoUJ5iPNjqSVIf46CChQoD+hgyyueX+NQxf+0PPL4gDaBT1MOKX4JqFsTy4DaCNUpKvbHs/rU3GgDVHdpllIp7on0M7oBIT69zrQRmim3FMv146XqQm0BRrPxsHvxQJoF7TE/eyeJqclXwbQDugw6eTyNLZbF8vK05od0B6o97TFgVDEVNeLJtAOqIYmn9+K4qZpZCzQ3ah0sjPG5+Immd8ZC3Q36jvCWwYmMHW+GGgXNITlmKFr26tFE2gHNB2IAd7sdFKrwgLdi0ZPk+1JaQZ+yFtctY9A96Kqnx9IkSp5WzV9FU2g29EwJFk5l6JpIzXQJqhn4E3V7PtHsVd9BbobrV4kfL7yXIsm0AaoW3yutt8iPCTQDmiGNzszja440EZo2pBBfuxLi0m55I+AtkAPlTU/qbimvnxKxgLdjhIVEcPnh4dcnSbQNmjWS+14NmYDbYiacxRBzZpILCf7QDejEipsvJm+8jUXAN2KunwmrB+A6CIPGGgX9NsAChToD+gf4QrkwKxYeCsAAAAASUVORK5CYII=" alt="QR 15"></div>
+      <div class="qr-num"><span class="dot"></span> 15</div>
+    </div>
+    <div class="qr-cell">
+      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGpSURBVGiB7dhBjsMwCAVQJB8gR/LVc6QeIBLTwMc4aTRqV2bxWURp/LpCYGzRr0NISUl/oi9BdD3On01139QfsdRIq9CGxHW1tZPa+oZvIKRFqAHpZ4p7/PSF8Y20Gn2XoaVzyjNpXaqTRxmSlqORycPnE3TOf/sr6SIqiO5d8vJAkFahGV5ygkFylzYvkpagA1jnlO2YfDRS0jK0KcaQeMOeNlI891fSxVTeJWfp9C0uHzGVzP2VdDHFMczD/nSG333Ygr+RFqGCQPEh2XLd7EgrUMWeZjnF50j2rWmSLqfxBWfovJ9SVRSkkJahgj3N6y53vCzI0TRJV9MoQ0z8G/6kOT5+NE3SdVRj5NBxAXxpmpj9SSvQy0AyT/yvFpeLj7ML6QpqhbbF3DEOaWifcmuapGvpLbGxseU3BGkFmhHA626M/TKuPUiX05HEnm8xhkQtkpahKDSbO+ZB0hN7a5qky6mgX35cV/kbaUXqo4nGPneG1WI2TdI61M9iFnF83kWiUkmLUIu89sha9HP1U38lXURjxYePLU9l7eECmHQt/TZISUl/oH9DQMwkIhgxHgAAAABJRU5ErkJggg==" alt="QR 16"></div>
+      <div class="qr-num"><span class="dot"></span> 16</div>
+    </div>
   </div>
+  <div class="footer">geocheckr.app — Scan. Guess. Win.</div>
+</div>
 
-  <script>
-    function generate() {
-      const pool = [...ALL_LOCATIONS].map((l, i) => ({...l, id: i+1}));
-      pool.sort(() => Math.random() - 0.5);
-      const selected = pool.slice(0, 16);
+<!-- PAGE 2: CITY CARDS -->
+<div class="a4-portrait">
+  <div class="header">
+    <div class="brand">🌍 City Cards</div>
+    <div class="page">2/2</div>
+  </div>
+  <p style="color:#888; font-size:11px; margin-bottom:4mm;">Jeder Spieler legt EINE Karte offen auf den Tisch. Wer die Stadt errät, kriegt die Karte!</p>
+  <div class="city-grid">
+    <div class="city-card">
+      <div class="city-name">Sarajevo</div>
+      <div class="city-country">Bosnien</div>
+    </div>
+    <div class="city-card">
+      <div class="city-name">Belgrad</div>
+      <div class="city-country">Serbien</div>
+    </div>
+    <div class="city-card">
+      <div class="city-name">Wien</div>
+      <div class="city-country">Oesterreich</div>
+    </div>
+    <div class="city-card">
+      <div class="city-name">Brest</div>
+      <div class="city-country">Belarus</div>
+    </div>
+    <div class="city-card">
+      <div class="city-name">Kharg</div>
+      <div class="city-country">Iran</div>
+    </div>
+    <div class="city-card">
+      <div class="city-name">Siem Reap</div>
+      <div class="city-country">Kambodscha</div>
+    </div>
+    <div class="city-card">
+      <div class="city-name">Sapporo</div>
+      <div class="city-country">Japan</div>
+    </div>
+    <div class="city-card">
+      <div class="city-name">Lyon</div>
+      <div class="city-country">Frankreich</div>
+    </div>
+    <div class="city-card">
+      <div class="city-name">Lemvig</div>
+      <div class="city-country">Daenemark</div>
+    </div>
+    <div class="city-card">
+      <div class="city-name">Bukarest</div>
+      <div class="city-country">Rumaenien</div>
+    </div>
+    <div class="city-card">
+      <div class="city-name">Birmingham</div>
+      <div class="city-country">UK</div>
+    </div>
+    <div class="city-card">
+      <div class="city-name">Tunis</div>
+      <div class="city-country">Tunesien</div>
+    </div>
+    <div class="city-card">
+      <div class="city-name">Athen</div>
+      <div class="city-country">Griechenland</div>
+    </div>
+    <div class="city-card">
+      <div class="city-name">Darwin</div>
+      <div class="city-country">Australien</div>
+    </div>
+    <div class="city-card">
+      <div class="city-name">Panama-Stadt</div>
+      <div class="city-country">Panama</div>
+    </div>
+    <div class="city-card">
+      <div class="city-name">Prag</div>
+      <div class="city-country">Tschechien</div>
+    </div>
+  </div>
+  <div class="footer">geocheckr.app — Scan. Guess. Win.</div>
+</div>
 
-      document.getElementById('count').textContent = selected.length + ' QR-Karten + ' + selected.length + ' City-Cards';
-
-      // ═══ QR CODES ═══
-      const qrGrid = document.getElementById('qr-grid');
-      qrGrid.innerHTML = '';
-      selected.forEach((loc, i) => {
-        const cell = document.createElement('div');
-        cell.className = 'qr-cell';
-        const url = 'https://timoapple.github.io/GeoCheckr/?loc=' + loc.id;
-        cell.innerHTML = `
-          <div class="qr-box" id="qr-${loc.id}"></div>
-          <div class="qr-label"><span class="dot"></span> ${i + 1}</div>
-        `;
-        qrGrid.appendChild(cell);
-
-        QRCode.toCanvas(url, {
-          width: 130,
-          margin: 0,
-          color: { dark: '#ffffff', light: '#00000000' }
-        }, (err, canvas) => {
-          if (!err) {
-            canvas.style.width = '100%';
-            canvas.style.height = '100%';
-            document.getElementById('qr-' + loc.id).appendChild(canvas);
-          }
-        });
-      });
-
-      // ═══ CITY CARDS ═══
-      const cityGrid = document.getElementById('city-grid');
-      cityGrid.innerHTML = '';
-      selected.forEach(loc => {
-        const card = document.createElement('div');
-        card.className = 'city-card';
-        card.innerHTML = `
-          <div class="city-name">${loc.city}</div>
-          <div class="city-country">${loc.country}</div>
-        `;
-        cityGrid.appendChild(card);
-      });
-    }
-
-    generate();
-  </script>
 </body>
 </html>
