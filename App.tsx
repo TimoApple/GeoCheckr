@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput, Animated,
-  Vibration, StatusBar, ScrollView, Dimensions
+  Vibration, StatusBar, ScrollView, Dimensions, Image
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -265,8 +265,9 @@ export default function App() {
     return (
       <View style={{ flex: 1, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40 }}>
         <StatusBar hidden />
-        <Text style={{ color: C.green, fontSize: 14, fontWeight: '700', letterSpacing: 2, marginBottom: 16 }}>GEOCHECKR</Text>
-        <Animated.View style={{ opacity: loadingFade }}>
+        <Animated.View style={{ opacity: loadingFade, alignItems: 'center' }}>
+          <Image source={require('./assets/icon.png')} style={{ width: 100, height: 100, marginBottom: 20 }} resizeMode="contain" />
+          <Text style={{ color: C.green, fontSize: 14, fontWeight: '700', letterSpacing: 2, marginBottom: 16 }}>GEOCHECKR</Text>
           <Text style={{ color: C.muted, fontSize: 18, textAlign: 'center', fontStyle: 'italic', lineHeight: 26 }}>"{loadingQuote}"</Text>
         </Animated.View>
         <View style={{ position: 'absolute', bottom: 80, flexDirection: 'row', gap: 6 }}>
