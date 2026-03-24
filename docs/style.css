@@ -1,25 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Surface Hierarchy (Material Design 3 + Design System) */
-  --surface: #111225;
-  --surface_low: #15162a;
-  --surface_container: #1d1e32;
-  --surface_container_high: #27283c;
-  --surface_container_highest: #323348;
-  --surface_container_lowest: #0d0e21;
-
-  /* Brand */
-  --primary: #bdc2ff;
-  --primary_container: #3340ca;
-  --tertiary: #a6d700;
-  --error: #ffb4ab;
-
-  /* Text */
-  --on_surface: #e5e2e1;
-  --on_surface_variant: #c6c5d7;
+  /* TIMO'S PALETTE — NUR DIESE */
+  --bg: #111225;           /* Dunkelgrau/Hintergrund */
+  --surface: #1d1e32;      /* Surface Container */
+  --surface-high: #27283c; /* Hover / high surface */
+  --surface-max: #323348;  /* Highest surface */
+  --accent: #bdc2ff;       /* Hellblau */
+  --green: #a6d700;        /* Intensiv Grün */
+  --dark-blue: #3340ca;    /* Dunkelblau */
+  --text: #e5e2e1;         /* Text */
+  --text-muted: #c6c5d7;   /* Text secondary */
   --outline: #8f8fa0;
-  --outline_variant: #454654;
+  --outline-soft: #454654;
+  --error: #ffb4ab;
 
   /* Spacing */
   --sp-1: 4px;
@@ -29,29 +23,17 @@
   --sp-5: 20px;
   --sp-6: 24px;
   --sp-8: 32px;
-  --sp-10: 40px;
-  --sp-12: 48px;
-
-  /* Radius */
-  --r-sm: 4px;
-  --r-md: 8px;
-  --r-lg: 12px;
-  --r-xl: 16px;
-  --r-pill: 9999px;
 }
 
-/* ═══ RESET ═══ */
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body {
   width:100%; height:100%; overflow-x:hidden;
-  font-family: 'Manrope', -apple-system, sans-serif;
-  background: var(--surface);
-  color: var(--on_surface);
+  font-family: 'Space Grotesk', sans-serif;
+  background: var(--bg);
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-/* ═══ SCREEN ═══ */
 .screen {
   min-height: 100vh;
   min-height: 100dvh;
@@ -59,45 +41,39 @@ html, body {
   flex-direction: column;
 }
 
-/* ═══ TYPOGRAPHY ═══ */
-.font-display { font-family: 'Space Grotesk', sans-serif; }
-.font-body { font-family: 'Manrope', sans-serif; }
+/* ═══ TYPO — NUR SPACE GROTESK ═══ */
 .label_sm {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1rem;
-  color: var(--on_surface_variant);
+  color: var(--text-muted);
 }
 
 /* ═══ INPUTS ═══ */
 .input {
   width: 100%;
-  background: var(--surface_container_lowest);
+  background: var(--bg);
   border: none;
-  border-bottom: 2px solid var(--outline_variant);
-  border-radius: var(--r-lg);
+  border-bottom: 2px solid var(--outline-soft);
+  border-radius: 12px;
   padding: 14px 18px;
-  color: var(--on_surface);
+  color: var(--text);
   font-size: 16px;
-  font-family: inherit;
+  font-family: 'Space Grotesk', sans-serif;
   outline: none;
-  transition: border-color 0.25s ease;
+  transition: border-color 0.25s;
 }
-.input:focus {
-  border-bottom-color: var(--primary);
-}
-.input::placeholder {
-  color: var(--outline);
-}
+.input:focus { border-bottom-color: var(--accent); }
+.input::placeholder { color: var(--outline); }
 
 /* ═══ BUTTONS ═══ */
 .btn {
   padding: 14px var(--sp-6);
-  border-radius: var(--r-pill);
+  border-radius: 9999px;
   border: none;
-  font-family: 'Manrope', sans-serif;
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -105,84 +81,75 @@ html, body {
   align-items: center;
   justify-content: center;
   gap: var(--sp-2);
-  transition: transform 0.15s ease, opacity 0.15s ease;
+  transition: transform 0.15s;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 .btn:active { transform: scale(0.96); }
 
-/* Primary: Gradient from primary_container → primary */
+/* Primary = Dunkelblau */
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary_container), var(--primary));
-  color: var(--surface);
-  box-shadow: 0 0 24px rgba(51, 64, 202, 0.35);
-}
-.btn-primary:hover { box-shadow: 0 0 32px rgba(51, 64, 202, 0.5); }
-
-/* Tertiary / Success: Electric Lime */
-.btn-tertiary {
-  background: var(--tertiary);
-  color: var(--surface);
-  box-shadow: 0 0 20px rgba(166, 215, 0, 0.3);
+  background: var(--dark-blue);
+  color: var(--accent);
 }
 
-/* Ghost: No bg, outline text */
+/* Green = Intensiv Grün */
+.btn-green {
+  background: var(--green);
+  color: var(--bg);
+}
+
+/* Ghost */
 .btn-ghost {
   background: transparent;
   color: var(--outline);
-  border: 1px solid rgba(143, 143, 160, 0.15);
+  border: 1px solid rgba(143,143,160,0.15);
 }
-.btn-ghost:hover {
-  border-color: rgba(143, 143, 160, 0.4);
-}
+.btn-ghost:hover { border-color: rgba(143,143,160,0.4); }
 
 .btn-lg { padding: 16px var(--sp-8); font-size: 16px; }
 .btn-sm { padding: 10px var(--sp-4); font-size: 13px; }
 
-/* ═══ GLASSMORPHISM HUD ═══ */
-.glass {
-  background: rgba(29, 30, 50, 0.7);
-  -webkit-backdrop-filter: blur(24px);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(143, 143, 160, 0.08);
-}
-
 /* ═══ CARDS ═══ */
 .card {
-  background: var(--surface_container);
-  border-radius: var(--r-xl);
+  background: var(--surface);
+  border-radius: 16px;
   padding: var(--sp-6);
-  /* No 1px borders — tonal transition */
 }
-
 .card-high {
-  background: var(--surface_container_high);
-  border-radius: var(--r-xl);
+  background: var(--surface-high);
+  border-radius: 16px;
   padding: var(--sp-6);
 }
 
-/* ═══ DIFFICULTY / TIMER BUTTONS ═══ */
+/* ═══ GLASS HUD ═══ */
+.glass {
+  background: rgba(29, 30, 50, 0.75);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+/* ═══ TIMER BUTTONS ═══ */
 .diff-btn {
   padding: var(--sp-3) var(--sp-4);
-  border-radius: var(--r-lg);
-  border: 1px solid rgba(143, 143, 160, 0.12);
-  background: var(--surface_container);
-  color: var(--on_surface_variant);
+  border-radius: 12px;
+  border: 1px solid rgba(143,143,160,0.12);
+  background: var(--surface);
+  color: var(--text-muted);
   font-size: 14px;
   font-weight: 600;
-  font-family: inherit;
+  font-family: 'Space Grotesk', sans-serif;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
 }
 .diff-btn:hover {
-  border-color: rgba(143, 143, 160, 0.3);
-  background: var(--surface_container_high);
+  border-color: rgba(143,143,160,0.3);
+  background: var(--surface-high);
 }
 .diff-btn.active {
-  background: var(--primary_container);
-  color: var(--primary);
-  border-color: var(--primary_container);
-  box-shadow: 0 0 16px rgba(51, 64, 202, 0.25);
+  background: var(--dark-blue);
+  color: var(--accent);
+  border-color: var(--dark-blue);
 }
 
 /* ═══ PLAYER BADGE ═══ */
@@ -191,17 +158,16 @@ html, body {
   align-items: center;
   gap: var(--sp-2);
   padding: var(--sp-2) var(--sp-3);
-  border-radius: var(--r-pill);
-  background: var(--surface_container);
+  border-radius: 9999px;
+  background: var(--surface);
   font-size: 13px;
   font-weight: 600;
-  color: var(--on_surface_variant);
-  transition: all 0.3s ease;
+  color: var(--text-muted);
+  transition: all 0.3s;
 }
 .player-badge.active {
-  background: var(--primary_container);
-  color: var(--primary);
-  box-shadow: 0 0 12px rgba(51, 64, 202, 0.3);
+  background: var(--dark-blue);
+  color: var(--accent);
 }
 .player-badge .dot {
   width: 8px;
@@ -213,23 +179,23 @@ html, body {
 /* ═══ PROGRESS BAR ═══ */
 .progress-bar {
   height: 3px;
-  background: var(--surface_container_highest);
+  background: var(--surface-max);
   border-radius: 2px;
   overflow: hidden;
 }
 .progress-bar .fill {
   height: 100%;
   border-radius: 2px;
-  background: linear-gradient(90deg, var(--primary), var(--tertiary));
-  transition: width 0.6s ease;
+  background: var(--green);
+  transition: width 0.6s;
 }
 
-/* ═══ SCORE NUMBER ═══ */
+/* ═══ SCORE ═══ */
 .score-big {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 48px;
   font-weight: 700;
-  color: var(--on_surface);
+  color: var(--text);
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
@@ -237,7 +203,7 @@ html, body {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 20px;
   font-weight: 700;
-  color: var(--on_surface);
+  color: var(--text);
   font-variant-numeric: tabular-nums;
 }
 
@@ -247,16 +213,10 @@ html, body {
   font-size: 22px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: var(--on_surface);
+  color: var(--text);
   transition: color 0.3s;
 }
 .timer-display.warn { color: var(--error); }
-
-/* ═══ DIVIDER — Ghost (almost invisible) ═══ */
-.divider {
-  height: 1px;
-  background: rgba(143, 143, 160, 0.08);
-}
 
 /* ═══ ANIMATIONS ═══ */
 @keyframes fadeIn {
@@ -266,10 +226,6 @@ html, body {
 @keyframes scaleIn {
   from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
-}
-@keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 20px rgba(51, 64, 202, 0.3); }
-  50% { box-shadow: 0 0 36px rgba(51, 64, 202, 0.55); }
 }
 .animate-in { animation: fadeIn 0.35s ease-out; }
 .animate-scale { animation: scaleIn 0.3s ease-out; }

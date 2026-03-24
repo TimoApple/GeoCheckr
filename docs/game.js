@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // GeoCheckr V1 — QR Card Game Engine
-// Design: "High-Tech Cartography" (DESIGN_SYSTEM.md)
-// Street View: UNVERÄNDERT (Vorlage 2 — 6 Tage Arbeit!)
+// Design: Timo's Palette — Space Grotesk + 4 Farben
+// Street View: UNVERÄNDERT (Vorlage 2 — 6 Tage!)
 // ═══════════════════════════════════════════════════════════════
 
 const LOCATIONS = ALL_LOCATIONS.map((l, i) => ({...l, id: i+1}));
@@ -23,7 +23,7 @@ const state = {
   usedLocations: [],
 };
 
-// Player colors
+// Player colors — Timo's palette
 const PLAYER_COLORS = ['#bdc2ff', '#a6d700', '#88da7d', '#FF9500', '#ffb4ab'];
 
 // ═══════════════════════════════════════════════════════════════
@@ -101,7 +101,7 @@ function loadPanorama(lat, lng) {
     });
     state.streetViewLoaded = true;
   } catch(e) {
-    container.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--surface);color:var(--outline);font-family:Space Grotesk,sans-serif;"><div style="text-align:center;">Street View not available</div></div>';
+    container.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--outline);font-family:Space Grotesk,sans-serif;"><div style="text-align:center;">Street View not available</div></div>';
     state.streetViewLoaded = false;
   }
 }
@@ -194,11 +194,11 @@ function renderSetup(el) {
     <div class="screen animate-in" style="padding:var(--sp-8) var(--sp-6);max-width:440px;margin:0 auto;">
       
       <!-- Logo -->
-      <div style="text-align:center;margin-bottom:var(--sp-10);">
-        <div style="width:56px;height:56px;border-radius:var(--r-xl);background:var(--surface_container);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-4);border:1px solid rgba(143,143,160,0.08);">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>
+      <div style="text-align:center;margin-bottom:var(--sp-8);">
+        <div style="width:56px;height:56px;border-radius:16px;background:var(--surface);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-4);">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>
         </div>
-        <h1 class="font-display" style="font-size:32px;font-weight:700;color:var(--on_surface);line-height:1.1;">GeoCheckr</h1>
+        <h1 style="font-size:32px;font-weight:700;color:var(--text);line-height:1.1;">GeoCheckr</h1>
         <p class="label_sm" style="margin-top:var(--sp-2);">QR Card Game</p>
       </div>
       
@@ -207,8 +207,7 @@ function renderSetup(el) {
         <p class="label_sm" style="margin-bottom:var(--sp-3);">Spieler</p>
         ${state.players.map((p, i) => `
           <div style="display:flex;align-items:center;gap:var(--sp-3);margin-bottom:var(--sp-2);">
-            <div style="width:32px;height:32px;border-radius:50%;background:${PLAYER_COLORS[i]};opacity:0.2;position:absolute;"></div>
-            <div style="width:32px;height:32px;border-radius:50%;background:var(--surface_container_highest);display:flex;align-items:center;justify-content:center;font-family:Space Grotesk,sans-serif;font-size:13px;font-weight:700;color:${PLAYER_COLORS[i]};flex-shrink:0;position:relative;">${i+1}</div>
+            <div style="width:32px;height:32px;border-radius:50%;background:var(--surface-max);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:${PLAYER_COLORS[i]};flex-shrink:0;">${i+1}</div>
             <input type="text" class="input" value="${p.name}" 
                    onchange="state.players[${i}].name=this.value"
                    placeholder="Spieler ${i+1}" maxlength="20"
@@ -232,13 +231,13 @@ function renderSetup(el) {
       </div>
       
       <!-- Start -->
-      <button class="btn btn-primary btn-lg" onclick="startGame()" style="width:100%;animation:pulseGlow 2.5s ease-in-out infinite;">
+      <button class="btn btn-primary btn-lg" onclick="startGame()" style="width:100%;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         Start
       </button>
       
       <p style="text-align:center;margin-top:var(--sp-4);color:var(--outline);font-size:13px;">
-        Karten drucken: <a href="cards.html" style="color:var(--primary);text-decoration:none;">cards.html</a>
+        Karten drucken: <a href="cards.html" style="color:var(--accent);text-decoration:none;">cards.html</a>
       </p>
     </div>
   `;
@@ -265,23 +264,23 @@ function renderScan(el) {
     <div class="screen animate-in" style="display:flex;flex-direction:column;padding:var(--sp-6);height:100vh;height:100dvh;">
       
       <!-- Header HUD -->
-      <div class="glass" style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);border-radius:var(--r-pill);margin-bottom:var(--sp-6);width:fit-content;">
-        <span class="label_sm" style="color:var(--tertiary);margin:0;">Runde ${state.round}</span>
-        <span style="width:1px;height:16px;background:var(--outline_variant);"></span>
-        <span style="font-size:14px;font-weight:600;color:var(--on_surface);">${state.players[cp].name}</span>
+      <div class="glass" style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);border-radius:9999px;margin-bottom:var(--sp-6);width:fit-content;">
+        <span class="label_sm" style="color:var(--green);margin:0;">Runde ${state.round}</span>
+        <span style="width:1px;height:16px;background:var(--outline-soft);"></span>
+        <span style="font-size:14px;font-weight:600;color:var(--text);">${state.players[cp].name}</span>
       </div>
       
       <!-- Scanner Area -->
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;">
         <div style="text-align:center;margin-bottom:var(--sp-6);">
-          <div style="width:64px;height:64px;border-radius:50%;background:var(--surface_container);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-4);border:1px solid rgba(143,143,160,0.08);">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><line x1="20" y1="14" x2="20" y2="20"/><line x1="14" y1="20" x2="20" y2="20"/></svg>
+          <div style="width:64px;height:64px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-4);">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><line x1="20" y1="14" x2="20" y2="20"/><line x1="14" y1="20" x2="20" y2="20"/></svg>
           </div>
-          <p style="color:var(--on_surface_variant);font-size:15px;">QR-Code scannen</p>
+          <p style="color:var(--text-muted);font-size:15px;">QR-Code scannen</p>
           <p class="label_sm" style="margin-top:var(--sp-1);">Kamera auf den Code richten</p>
         </div>
         
-        <div id="qr-reader" style="width:100%;max-width:300px;border-radius:var(--r-xl);overflow:hidden;border:1px solid rgba(143,143,160,0.08);"></div>
+        <div id="qr-reader" style="width:100%;max-width:300px;border-radius:16px;overflow:hidden;"></div>
         <div id="qr-status" style="color:var(--outline);font-size:13px;margin-top:var(--sp-3);text-align:center;"></div>
       </div>
       
@@ -307,33 +306,33 @@ function renderView(el) {
       <!-- Street View Container -->
       <div id="streetview-container" style="position:absolute;top:0;left:0;right:0;bottom:0;z-index:0;"></div>
       
-      <!-- Timer — Glassmorphism HUD -->
-      <div class="glass" style="position:absolute;top:40px;right:var(--sp-4);z-index:10;border-radius:var(--r-pill);padding:var(--sp-2) var(--sp-5);display:flex;align-items:center;gap:var(--sp-2);">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--on_surface_variant)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <!-- Timer — Glass HUD -->
+      <div class="glass" style="position:absolute;top:40px;right:var(--sp-4);z-index:10;border-radius:9999px;padding:var(--sp-2) var(--sp-5);display:flex;align-items:center;gap:var(--sp-2);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <span id="timer-display" class="timer-display">${state.timer}</span>
       </div>
       
-      <!-- Round + Player — Glassmorphism HUD -->
-      <div class="glass" style="position:absolute;top:40px;left:var(--sp-4);z-index:10;border-radius:var(--r-lg);padding:var(--sp-2) var(--sp-4);display:flex;align-items:center;gap:var(--sp-3);">
-        <span class="label_sm" style="color:var(--tertiary);margin:0;">R${state.round}</span>
-        <span style="width:1px;height:14px;background:var(--outline_variant);"></span>
-        <span style="font-size:13px;font-weight:600;color:var(--on_surface);">${state.players[state.currentPlayer].name}</span>
+      <!-- Round + Player — Glass HUD -->
+      <div class="glass" style="position:absolute;top:40px;left:var(--sp-4);z-index:10;border-radius:12px;padding:var(--sp-2) var(--sp-4);display:flex;align-items:center;gap:var(--sp-3);">
+        <span class="label_sm" style="color:var(--green);margin:0;">R${state.round}</span>
+        <span style="width:1px;height:14px;background:var(--outline-soft);"></span>
+        <span style="font-size:13px;font-weight:600;color:var(--text);">${state.players[state.currentPlayer].name}</span>
       </div>
       
       <!-- Player Badges — Floating -->
-      <div class="glass" style="position:absolute;bottom:90px;left:var(--sp-4);right:var(--sp-4);z-index:10;border-radius:var(--r-xl);padding:var(--sp-3) var(--sp-4);display:flex;gap:var(--sp-2);overflow-x:auto;">
+      <div class="glass" style="position:absolute;bottom:90px;left:var(--sp-4);right:var(--sp-4);z-index:10;border-radius:16px;padding:var(--sp-3) var(--sp-4);display:flex;gap:var(--sp-2);overflow-x:auto;">
         ${state.players.map((p, i) => `
           <div class="player-badge ${i===state.currentPlayer?'active':''}" style="white-space:nowrap;">
             <div class="dot" style="background:${PLAYER_COLORS[i]};"></div>
             ${p.name}
-            <span style="font-family:Space Grotesk,sans-serif;font-weight:700;margin-left:2px;">${state.scores[i]}</span>
+            <span style="font-weight:700;margin-left:2px;">${state.scores[i]}</span>
           </div>
         `).join('')}
       </div>
       
       <!-- Skip Button -->
       <div style="position:absolute;bottom:28px;left:50%;transform:translateX(-50%);z-index:10;">
-        <button onclick="skipTimer()" class="btn btn-primary" style="padding:var(--sp-3) var(--sp-8);box-shadow:0 0 24px rgba(51,64,202,0.4);">
+        <button onclick="skipTimer()" class="btn btn-primary" style="padding:var(--sp-3) var(--sp-8);">
           Fertig
         </button>
       </div>
@@ -374,7 +373,7 @@ function skipTimer() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// ANSWER — Stadt + Land, Punkt zuweisen
+// ANSWER — Stadt + Land
 // ═══════════════════════════════════════════════════════════════
 function renderAnswer(el) {
   const loc = state.currentLocation;
@@ -386,14 +385,14 @@ function renderAnswer(el) {
       <!-- Answer Reveal -->
       <div style="text-align:center;margin-bottom:var(--sp-8);">
         <div style="width:56px;height:56px;border-radius:50%;background:rgba(166,215,0,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-4);">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--tertiary)" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>
         </div>
-        <h2 class="font-display" style="font-size:32px;font-weight:700;color:var(--tertiary);line-height:1.1;">${loc.city}</h2>
-        <p style="font-size:18px;color:var(--on_surface_variant);margin-top:var(--sp-1);font-family:Manrope,sans-serif;">${loc.country}</p>
+        <h2 style="font-size:32px;font-weight:700;color:var(--green);line-height:1.1;">${loc.city}</h2>
+        <p style="font-size:18px;color:var(--text-muted);margin-top:var(--sp-1);">${loc.country}</p>
       </div>
       
       <!-- Question -->
-      <p style="color:var(--on_surface_variant);font-size:14px;margin-bottom:var(--sp-5);text-align:center;">
+      <p style="color:var(--text-muted);font-size:14px;margin-bottom:var(--sp-5);text-align:center;">
         Wer hat den richtigen Ort?
       </p>
       
@@ -404,14 +403,12 @@ function renderAnswer(el) {
             display:flex;align-items:center;gap:var(--sp-3);
             padding:var(--sp-4) var(--sp-5);
             cursor:pointer;border:none;text-align:left;
-            border:1px solid ${i === cp ? 'rgba(166,215,0,0.2)' : 'transparent'};
             transition:all 0.2s;
-          " onmouseover="this.style.borderColor='rgba(166,215,0,0.3)'" onmouseout="this.style.borderColor='${i===cp?'rgba(166,215,0,0.2)':'transparent'}'">
-            <div style="width:28px;height:28px;border-radius:50%;background:${PLAYER_COLORS[i]};opacity:0.2;position:absolute;"></div>
-            <div style="width:28px;height:28px;border-radius:50%;background:var(--surface_container);display:flex;align-items:center;justify-content:center;font-family:Space Grotesk,sans-serif;font-size:12px;font-weight:700;color:${PLAYER_COLORS[i]};flex-shrink:0;position:relative;border:1px solid ${PLAYER_COLORS[i]}33;">${i+1}</div>
-            <span style="flex:1;font-size:15px;font-weight:600;color:var(--on_surface);">${p.name}</span>
-            ${i === cp ? '<span class="label_sm" style="color:var(--tertiary);margin:0;">DRAN</span>' : ''}
-            <span class="score-sm" style="font-size:14px;color:var(--on_surface_variant);">${state.scores[i]}</span>
+          ">
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:${PLAYER_COLORS[i]};flex-shrink:0;border:1px solid ${PLAYER_COLORS[i]}33;">${i+1}</div>
+            <span style="flex:1;font-size:15px;font-weight:600;color:var(--text);">${p.name}</span>
+            ${i === cp ? '<span class="label_sm" style="color:var(--green);margin:0;">DRAN</span>' : ''}
+            <span class="score-sm" style="font-size:14px;color:var(--text-muted);">${state.scores[i]}</span>
           </button>
         `).join('')}
       </div>
@@ -442,7 +439,7 @@ function noPoint() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// SCORE — Zwischenstand
+// SCORE
 // ═══════════════════════════════════════════════════════════════
 function renderScore(el) {
   const sorted = state.players.map((p, i) => ({ ...p, idx: i, score: state.scores[i] }))
@@ -455,7 +452,7 @@ function renderScore(el) {
       
       <!-- Header -->
       <div style="text-align:center;margin-bottom:var(--sp-8);">
-        <h2 class="font-display" style="font-size:24px;font-weight:700;color:var(--on_surface);">Scoreboard</h2>
+        <h2 style="font-size:24px;font-weight:700;color:var(--text);">Scoreboard</h2>
         <p class="label_sm" style="margin-top:var(--sp-1);">Runde ${state.round}</p>
       </div>
       
@@ -464,9 +461,9 @@ function renderScore(el) {
         ${sorted.map((p, i) => `
           <div style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-4) 0;">
             <span style="font-size:${i===0?'20':'16'}px;width:28px;text-align:center;">
-              ${i < 3 ? medals[i] : '<span style="color:var(--outline);font-family:Space Grotesk;font-size:13px;">#'+(i+1)+'</span>'}
+              ${i < 3 ? medals[i] : '<span style="color:var(--outline);font-size:13px;">#'+(i+1)+'</span>'}
             </span>
-            <span style="flex:1;font-size:15px;font-weight:600;color:var(--on_surface);">${p.name}</span>
+            <span style="flex:1;font-size:15px;font-weight:600;color:var(--text);">${p.name}</span>
             <span class="score-sm">${p.score}</span>
           </div>
           <div class="progress-bar" style="margin-bottom:var(--sp-3);">
@@ -477,7 +474,7 @@ function renderScore(el) {
       
       <!-- Next Round -->
       <div style="margin-top:auto;width:100%;max-width:380px;padding-top:var(--sp-6);">
-        <button onclick="nextRound()" class="btn btn-primary btn-lg" style="width:100%;animation:pulseGlow 2.5s ease-in-out infinite;">
+        <button onclick="nextRound()" class="btn btn-primary btn-lg" style="width:100%;">
           Nächste Runde → Runde ${state.round}
         </button>
       </div>
