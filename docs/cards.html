@@ -4,249 +4,270 @@
 <meta charset="UTF-8">
 <title>GeoCheckr — QR Karten</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="locations_db.js"></script>
 <style>
+:root { --green: #a6d700; }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:'Space Grotesk',sans-serif; background:#f5f5f5; }
-.controls { text-align:center; padding:16px; }
-.controls button { font-family:inherit; padding:12px 24px; border-radius:9999px; border:none; font-size:14px; font-weight:600; cursor:pointer; margin:0 4px; }
-.btn-shuffle { background:#e5e5ea; }
+
+.controls { text-align:center; padding:16px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+.controls button { font-family:inherit; padding:12px 24px; border-radius:9999px; border:none; font-size:14px; font-weight:600; cursor:pointer; transition:opacity .15s; }
+.controls button:hover { opacity:.85; }
+.btn-shuffle { background:#e5e5ea; color:#1C1C1E; }
 .btn-print { background:#007AFF; color:#fff; }
+.status { text-align:center; color:#8E8E93; font-size:13px; margin-bottom:8px; }
 
+/* ═══ A4 LANDSCAPE — QR PAGE ═══ */
 .a4 {
-  width: 297mm; height: 210mm;
-  background: #fff; margin: 16px auto;
-  padding: 12mm 16mm;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-  page-break-after: always;
-  display: flex; flex-direction: column;
+  width:297mm; height:210mm; background:#fff; margin:12px auto;
+  padding:12mm 16mm; box-shadow:0 2px 12px rgba(0,0,0,.08);
+  page-break-after:always; display:flex; flex-direction:column;
 }
-.header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 6mm;
-}
-.header .brand {
-  font-size: 14px; font-weight: 700; color: #111;
-  display: flex; align-items: center; gap: 6px;
-}
-.header .brand .dot { width: 6px; height: 6px; background: #a6d700; border-radius: 50%; display: inline-block; }
-.header .page { font-size: 10px; color: #999; }
-
+.a4 .hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:5mm; }
+.a4 .brand { font-size:15px; font-weight:700; color:#111; display:flex; align-items:center; gap:6px; }
+.a4 .brand .dot { width:7px; height:7px; background:var(--green); border-radius:50%; }
+.a4 .pg { font-size:10px; color:#999; }
 .qr-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(4, 1fr);
-  gap: 4mm 8mm;
-  flex: 1;
+  display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(4,1fr);
+  gap:4mm 6mm; flex:1;
 }
-.qr-cell {
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-}
+.qr-cell { display:flex; flex-direction:column; align-items:center; justify-content:center; }
 .qr-box {
-  width: 36mm; height: 36mm;
-  border: 1.5px solid #ddd;
-  border-radius: 10px;
-  overflow: hidden;
-  display: flex; align-items: center; justify-content: center;
-  padding: 4px;
+  width:38mm; height:38mm; border:1.5px solid #e0e0e0; border-radius:10px;
+  overflow:hidden; display:flex; align-items:center; justify-content:center; padding:5px; background:#fff;
 }
-.qr-box img { width: 100%; height: 100%; object-fit: contain; }
-.qr-num {
-  margin-top: 2mm;
-  font-size: 14px; font-weight: 700; color: #111;
-  display: flex; align-items: center; gap: 3px;
-}
-.qr-num .dot { width: 5px; height: 5px; background: #a6d700; border-radius: 50%; display: inline-block; }
+.qr-box img, .qr-box canvas { max-width:100%; max-height:100%; }
+.qr-num { margin-top:2mm; font-size:15px; font-weight:700; color:#111; display:flex; align-items:center; gap:3px; }
+.qr-num .dot { width:5px; height:5px; background:var(--green); border-radius:50%; }
+.a4 .ftr { font-size:8px; color:#ccc; text-align:center; margin-top:auto; padding-top:3mm; }
 
-/* City Cards Page */
-.a4-portrait {
-  width: 210mm; height: 297mm;
-  background: #fff; margin: 16px auto;
-  padding: 14mm 16mm;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-  page-break-after: always;
+/* ═══ A4 PORTRAIT — CITY CARDS ═══ */
+.a4p {
+  width:210mm; height:297mm; background:#fff; margin:12px auto;
+  padding:14mm 16mm; box-shadow:0 2px 12px rgba(0,0,0,.08);
+  page-break-after:always;
 }
+.a4p .sub { color:#888; font-size:11px; margin:3mm 0 6mm; }
 .city-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(4, 1fr);
-  gap: 6mm;
-  margin-top: 6mm;
+  display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(4,1fr);
+  gap:5mm;
 }
 .city-card {
-  border: 2px solid #111;
-  border-radius: 14px;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  padding: 12px 8px;
+  border:2px solid #111; border-radius:14px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:12px 8px;
 }
-.city-name { font-size: 18px; font-weight: 700; color: #111; }
-.city-country { font-size: 11px; color: #888; margin-top: 2px; }
-
-.footer { font-size: 8px; color: #ccc; text-align: center; margin-top: auto; padding-top: 4mm; }
+.city-name { font-size:18px; font-weight:700; color:#111; }
+.city-cty { font-size:11px; color:#888; margin-top:2px; }
 
 @media print {
-  body { background: #fff; }
-  .controls { display: none; }
-  .a4, .a4-portrait { box-shadow: none; margin: 0; }
+  body { background:#fff; }
+  .controls, .status { display:none !important; }
+  .a4, .a4p { box-shadow:none; margin:0; }
 }
 </style>
 </head>
 <body>
+
 <div class="controls">
+  <button class="btn-shuffle" onclick="doShuffle()">🔄 Shuffle</button>
   <button class="btn-print" onclick="window.print()">🖨️ Drucken</button>
 </div>
+<div class="status" id="status">16 Karten bereit zum Drucken</div>
 
 <!-- PAGE 1: QR CODES -->
-<div class="a4">
-  <div class="header">
+<div class="a4" id="page1">
+  <div class="hdr">
     <div class="brand"><span class="dot"></span>GeoCheckr</div>
-    <div class="page">1/2</div>
+    <div class="pg">1/2</div>
   </div>
-  <div class="qr-grid">
-    <div class="qr-cell">
-      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGvSURBVGiB7do7ssIwDAVQzWQBWVK2niV5AZkRtnTlD1BAZRVXRcgLJzRCimye6M8hpKSkf9EiiKv9fZXDD3pLPUMcpFnogcS50kdM4Zq9FNJE1FI3X46ot7eMkyakfllaI23ZPUkz0wZMfdxOmoiOkqv9cn3ijdIkTUH7e+XQ9wOCNAud4qlXT6QTxTeCNAMtSJ291Afb4wdU5YmHHWkOOqb7Mk8lcwVG0yRNQT27XoGPE7uGnPaKJU1BtVfbNE3W+CxD0q10GR9RgQO0PF9KmoVqPM4QvSoFKV6aJuleaulspy2dALHj4Su18R0g3U1DoV+24rMKbApnJ2kaGnU3Vs7YrrJ4a5qke2mUoU7tc2maWFKTpqAxkHhOY1Wmfc32ZXYh3UgxL0ofJNvxlhhS5mGfNAPV2Ei0hfSJ1fSoRdIcdEQrSMvu7QVpcz48aQ4aXXI83TA5St9htA8iTUHXVumrsr587skmzUJFIomqY87vM+Q8PpKmoXO/9CW1KrZCSBNSbFcJfrNELOMj6WZqARp3+mf4viJpHhrpQ2IfGf8Z8GWvmHQr/TVISUn/oC9xvbxvkFw/PwAAAABJRU5ErkJggg==" alt="QR 1"></div>
-      <div class="qr-num"><span class="dot"></span> 1</div>
+  <div class="qr-grid" id="qrGrid">
+    <div class="qr-cell" data-idx="0">
+      <div class="qr-box"><img id="qrimg1" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGvSURBVGiB7do7ssIwDAVQzWQBWVK2niV5AZkRtnTlD1BAZRVXRcgLJzRCimye6M8hpKSkf9EiiKv9fZXDD3pLPUMcpFnogcS50kdM4Zq9FNJE1FI3X46ot7eMkyakfllaI23ZPUkz0wZMfdxOmoiOkqv9cn3ijdIkTUH7e+XQ9wOCNAud4qlXT6QTxTeCNAMtSJ291Afb4wdU5YmHHWkOOqb7Mk8lcwVG0yRNQT27XoGPE7uGnPaKJU1BtVfbNE3W+CxD0q10GR9RgQO0PF9KmoVqPM4QvSoFKV6aJuleaulspy2dALHj4Su18R0g3U1DoV+24rMKbApnJ2kaGnU3Vs7YrrJ4a5qke2mUoU7tc2maWFKTpqAxkHhOY1Wmfc32ZXYh3UgxL0ofJNvxlhhS5mGfNAPV2Ei0hfSJ1fSoRdIcdEQrSMvu7QVpcz48aQ4aXXI83TA5St9htA8iTUHXVumrsr587skmzUJFIomqY87vM+Q8PpKmoXO/9CW1KrZCSBNSbFcJfrNELOMj6WZqARp3+mf4viJpHhrpQ2IfGf8Z8GWvmHQr/TVISUn/oC9xvbxvkFw/PwAAAABJRU5ErkJggg=="></div>
+      <div class="qr-num"><span class="dot"></span> <span id="qrnum1">1</span></div>
     </div>
-    <div class="qr-cell">
-      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGrSURBVGiB7dpLbsQgEATQlnyAHImrcyQOYIlAf2icSZSZFbUoFpaDH9mUgIZE+ttNSElJP6JNvBV9+7rn8Nt+R3y6SFHo5cGV+ayjewy64k0/NVIgqtGN7hFn1WCVfs3hTRMnBaRz3g2qLSImRabb8vlfsKRHaCyaPg1t0Hr8ur6SHqIiEafvbtvDGykKzTYG2UN3tzkN90aKQNvazvqqRSLO12lIepZ2XSXv3evKqcFqn0VMikDbXjlmzj1P06WTAtGsSuKbh71NTVIYuh3DprVg25qBpFC026IZNaRVk/2O6lFIUeh8rp4A16OvkaLQSNLS7XEqy4qfFIj27uul+mqDYqm0+2BDpADUdjKvHO3NMtVBuc+RQlCfgZILZLVTmdhV8FaQkALQvJDKYKP5fTApDi0xFyVrkbWQPqYh6VmarcWBzM7Q9uPa8UgR6Mpvu02U/XBNikQvfy1dy5CsTzxnvwUhBaEij0sqi7NG4I9gSWFohPhzBrbXYElP08hU8r9Fq/hXUhhq06y01W0tDtelkcLQWBxtGm5/YRb5s3wkPUTfbaSkpB/Qb0Hpygd7nxoBAAAAAElFTkSuQmCC" alt="QR 2"></div>
-      <div class="qr-num"><span class="dot"></span> 2</div>
+    <div class="qr-cell" data-idx="1">
+      <div class="qr-box"><img id="qrimg2" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGrSURBVGiB7dpLbsQgEATQlnyAHImrcyQOYIlAf2icSZSZFbUoFpaDH9mUgIZE+ttNSElJP6JNvBV9+7rn8Nt+R3y6SFHo5cGV+ayjewy64k0/NVIgqtGN7hFn1WCVfs3hTRMnBaRz3g2qLSImRabb8vlfsKRHaCyaPg1t0Hr8ur6SHqIiEafvbtvDGykKzTYG2UN3tzkN90aKQNvazvqqRSLO12lIepZ2XSXv3evKqcFqn0VMikDbXjlmzj1P06WTAtGsSuKbh71NTVIYuh3DprVg25qBpFC026IZNaRVk/2O6lFIUeh8rp4A16OvkaLQSNLS7XEqy4qfFIj27uul+mqDYqm0+2BDpADUdjKvHO3NMtVBuc+RQlCfgZILZLVTmdhV8FaQkALQvJDKYKP5fTApDi0xFyVrkbWQPqYh6VmarcWBzM7Q9uPa8UgR6Mpvu02U/XBNikQvfy1dy5CsTzxnvwUhBaEij0sqi7NG4I9gSWFohPhzBrbXYElP08hU8r9Fq/hXUhhq06y01W0tDtelkcLQWBxtGm5/YRb5s3wkPUTfbaSkpB/Qb0Hpygd7nxoBAAAAAElFTkSuQmCC"></div>
+      <div class="qr-num"><span class="dot"></span> <span id="qrnum2">2</span></div>
     </div>
-    <div class="qr-cell">
-      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGnSURBVGiB7dlBjsMgDAVQJA6QI+XqHMkHQGKC7Y9pFqN2hRefRdTCy2xcO46njK9XISUl/YlK8XVLHaM9H579bn8DR5U0C60euFvUF9srt+7pkZAmoho6O/MQP77pniDipAnpPTOwXf3ZugZpYqrl83Lvd5Kmoyia8xE3Y2qV89/6SnqIloJSWcf74os0C421EnLmYkTcF2kGqmVxePKhK1HfPaZt/w2QHqcayVZw01zWPvoBaRqq2dbht0tfESdNQws6kGhDcDumIIM0CcVZJJ/nnXw+7EhT0O7ABok28fDLq2iSHqeCIK6uBGrVSyHNQqMDuSLE3kPGV9IkFB9Xs2+RjPZxr6+kx2kk34g2ZBVNCzFpCmpDKn9z3pv9ue19JWkWOlaBvDCk38Ipr6JJepZi7LEBrZc3JsMWZ9IUNJZUvENH8tlrdiVNQhG/GEhFG/J+LyA9Tr0s2rY1jeVT2TlpDupnNvaoWzdpRZM0JR0D/1zx/uRdNEnzUAGwDmQ951ohTUSjaMZNmIL0zzQkPUxRHK1Ubm9lKwNXGpKept8uUlLSH+gfZdzOIVlnnZ8AAAAASUVORK5CYII=" alt="QR 3"></div>
-      <div class="qr-num"><span class="dot"></span> 3</div>
+    <div class="qr-cell" data-idx="2">
+      <div class="qr-box"><img id="qrimg3" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGnSURBVGiB7dlBjsMgDAVQJA6QI+XqHMkHQGKC7Y9pFqN2hRefRdTCy2xcO46njK9XISUl/YlK8XVLHaM9H579bn8DR5U0C60euFvUF9srt+7pkZAmoho6O/MQP77pniDipAnpPTOwXf3ZugZpYqrl83Lvd5Kmoyia8xE3Y2qV89/6SnqIloJSWcf74os0C421EnLmYkTcF2kGqmVxePKhK1HfPaZt/w2QHqcayVZw01zWPvoBaRqq2dbht0tfESdNQws6kGhDcDumIIM0CcVZJJ/nnXw+7EhT0O7ABok28fDLq2iSHqeCIK6uBGrVSyHNQqMDuSLE3kPGV9IkFB9Xs2+RjPZxr6+kx2kk34g2ZBVNCzFpCmpDKn9z3pv9ue19JWkWOlaBvDCk38Ipr6JJepZi7LEBrZc3JsMWZ9IUNJZUvENH8tlrdiVNQhG/GEhFG/J+LyA9Tr0s2rY1jeVT2TlpDupnNvaoWzdpRZM0JR0D/1zx/uRdNEnzUAGwDmQ951ohTUSjaMZNmIL0zzQkPUxRHK1Ubm9lKwNXGpKept8uUlLSH+gfZdzOIVlnnZ8AAAAASUVORK5CYII="></div>
+      <div class="qr-num"><span class="dot"></span> <span id="qrnum3">3</span></div>
     </div>
-    <div class="qr-cell">
-      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGmSURBVGiB7dlBjsMgDAVQSxyAI+XqORIHiOQJxh+TTBftCi++F1HbPGbzBRhG9OsSUlLSn2gTr0Ov/rWonlXHA68KaRZaPLjD1P3iVlcf2X+zV400EbXobooQzfvwnjhpQnpPQ5GqyJk0NZ0T0keSpqSeZLP1UrFywn9cX0k3UfHq+b0fXqRZaFQPVptvdpG4F2kGislnu1t0/Ai2qG97pCnoo18c3jK13W0e10hTUL0EnaMfyCLscUibwZKmoF1hlbxGLxIP0lzUwlwyHcEKpuEphTQP9WDtE5ZPB1GkSejq0T6i47fBhTQJjb7Dqs0L4JiQS6dJupdqNI2C3a1eEi0laSa6diBxkYi/8Wr2SfdSNI1rQ4ID2VgvZ0NCup1afvallWVCokhTUdwcjmB9d1vvfj1x0gw0as7AOEjHXCRNQeeUGy2+zi2u+S3ws9Mk3UtjGl7/djd9Hs1IE9BYG8ct8EutwZJmoThS+0Wi/XvMijQh7T+cVZdPI92jfZqGpJuolTeN1W+Bx3Cp+nGLI91F8SYuOw7sc7izIs1Cvy1SUtIf6B//eacam1mB8AAAAABJRU5ErkJggg==" alt="QR 4"></div>
-      <div class="qr-num"><span class="dot"></span> 4</div>
+    <div class="qr-cell" data-idx="3">
+      <div class="qr-box"><img id="qrimg4" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGmSURBVGiB7dlBjsMgDAVQSxyAI+XqORIHiOQJxh+TTBftCi++F1HbPGbzBRhG9OsSUlLSn2gTr0Ov/rWonlXHA68KaRZaPLjD1P3iVlcf2X+zV400EbXobooQzfvwnjhpQnpPQ5GqyJk0NZ0T0keSpqSeZLP1UrFywn9cX0k3UfHq+b0fXqRZaFQPVptvdpG4F2kGislnu1t0/Ai2qG97pCnoo18c3jK13W0e10hTUL0EnaMfyCLscUibwZKmoF1hlbxGLxIP0lzUwlwyHcEKpuEphTQP9WDtE5ZPB1GkSejq0T6i47fBhTQJjb7Dqs0L4JiQS6dJupdqNI2C3a1eEi0laSa6diBxkYi/8Wr2SfdSNI1rQ4ID2VgvZ0NCup1afvallWVCokhTUdwcjmB9d1vvfj1x0gw0as7AOEjHXCRNQeeUGy2+zi2u+S3ws9Mk3UtjGl7/djd9Hs1IE9BYG8ct8EutwZJmoThS+0Wi/XvMijQh7T+cVZdPI92jfZqGpJuolTeN1W+Bx3Cp+nGLI91F8SYuOw7sc7izIs1Cvy1SUtIf6B//eacam1mB8AAAAABJRU5ErkJggg=="></div>
+      <div class="qr-num"><span class="dot"></span> <span id="qrnum4">4</span></div>
     </div>
-    <div class="qr-cell">
-      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGmSURBVGiB7dpBjsMwCAVQJB+gR8rVcyQfoBIzAT4mGWnUrszie+FGyUs3CBvcin48hJSU9Cs6Jcahb39TjjlUTxmKR4O0Cx0KIPILbMp79jFJG1ELnQVW5KVl2OseZ9Jm1AL7slx8X1eknSki+XidtBdFymUu+o733/pKuokKnhm9TzFIu9DHmCshx+0BaQc6I3SIbuxzZcc7X6SNqJf4qlGL+MZWMrAsmqR7qQE8s5f8yr9j1f6kHejM0KE1k6wmn2lIupteswO/bT6BZaWSdqEo8T0XozWzTIz+7NYXkO6nmXwlzgf2vntgSffSPPa1vLuCaFfr3t/ykXQjReeMDMyfWfSxaJJup+iXvSEr1eQ6VxykjaiXIdlNX0P9zD4LSdIu1EN3GrHdzeLsXuuiSdqBSmZgeJzZlxqStANdA5tdFI3eYYcn7UFxPhVVCaIb66XXJ0rahaIh8zu5huqaSDtRkRLErPOzhqzlI2kbWtdL/FEq6krSdjTqRQsoGoBr3MpH0s3UgQd2HS5OvH6S9qEIXwQ2fmGJyR4oaRf66SAlJf2C/gD01X9/ynFwaQAAAABJRU5ErkJggg==" alt="QR 5"></div>
-      <div class="qr-num"><span class="dot"></span> 5</div>
+    <div class="qr-cell" data-idx="4">
+      <div class="qr-box"><img id="qrimg5" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGmSURBVGiB7dpBjsMwCAVQJB+gR8rVcyQfoBIzAT4mGWnUrszie+FGyUs3CBvcin48hJSU9Cs6Jcahb39TjjlUTxmKR4O0Cx0KIPILbMp79jFJG1ELnQVW5KVl2OseZ9Jm1AL7slx8X1eknSki+XidtBdFymUu+o733/pKuokKnhm9TzFIu9DHmCshx+0BaQc6I3SIbuxzZcc7X6SNqJf4qlGL+MZWMrAsmqR7qQE8s5f8yr9j1f6kHejM0KE1k6wmn2lIupteswO/bT6BZaWSdqEo8T0XozWzTIz+7NYXkO6nmXwlzgf2vntgSffSPPa1vLuCaFfr3t/ykXQjReeMDMyfWfSxaJJup+iXvSEr1eQ6VxykjaiXIdlNX0P9zD4LSdIu1EN3GrHdzeLsXuuiSdqBSmZgeJzZlxqStANdA5tdFI3eYYcn7UFxPhVVCaIb66XXJ0rahaIh8zu5huqaSDtRkRLErPOzhqzlI2kbWtdL/FEq6krSdjTqRQsoGoBr3MpH0s3UgQd2HS5OvH6S9qEIXwQ2fmGJyR4oaRf66SAlJf2C/gD01X9/ynFwaQAAAABJRU5ErkJggg=="></div>
+      <div class="qr-num"><span class="dot"></span> <span id="qrnum5">5</span></div>
     </div>
-    <div class="qr-cell">
-      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGfSURBVGiB7dlBjsMgDAVQSzlAjtSrc6QcIJIn2P4Gqo7UrvDiexG14dGNZTBU9OsQUlLSn+glEa/+vT+0nfHA0EFahR6RuNdl/pZH3fNMJ6RFqKXuoTFJ2/Nink5akPacTnkmLU3xGjNJS1KUHGrRyrDBf1xfSTdRiUg6PSJIq9ARNnZG8Y2MR5BWoP21N/bW4kuoafm0AdISVBVro/X5o5HM3j8XTdL99DmGST+L2drYJBRO0zaqpEXoNcZu39Dc54O0EF3vOXqKY6agDFs2JKS7aZacRTNqn+TfhoR0GwWIRRPtIzp+iQHSEhRvNDe7qErv+DPtpFWoH8hUce1hXiTTTlqFekQ6lzyPHe8gLULHedn7xSjIMTA1JKS7qRXadCobGxt2N9I6dEps7Glvd79xKUJagY7Aafo9z0unSbqVZsl5i686XdejP1HSKvTwtC7XHplOTCctQ7E23n4rNSnf4k7SetRTfOMi0f4esyAtSJFTrztPJ/oT0jLUAheJktF/49SPWxzpLoqRqSHJP5fbumiS7qbfBikp6Q/0D0rxCqgEyxqDAAAAAElFTkSuQmCC" alt="QR 6"></div>
-      <div class="qr-num"><span class="dot"></span> 6</div>
+    <div class="qr-cell" data-idx="5">
+      <div class="qr-box"><img id="qrimg6" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGfSURBVGiB7dlBjsMgDAVQSzlAjtSrc6QcIJIn2P4Gqo7UrvDiexG14dGNZTBU9OsQUlLSn+glEa/+vT+0nfHA0EFahR6RuNdl/pZH3fNMJ6RFqKXuoTFJ2/Nink5akPacTnkmLU3xGjNJS1KUHGrRyrDBf1xfSTdRiUg6PSJIq9ARNnZG8Y2MR5BWoP21N/bW4kuoafm0AdISVBVro/X5o5HM3j8XTdL99DmGST+L2drYJBRO0zaqpEXoNcZu39Dc54O0EF3vOXqKY6agDFs2JKS7aZacRTNqn+TfhoR0GwWIRRPtIzp+iQHSEhRvNDe7qErv+DPtpFWoH8hUce1hXiTTTlqFekQ6lzyPHe8gLULHedn7xSjIMTA1JKS7qRXadCobGxt2N9I6dEps7Glvd79xKUJagY7Aafo9z0unSbqVZsl5i686XdejP1HSKvTwtC7XHplOTCctQ7E23n4rNSnf4k7SetRTfOMi0f4esyAtSJFTrztPJ/oT0jLUAheJktF/49SPWxzpLoqRqSHJP5fbumiS7qbfBikp6Q/0D0rxCqgEyxqDAAAAAElFTkSuQmCC"></div>
+      <div class="qr-num"><span class="dot"></span> <span id="qrnum6">6</span></div>
     </div>
-    <div class="qr-cell">
-      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGfSURBVGiB7dlBjsMwCAVQJB+gR8rVfaQcIBJTAx8cdRbtKiw+i6iNX7pBYJyKfh1CSkr6Ez0l4ljf10XnKy5YGqRd6IjEHaf5S97q2p90QtqEWureNB7S+b6xP07akK6cbnkmbU1xG0+StqQoOdSileGE/7e/kj5EJSLpdokg7UIrbO0VxVcZjyDtQNdtH+xtxJdQW/u0BdI2NPyFVmk5zdl/b5qkz9IVdhaz3jglFE7TawGJJX2cev5Ua7NznxfSRlRRfOKd80JVCspw5kBC2oBGYlGQ8Uk+ZxfSBhSTYzTI7Uh9eGkO0iY0546ZZegvgLdJRUmbUEUmo18OxSApOa6QtqE2OQrWUHz+G/U4aQvqx7AFtNKZjbQOAKQdqOVPMOJnYhGkrShy6l5zFkkawyVpB1qR+1wdpKsWSVvQLLmj2udZm93Q+6RJ+iwdnlacpm+7WxwFSBvRrTfWq2DNM/SeWNIu9IzJcT9XW5A2pJovqTzFijI8B2kfauGJnVIxNP56/tziSJ+iWDmwnXkZ2m/Me9MkfZp+G6SkpD/QP/5u8nXhM8UCAAAAAElFTkSuQmCC" alt="QR 7"></div>
-      <div class="qr-num"><span class="dot"></span> 7</div>
+    <div class="qr-cell" data-idx="6">
+      <div class="qr-box"><img id="qrimg7" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGfSURBVGiB7dlBjsMwCAVQJB+gR8rVfaQcIBJTAx8cdRbtKiw+i6iNX7pBYJyKfh1CSkr6Ez0l4ljf10XnKy5YGqRd6IjEHaf5S97q2p90QtqEWureNB7S+b6xP07akK6cbnkmbU1xG0+StqQoOdSileGE/7e/kj5EJSLpdokg7UIrbO0VxVcZjyDtQNdtH+xtxJdQW/u0BdI2NPyFVmk5zdl/b5qkz9IVdhaz3jglFE7TawGJJX2cev5Ua7NznxfSRlRRfOKd80JVCspw5kBC2oBGYlGQ8Uk+ZxfSBhSTYzTI7Uh9eGkO0iY0546ZZegvgLdJRUmbUEUmo18OxSApOa6QtqE2OQrWUHz+G/U4aQvqx7AFtNKZjbQOAKQdqOVPMOJnYhGkrShy6l5zFkkawyVpB1qR+1wdpKsWSVvQLLmj2udZm93Q+6RJ+iwdnlacpm+7WxwFSBvRrTfWq2DNM/SeWNIu9IzJcT9XW5A2pJovqTzFijI8B2kfauGJnVIxNP56/tziSJ+iWDmwnXkZ2m/Me9MkfZp+G6SkpD/QP/5u8nXhM8UCAAAAAElFTkSuQmCC"></div>
+      <div class="qr-num"><span class="dot"></span> <span id="qrnum7">7</span></div>
     </div>
-    <div class="qr-cell">
-      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGgSURBVGiB7dkxDsMgDAVQSzlAjpSr50g5ABIF+38gUod2wsP3gNrwmCwTQ6z+HCYqKvoXfQxx9f99qPeJgVOHaBZ6IHHX475YU2VdGUQ0CfXUNYpF9W4P1uWiCWnP6ZJn0dSUj7lSNCVlybEWvQxv+q/7q+gmaohBlwEhmoXO8LkTxTczjhDNQPvjaOy9xTeoZfv0CdEslAeywq3Sczp6/9emKbqV9nHm7zYonqbbIW0kVnQ7jQ3ScHzuEX4Moolo3HNg02xD4UpjGd6jIRHdTePwhbnYOT0CzBDNQKsX34FD82gf2fFbzIrmoNHio/jiV1wAL7tpFU1CPZjTaBXRSBoLUjQPLWPTnDcexr7yfDX7orvp69DMdBbW52gkRVNQLzQHz5pYhmgqGlccHVS+55BnUNzZi2agMx42+/MgPWtRNAUdJXe9ynBW5dJpim6nR6Q1viv3WNPpVVlFE9G5N/rOuah4xZ2i+Sjfc7hIPCvfc6IJaX/gYPya/YloGuqBJxVfWGK55/TLK050F+UMyrCOtp89pGge+muIior+QT//WdVHrEvwAwAAAABJRU5ErkJggg==" alt="QR 8"></div>
-      <div class="qr-num"><span class="dot"></span> 8</div>
+    <div class="qr-cell" data-idx="7">
+      <div class="qr-box"><img id="qrimg8" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGgSURBVGiB7dkxDsMgDAVQSzlAjpSr50g5ABIF+38gUod2wsP3gNrwmCwTQ6z+HCYqKvoXfQxx9f99qPeJgVOHaBZ6IHHX475YU2VdGUQ0CfXUNYpF9W4P1uWiCWnP6ZJn0dSUj7lSNCVlybEWvQxv+q/7q+gmaohBlwEhmoXO8LkTxTczjhDNQPvjaOy9xTeoZfv0CdEslAeywq3Sczp6/9emKbqV9nHm7zYonqbbIW0kVnQ7jQ3ScHzuEX4Moolo3HNg02xD4UpjGd6jIRHdTePwhbnYOT0CzBDNQKsX34FD82gf2fFbzIrmoNHio/jiV1wAL7tpFU1CPZjTaBXRSBoLUjQPLWPTnDcexr7yfDX7orvp69DMdBbW52gkRVNQLzQHz5pYhmgqGlccHVS+55BnUNzZi2agMx42+/MgPWtRNAUdJXe9ynBW5dJpim6nR6Q1viv3WNPpVVlFE9G5N/rOuah4xZ2i+Sjfc7hIPCvfc6IJaX/gYPya/YloGuqBJxVfWGK55/TLK050F+UMyrCOtp89pGge+muIior+QT//WdVHrEvwAwAAAABJRU5ErkJggg=="></div>
+      <div class="qr-num"><span class="dot"></span> <span id="qrnum8">8</span></div>
     </div>
-    <div class="qr-cell">
-      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGxSURBVGiB7doxksMgDAVQzXAAHylX95E4ADOskb4EtrdIKlR8FST2PldagcCR/nUIKSnpT7QK4jOuP7XY0E+5viEKaRZakDhTvYkq3NOPSpqIaurW2x7X4yPjpAmp3ZYxkY7sHqSZ6QCqXo+TJqKz5K758r7izdIkTUHjb7X054AgzUKXaNfdA+lE8c0gzUArUqcf18LWbEBVHljsSHPQMYpe1LUrWSuwFtIk1KqtxZrWjGjGkdMoQ9LdtN8nyKWbvOJdhqRbacVty6dV4ASecdIkVLwr8YK8LXu3SZN0Oy3dNmTYmpWOHjJ2auv/AGkG6l5bE63AcYlvB2kaKgjNHzLZYs/2mDRJt9Pel9NEeU6aaFdIU1A/i4oDYA178oxGkjQL9TeVzc8VvSCtEt/zK+lGqt29VZueT+klInpI0gx0hu+hvZvUPh+eNAedDYmfJqJztNVN/u1dSHfRYmnFElejA4nhXCqWdDsV8STaGSKqEhX4bB9Jc9B1vsQLF+smSRNSTJCaULQmGrf2kXQz1UCfH10Jps94H0aagnr6jPa2/DLgeQBMupt+G6SkpD/QP/6dioOEczFwAAAAAElFTkSuQmCC" alt="QR 9"></div>
-      <div class="qr-num"><span class="dot"></span> 9</div>
+    <div class="qr-cell" data-idx="8">
+      <div class="qr-box"><img id="qrimg9" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGxSURBVGiB7doxksMgDAVQzXAAHylX95E4ADOskb4EtrdIKlR8FST2PldagcCR/nUIKSnpT7QK4jOuP7XY0E+5viEKaRZakDhTvYkq3NOPSpqIaurW2x7X4yPjpAmp3ZYxkY7sHqSZ6QCqXo+TJqKz5K758r7izdIkTUHjb7X054AgzUKXaNfdA+lE8c0gzUArUqcf18LWbEBVHljsSHPQMYpe1LUrWSuwFtIk1KqtxZrWjGjGkdMoQ9LdtN8nyKWbvOJdhqRbacVty6dV4ASecdIkVLwr8YK8LXu3SZN0Oy3dNmTYmpWOHjJ2auv/AGkG6l5bE63AcYlvB2kaKgjNHzLZYs/2mDRJt9Pel9NEeU6aaFdIU1A/i4oDYA178oxGkjQL9TeVzc8VvSCtEt/zK+lGqt29VZueT+klInpI0gx0hu+hvZvUPh+eNAedDYmfJqJztNVN/u1dSHfRYmnFElejA4nhXCqWdDsV8STaGSKqEhX4bB9Jc9B1vsQLF+smSRNSTJCaULQmGrf2kXQz1UCfH10Jps94H0aagnr6jPa2/DLgeQBMupt+G6SkpD/QP/6dioOEczFwAAAAAElFTkSuQmCC"></div>
+      <div class="qr-num"><span class="dot"></span> <span id="qrnum9">9</span></div>
     </div>
-    <div class="qr-cell">
-      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGfSURBVGiB7dhBjsMgDAVQpBwgR8rVOVIOgOQW2984VRftCi++F4yGPGbjwRia/ByNlJT0L3o3j2v+Pgfppw/4dJBWoYcn7rrVj/ZWI680QlqEaure1BdJf0/k5aQF6cxpyjNpaYpprCQtSbHlsBd1G3b4r/WVdBNtHkHT4EFaha7Qb6dvvpVxD9IKdE5bY68tfnOVyqd+IK1BtUrO4RwolZrT6P0f9ZV0L51VEXcxWxTJtkta/h8g3Utl5OvzDM8zBtJqdFXJc6CQNmzDHg0J6W56o7vX0Mopa0OuIK1ADQgae7SPSLZOHqRFaPT01pBgQMePw460Bl3NPlpFbyRbSjtpDSpr2qnnVB7LSUtQ24bDaqOWyLSoRSNJWoJa/uYPPE3hYMPpRlqHxhNH+I+3X3+zJ61AV8TVbF2k114kLUFjy1mLL5Ke6+1xMfcupJupN/v6xKGR04nlpGVoS7URrQky/pFY0ir09s4R78GSnkJIq9Ho+DXF/dGfkJahGimxHoffAr4ccaS7KL5cj8PO/kZ/Fk3S3fTXICUl/YO+AHYXPhoK6JLvAAAAAElFTkSuQmCC" alt="QR 10"></div>
-      <div class="qr-num"><span class="dot"></span> 10</div>
+    <div class="qr-cell" data-idx="9">
+      <div class="qr-box"><img id="qrimg10" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGfSURBVGiB7dhBjsMgDAVQpBwgR8rVOVIOgOQW2984VRftCi++F4yGPGbjwRia/ByNlJT0L3o3j2v+Pgfppw/4dJBWoYcn7rrVj/ZWI680QlqEaure1BdJf0/k5aQF6cxpyjNpaYpprCQtSbHlsBd1G3b4r/WVdBNtHkHT4EFaha7Qb6dvvpVxD9IKdE5bY68tfnOVyqd+IK1BtUrO4RwolZrT6P0f9ZV0L51VEXcxWxTJtkta/h8g3Utl5OvzDM8zBtJqdFXJc6CQNmzDHg0J6W56o7vX0Mopa0OuIK1ADQgae7SPSLZOHqRFaPT01pBgQMePw460Bl3NPlpFbyRbSjtpDSpr2qnnVB7LSUtQ24bDaqOWyLSoRSNJWoJa/uYPPE3hYMPpRlqHxhNH+I+3X3+zJ61AV8TVbF2k114kLUFjy1mLL5Ke6+1xMfcupJupN/v6xKGR04nlpGVoS7URrQky/pFY0ir09s4R78GSnkJIq9Ho+DXF/dGfkJahGimxHoffAr4ccaS7KL5cj8PO/kZ/Fk3S3fTXICUl/YO+AHYXPhoK6JLvAAAAAElFTkSuQmCC"></div>
+      <div class="qr-num"><span class="dot"></span> <span id="qrnum10">10</span></div>
     </div>
-    <div class="qr-cell">
-      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGoSURBVGiB7djLbQQhDAZgSxSwJdH6lDQFjOQEP0F5aPdkH34Ooyx8nBwbA/Hbg0BBQT+iN9mY/Kyfg/l6sX58aYB2ocMCN1nWFpX1l80ZAW1CBdBcIZ7+UxdiDrQb/U5DCecWZ9C+lDdvaQjajnokH+1PrHL+W19BiyjZmFolj48N0C40h6YcWSN50dgXQVvQAFI56fVs3gspaBcqM7dXSTvYhsc5rmugLWhMryE7/eM7z4s0aDGV5NNN10pD2SRvH+wRB+1B2dYsfjdpIdW3j+2wA+1C54rcJeH0Fw+N+C/1FbSY2vR9vk8xsyUkgXajedhp5ZyZkFvRBK2lfsR5EP2T7WMEFrScMrMFUSpntCFRNPNJEbScRmAz77KQ6uPij/8B0Cp6XKSzadSdmpV7sw9aSo9exPtFijHYBmgHmuM806Ltp3j2AC2nEcSZZ5p7z0XQNtQSzR7p42OXNNBulLRe6qZnU/rXeTUD7UH9uWrv/ekomqB9qCekRNfPOfJMBW1CZdhx5g8gup3kArClIWgx9ZUsmtGGyPwfvQtoBX13gIKCfkC/AEQ6gQXWEoJHAAAAAElFTkSuQmCC" alt="QR 11"></div>
-      <div class="qr-num"><span class="dot"></span> 11</div>
+    <div class="qr-cell" data-idx="10">
+      <div class="qr-box"><img id="qrimg11" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGoSURBVGiB7djLbQQhDAZgSxSwJdH6lDQFjOQEP0F5aPdkH34Ooyx8nBwbA/Hbg0BBQT+iN9mY/Kyfg/l6sX58aYB2ocMCN1nWFpX1l80ZAW1CBdBcIZ7+UxdiDrQb/U5DCecWZ9C+lDdvaQjajnokH+1PrHL+W19BiyjZmFolj48N0C40h6YcWSN50dgXQVvQAFI56fVs3gspaBcqM7dXSTvYhsc5rmugLWhMryE7/eM7z4s0aDGV5NNN10pD2SRvH+wRB+1B2dYsfjdpIdW3j+2wA+1C54rcJeH0Fw+N+C/1FbSY2vR9vk8xsyUkgXajedhp5ZyZkFvRBK2lfsR5EP2T7WMEFrScMrMFUSpntCFRNPNJEbScRmAz77KQ6uPij/8B0Cp6XKSzadSdmpV7sw9aSo9exPtFijHYBmgHmuM806Ltp3j2AC2nEcSZZ5p7z0XQNtQSzR7p42OXNNBulLRe6qZnU/rXeTUD7UH9uWrv/ekomqB9qCekRNfPOfJMBW1CZdhx5g8gup3kArClIWgx9ZUsmtGGyPwfvQtoBX13gIKCfkC/AEQ6gQXWEoJHAAAAAElFTkSuQmCC"></div>
+      <div class="qr-num"><span class="dot"></span> <span id="qrnum11">11</span></div>
     </div>
-    <div class="qr-cell">
-      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGtSURBVGiB7dlNjsMgDAVgSzlAj8TVcyQOgEQbP/+QjmbUbgYvHgvUwJeVZcdQmR8PISUl/Yp2sdHmuB6POc/HxORbB2kVeljg2tS9i+r+w9aMkBahCqRdIW7+iI1YI61GX2mo4VziTFqXzsVbGpKWox7Jgf7EKuef9ZV0ExUbDVXyNtkgrUJzIOXEGslTjnWTtAQNoJVTHmPxXkhJC1Ht7vFsH7bD4xzHNdIaNKuk+hGTv7kepEn3Uh3dAvtqQwa+arj70JjiF2kFGu0jTmX6kqfm+rEjrUD1AcfnWO42vRVN0u0UkfTT9HI/pcHWhBTSMtTjd/o9Bypny4RciibpXnrNdjU1rJHUKdvHLJqkFahmG35FGxIRzytF0u00mn3cAmfH72tvRZN0J50j8i6uPaYXTWRlFE3S3bTfm33EVGLYLmkNmiMy8Mzki1wkLUEjiK3H5N5zkbQM9TTUvuOMl+yQRlqNyr0XSYVft1McaRGq0UWIrfdHLmbRJK1Du/m5fufEM5W0CNVhRdP/XMHr2lL+bPZJt1HfiV4k2xBd/7V3If1/+ukgJSX9gj4By2zabyPA6L8AAAAASUVORK5CYII=" alt="QR 12"></div>
-      <div class="qr-num"><span class="dot"></span> 12</div>
+    <div class="qr-cell" data-idx="11">
+      <div class="qr-box"><img id="qrimg12" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGtSURBVGiB7dlNjsMgDAVgSzlAj8TVcyQOgEQbP/+QjmbUbgYvHgvUwJeVZcdQmR8PISUl/Yp2sdHmuB6POc/HxORbB2kVeljg2tS9i+r+w9aMkBahCqRdIW7+iI1YI61GX2mo4VziTFqXzsVbGpKWox7Jgf7EKuef9ZV0ExUbDVXyNtkgrUJzIOXEGslTjnWTtAQNoJVTHmPxXkhJC1Ht7vFsH7bD4xzHNdIaNKuk+hGTv7kepEn3Uh3dAvtqQwa+arj70JjiF2kFGu0jTmX6kqfm+rEjrUD1AcfnWO42vRVN0u0UkfTT9HI/pcHWhBTSMtTjd/o9Bypny4RciibpXnrNdjU1rJHUKdvHLJqkFahmG35FGxIRzytF0u00mn3cAmfH72tvRZN0J50j8i6uPaYXTWRlFE3S3bTfm33EVGLYLmkNmiMy8Mzki1wkLUEjiK3H5N5zkbQM9TTUvuOMl+yQRlqNyr0XSYVft1McaRGq0UWIrfdHLmbRJK1Du/m5fufEM5W0CNVhRdP/XMHr2lL+bPZJt1HfiV4k2xBd/7V3If1/+ukgJSX9gj4By2zabyPA6L8AAAAASUVORK5CYII="></div>
+      <div class="qr-num"><span class="dot"></span> <span id="qrnum12">12</span></div>
     </div>
-    <div class="qr-cell">
-      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGVSURBVGiB7dkxEoMwDARAz/AAnsTXeRIP8IwC0p2lIkVSoeJUkATWlUf2mQz7uYaoqOhf9Bqo4/n9XOzcceGjTbQL3TBxx+V+jlvNOjKIaBPqU3dTDLLzvlGHizakz5yWeRZtTXmbI0VbUrYce9Hb8KT/ur6KvkQHatFyQYl2oVn+bEfz5YyjRDvQ53YEe4/4A6osn/5AtAVluse3DJIr+69FU7QDZfP57gbF0zSeivagDvyHDxrIInkR7URHab779lz32IZnyS6i71KbxXP5NDZklmgLauvQjIYsR+ojjgKbaBMaG9tAKlkXJn5udqItqM1yhuaONwdivzekaC8aid8smy/6EzveJtqE+qeh7yI+Gg9ksV6eQ7QLzUZbYA0S7UYzhqzZjdhPinf2oh1o1sWjWR6ksxdFW9DVcrmxITkypGTSFH2dbgZgNYFgOr0rTbQR5dqIIFlUbHG7aD+aQXJl/yjRhpQve6PvYjqZT0TbUC8kR8M/LDHc5/TLFif6FuWTEkh4SOMrfNEu9NcSFRX9g34AWWp67E9RDO8AAAAASUVORK5CYII=" alt="QR 13"></div>
-      <div class="qr-num"><span class="dot"></span> 13</div>
+    <div class="qr-cell" data-idx="12">
+      <div class="qr-box"><img id="qrimg13" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGVSURBVGiB7dkxEoMwDARAz/AAnsTXeRIP8IwC0p2lIkVSoeJUkATWlUf2mQz7uYaoqOhf9Bqo4/n9XOzcceGjTbQL3TBxx+V+jlvNOjKIaBPqU3dTDLLzvlGHizakz5yWeRZtTXmbI0VbUrYce9Hb8KT/ur6KvkQHatFyQYl2oVn+bEfz5YyjRDvQ53YEe4/4A6osn/5AtAVluse3DJIr+69FU7QDZfP57gbF0zSeivagDvyHDxrIInkR7URHab779lz32IZnyS6i71KbxXP5NDZklmgLauvQjIYsR+ojjgKbaBMaG9tAKlkXJn5udqItqM1yhuaONwdivzekaC8aid8smy/6EzveJtqE+qeh7yI+Gg9ksV6eQ7QLzUZbYA0S7UYzhqzZjdhPinf2oh1o1sWjWR6ksxdFW9DVcrmxITkypGTSFH2dbgZgNYFgOr0rTbQR5dqIIFlUbHG7aD+aQXJl/yjRhpQve6PvYjqZT0TbUC8kR8M/LDHc5/TLFif6FuWTEkh4SOMrfNEu9NcSFRX9g34AWWp67E9RDO8AAAAASUVORK5CYII="></div>
+      <div class="qr-num"><span class="dot"></span> <span id="qrnum13">13</span></div>
     </div>
-    <div class="qr-cell">
-      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAG2SURBVGiB7Zo9ssMgDIQ1wwE4kq+eI3EAZnhGPyDjVySVVKwKjPHnNDuIlRwaXwcBBQr0J7SRxjXvr1ZkGB+6ZxoFaBa0qHBCjU5M6RpfGtBEKEvnly3u16fiQBOiskwzkU51K9DM6ASYer0ONBG6t9ydL58n3t6aQFOg61kr4xw0gGZBXfR7taqcuvl2AM2ANpWOL/fB1mXQXVn1sAOaBNWTbM9kcDvQn4ZAQ9EZHzP77EpE4iHCnjsWaDxaV/ns3OR6UIFmQiVzWqrkmWnaST0k0Azo8h0sopZmmi/f+RVoOCqasnMUwDoeUql5YYEGo+pFtD9fWeI5kB1x3mkCDUZXvSzCspLdsumZNIEGo6RNw9XxPZKmaykCDUeL029XZWPYR7HTkAANRjU3dpWTn32EH8+kCTQeHavPIYV07Xa/PSTQDOgOq6HVNLrfAJoF3Zq2Ik0qdY5yutFhSIDGolpIyw68eNZW+WxVANA0KDmXuH3+8pDePgJNg64+R7OSWj5m/iMs0HDUNiSRfrPUeLY9gMaiAsgRt1zJaEtsoHlQk0/Q0d0/A94NYKCx6LcBFCjQH9A/0cRuYxgux6AAAAAASUVORK5CYII=" alt="QR 14"></div>
-      <div class="qr-num"><span class="dot"></span> 14</div>
+    <div class="qr-cell" data-idx="13">
+      <div class="qr-box"><img id="qrimg14" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAG2SURBVGiB7Zo9ssMgDIQ1wwE4kq+eI3EAZnhGPyDjVySVVKwKjPHnNDuIlRwaXwcBBQr0J7SRxjXvr1ZkGB+6ZxoFaBa0qHBCjU5M6RpfGtBEKEvnly3u16fiQBOiskwzkU51K9DM6ASYer0ONBG6t9ydL58n3t6aQFOg61kr4xw0gGZBXfR7taqcuvl2AM2ANpWOL/fB1mXQXVn1sAOaBNWTbM9kcDvQn4ZAQ9EZHzP77EpE4iHCnjsWaDxaV/ns3OR6UIFmQiVzWqrkmWnaST0k0Azo8h0sopZmmi/f+RVoOCqasnMUwDoeUql5YYEGo+pFtD9fWeI5kB1x3mkCDUZXvSzCspLdsumZNIEGo6RNw9XxPZKmaykCDUeL029XZWPYR7HTkAANRjU3dpWTn32EH8+kCTQeHavPIYV07Xa/PSTQDOgOq6HVNLrfAJoF3Zq2Ik0qdY5yutFhSIDGolpIyw68eNZW+WxVANA0KDmXuH3+8pDePgJNg64+R7OSWj5m/iMs0HDUNiSRfrPUeLY9gMaiAsgRt1zJaEtsoHlQk0/Q0d0/A94NYKCx6LcBFCjQH9A/0cRuYxgux6AAAAAASUVORK5CYII="></div>
+      <div class="qr-num"><span class="dot"></span> <span id="qrnum14">14</span></div>
     </div>
-    <div class="qr-cell">
-      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGkSURBVGiB7Zk9soMwDIQ1wwE4ElfPkXwAZvSw/s1rksoqVoUJ5iPNjqSVIf46CChQoD+hgyyueX+NQxf+0PPL4gDaBT1MOKX4JqFsTy4DaCNUpKvbHs/rU3GgDVHdpllIp7on0M7oBIT69zrQRmim3FMv146XqQm0BRrPxsHvxQJoF7TE/eyeJqclXwbQDugw6eTyNLZbF8vK05od0B6o97TFgVDEVNeLJtAOqIYmn9+K4qZpZCzQ3ah0sjPG5+Immd8ZC3Q36jvCWwYmMHW+GGgXNITlmKFr26tFE2gHNB2IAd7sdFKrwgLdi0ZPk+1JaQZ+yFtctY9A96Kqnx9IkSp5WzV9FU2g29EwJFk5l6JpIzXQJqhn4E3V7PtHsVd9BbobrV4kfL7yXIsm0AaoW3yutt8iPCTQDmiGNzszja440EZo2pBBfuxLi0m55I+AtkAPlTU/qbimvnxKxgLdjhIVEcPnh4dcnSbQNmjWS+14NmYDbYiacxRBzZpILCf7QDejEipsvJm+8jUXAN2KunwmrB+A6CIPGGgX9NsAChToD+gf4QrkwKxYeCsAAAAASUVORK5CYII=" alt="QR 15"></div>
-      <div class="qr-num"><span class="dot"></span> 15</div>
+    <div class="qr-cell" data-idx="14">
+      <div class="qr-box"><img id="qrimg15" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGkSURBVGiB7Zk9soMwDIQ1wwE4ElfPkXwAZvSw/s1rksoqVoUJ5iPNjqSVIf46CChQoD+hgyyueX+NQxf+0PPL4gDaBT1MOKX4JqFsTy4DaCNUpKvbHs/rU3GgDVHdpllIp7on0M7oBIT69zrQRmim3FMv146XqQm0BRrPxsHvxQJoF7TE/eyeJqclXwbQDugw6eTyNLZbF8vK05od0B6o97TFgVDEVNeLJtAOqIYmn9+K4qZpZCzQ3ah0sjPG5+Immd8ZC3Q36jvCWwYmMHW+GGgXNITlmKFr26tFE2gHNB2IAd7sdFKrwgLdi0ZPk+1JaQZ+yFtctY9A96Kqnx9IkSp5WzV9FU2g29EwJFk5l6JpIzXQJqhn4E3V7PtHsVd9BbobrV4kfL7yXIsm0AaoW3yutt8iPCTQDmiGNzszja440EZo2pBBfuxLi0m55I+AtkAPlTU/qbimvnxKxgLdjhIVEcPnh4dcnSbQNmjWS+14NmYDbYiacxRBzZpILCf7QDejEipsvJm+8jUXAN2KunwmrB+A6CIPGGgX9NsAChToD+gf4QrkwKxYeCsAAAAASUVORK5CYII="></div>
+      <div class="qr-num"><span class="dot"></span> <span id="qrnum15">15</span></div>
     </div>
-    <div class="qr-cell">
-      <div class="qr-box"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGpSURBVGiB7dhBjsMwCAVQJB8gR/LVc6QeIBLTwMc4aTRqV2bxWURp/LpCYGzRr0NISUl/oi9BdD3On01139QfsdRIq9CGxHW1tZPa+oZvIKRFqAHpZ4p7/PSF8Y20Gn2XoaVzyjNpXaqTRxmSlqORycPnE3TOf/sr6SIqiO5d8vJAkFahGV5ygkFylzYvkpagA1jnlO2YfDRS0jK0KcaQeMOeNlI891fSxVTeJWfp9C0uHzGVzP2VdDHFMczD/nSG333Ygr+RFqGCQPEh2XLd7EgrUMWeZjnF50j2rWmSLqfxBWfovJ9SVRSkkJahgj3N6y53vCzI0TRJV9MoQ0z8G/6kOT5+NE3SdVRj5NBxAXxpmpj9SSvQy0AyT/yvFpeLj7ML6QpqhbbF3DEOaWifcmuapGvpLbGxseU3BGkFmhHA626M/TKuPUiX05HEnm8xhkQtkpahKDSbO+ZB0hN7a5qky6mgX35cV/kbaUXqo4nGPneG1WI2TdI61M9iFnF83kWiUkmLUIu89sha9HP1U38lXURjxYePLU9l7eECmHQt/TZISUl/oH9DQMwkIhgxHgAAAABJRU5ErkJggg==" alt="QR 16"></div>
-      <div class="qr-num"><span class="dot"></span> 16</div>
+    <div class="qr-cell" data-idx="15">
+      <div class="qr-box"><img id="qrimg16" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQMAAABB54RGAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP//8i138cAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAGpSURBVGiB7dhBjsMwCAVQJB8gR/LVc6QeIBLTwMc4aTRqV2bxWURp/LpCYGzRr0NISUl/oi9BdD3On01139QfsdRIq9CGxHW1tZPa+oZvIKRFqAHpZ4p7/PSF8Y20Gn2XoaVzyjNpXaqTRxmSlqORycPnE3TOf/sr6SIqiO5d8vJAkFahGV5ygkFylzYvkpagA1jnlO2YfDRS0jK0KcaQeMOeNlI891fSxVTeJWfp9C0uHzGVzP2VdDHFMczD/nSG333Ygr+RFqGCQPEh2XLd7EgrUMWeZjnF50j2rWmSLqfxBWfovJ9SVRSkkJahgj3N6y53vCzI0TRJV9MoQ0z8G/6kOT5+NE3SdVRj5NBxAXxpmpj9SSvQy0AyT/yvFpeLj7ML6QpqhbbF3DEOaWifcmuapGvpLbGxseU3BGkFmhHA626M/TKuPUiX05HEnm8xhkQtkpahKDSbO+ZB0hN7a5qky6mgX35cV/kbaUXqo4nGPneG1WI2TdI61M9iFnF83kWiUkmLUIu89sha9HP1U38lXURjxYePLU9l7eECmHQt/TZISUl/oH9DQMwkIhgxHgAAAABJRU5ErkJggg=="></div>
+      <div class="qr-num"><span class="dot"></span> <span id="qrnum16">16</span></div>
     </div>
   </div>
-  <div class="footer">geocheckr.app — Scan. Guess. Win.</div>
+  <div class="ftr">geocheckr.app — Scan. Guess. Win.</div>
 </div>
 
 <!-- PAGE 2: CITY CARDS -->
-<div class="a4-portrait">
-  <div class="header">
+<div class="a4p" id="page2">
+  <div class="hdr">
     <div class="brand">🌍 City Cards</div>
-    <div class="page">2/2</div>
+    <div class="pg">2/2</div>
   </div>
-  <p style="color:#888; font-size:11px; margin-bottom:4mm;">Jeder Spieler legt EINE Karte offen auf den Tisch. Wer die Stadt errät, kriegt die Karte!</p>
-  <div class="city-grid">
-    <div class="city-card">
+  <p class="sub">Jeder Spieler legt EINE Karte offen auf den Tisch. Wer die Stadt errät, kriegt die Karte!</p>
+  <div class="city-grid" id="cityGrid">
+    <div class="city-card" data-idx="0">
       <div class="city-name">Sarajevo</div>
-      <div class="city-country">Bosnien</div>
+      <div class="city-cty">Bosnien</div>
     </div>
-    <div class="city-card">
+    <div class="city-card" data-idx="1">
       <div class="city-name">Belgrad</div>
-      <div class="city-country">Serbien</div>
+      <div class="city-cty">Serbien</div>
     </div>
-    <div class="city-card">
+    <div class="city-card" data-idx="2">
       <div class="city-name">Wien</div>
-      <div class="city-country">Oesterreich</div>
+      <div class="city-cty">Oesterreich</div>
     </div>
-    <div class="city-card">
+    <div class="city-card" data-idx="3">
       <div class="city-name">Brest</div>
-      <div class="city-country">Belarus</div>
+      <div class="city-cty">Belarus</div>
     </div>
-    <div class="city-card">
+    <div class="city-card" data-idx="4">
       <div class="city-name">Kharg</div>
-      <div class="city-country">Iran</div>
+      <div class="city-cty">Iran</div>
     </div>
-    <div class="city-card">
+    <div class="city-card" data-idx="5">
       <div class="city-name">Siem Reap</div>
-      <div class="city-country">Kambodscha</div>
+      <div class="city-cty">Kambodscha</div>
     </div>
-    <div class="city-card">
+    <div class="city-card" data-idx="6">
       <div class="city-name">Sapporo</div>
-      <div class="city-country">Japan</div>
+      <div class="city-cty">Japan</div>
     </div>
-    <div class="city-card">
+    <div class="city-card" data-idx="7">
       <div class="city-name">Lyon</div>
-      <div class="city-country">Frankreich</div>
+      <div class="city-cty">Frankreich</div>
     </div>
-    <div class="city-card">
+    <div class="city-card" data-idx="8">
       <div class="city-name">Lemvig</div>
-      <div class="city-country">Daenemark</div>
+      <div class="city-cty">Daenemark</div>
     </div>
-    <div class="city-card">
+    <div class="city-card" data-idx="9">
       <div class="city-name">Bukarest</div>
-      <div class="city-country">Rumaenien</div>
+      <div class="city-cty">Rumaenien</div>
     </div>
-    <div class="city-card">
+    <div class="city-card" data-idx="10">
       <div class="city-name">Birmingham</div>
-      <div class="city-country">UK</div>
+      <div class="city-cty">UK</div>
     </div>
-    <div class="city-card">
+    <div class="city-card" data-idx="11">
       <div class="city-name">Tunis</div>
-      <div class="city-country">Tunesien</div>
+      <div class="city-cty">Tunesien</div>
     </div>
-    <div class="city-card">
+    <div class="city-card" data-idx="12">
       <div class="city-name">Athen</div>
-      <div class="city-country">Griechenland</div>
+      <div class="city-cty">Griechenland</div>
     </div>
-    <div class="city-card">
+    <div class="city-card" data-idx="13">
       <div class="city-name">Darwin</div>
-      <div class="city-country">Australien</div>
+      <div class="city-cty">Australien</div>
     </div>
-    <div class="city-card">
+    <div class="city-card" data-idx="14">
       <div class="city-name">Panama-Stadt</div>
-      <div class="city-country">Panama</div>
+      <div class="city-cty">Panama</div>
     </div>
-    <div class="city-card">
+    <div class="city-card" data-idx="15">
       <div class="city-name">Prag</div>
-      <div class="city-country">Tschechien</div>
+      <div class="city-cty">Tschechien</div>
     </div>
   </div>
-  <div class="footer">geocheckr.app — Scan. Guess. Win.</div>
+  <div class="ftr">geocheckr.app — Scan. Guess. Win.</div>
 </div>
 
+<script>
+const LOCS = [{"city": "Berlin", "country": "Deutschland"}, {"city": "London", "country": "UK"}, {"city": "Paris", "country": "Frankreich"}, {"city": "Madrid", "country": "Spanien"}, {"city": "Rom", "country": "Italien"}, {"city": "Amsterdam", "country": "Niederlande"}, {"city": "Wien", "country": "Oesterreich"}, {"city": "Zuerich", "country": "Schweiz"}, {"city": "Prag", "country": "Tschechien"}, {"city": "Budapest", "country": "Ungarn"}, {"city": "Warschau", "country": "Polen"}, {"city": "Stockholm", "country": "Schweden"}, {"city": "Oslo", "country": "Norwegen"}, {"city": "Kopenhagen", "country": "Daenemark"}, {"city": "Helsinki", "country": "Finnland"}, {"city": "Lissabon", "country": "Portugal"}, {"city": "Dublin", "country": "Irland"}, {"city": "Bruesel", "country": "Belgien"}, {"city": "Muenchen", "country": "Deutschland"}, {"city": "Hamburg", "country": "Deutschland"}, {"city": "Barcelona", "country": "Spanien"}, {"city": "Mailand", "country": "Italien"}, {"city": "Athen", "country": "Griechenland"}, {"city": "Istanbul", "country": "Tuerkei"}, {"city": "Moskau", "country": "Russland"}, {"city": "St. Petersburg", "country": "Russland"}, {"city": "Bukarest", "country": "Rumaenien"}, {"city": "Sofia", "country": "Bulgarien"}, {"city": "Belgrad", "country": "Serbien"}, {"city": "Zagreb", "country": "Kroatien"}, {"city": "Tallinn", "country": "Estland"}, {"city": "Riga", "country": "Lettland"}, {"city": "Vilnius", "country": "Litauen"}, {"city": "Reykjavik", "country": "Island"}, {"city": "Venedig", "country": "Italien"}, {"city": "Lyon", "country": "Frankreich"}, {"city": "Edinburgh", "country": "UK"}, {"city": "Tromsoe", "country": "Norwegen"}, {"city": "Murmansk", "country": "Russland"}, {"city": "Tokyo", "country": "Japan"}, {"city": "Seoul", "country": "Suedkorea"}, {"city": "Beijing", "country": "China"}, {"city": "Shanghai", "country": "China"}, {"city": "Hongkong", "country": "China"}, {"city": "Bangkok", "country": "Thailand"}, {"city": "Singapur", "country": "Singapur"}, {"city": "Mumbai", "country": "Indien"}, {"city": "Delhi", "country": "Indien"}, {"city": "Kolkata", "country": "Indien"}, {"city": "Chennai", "country": "Indien"}, {"city": "Taipei", "country": "Taiwan"}, {"city": "Dubai", "country": "VAE"}, {"city": "Jerusalem", "country": "Israel"}, {"city": "Hanoi", "country": "Vietnam"}, {"city": "Manila", "country": "Philippinen"}, {"city": "Jakarta", "country": "Indonesien"}, {"city": "Kuala Lumpur", "country": "Malaysia"}, {"city": "Sapporo", "country": "Japan"}, {"city": "Osaka", "country": "Japan"}, {"city": "Chengdu", "country": "China"}, {"city": "Guangzhou", "country": "China"}, {"city": "Urumqi", "country": "China"}, {"city": "Siem Reap", "country": "Kambodscha"}, {"city": "Chiang Mai", "country": "Thailand"}, {"city": "Denpasar", "country": "Indonesien"}, {"city": "Kathmandu", "country": "Nepal"}, {"city": "Colombo", "country": "Sri Lanka"}, {"city": "Dhaka", "country": "Bangladesch"}, {"city": "Bagdad", "country": "Irak"}, {"city": "Teheran", "country": "Iran"}, {"city": "Kharg", "country": "Iran"}, {"city": "Riad", "country": "Saudi-Arabien"}, {"city": "Amman", "country": "Jordanien"}, {"city": "Beirut", "country": "Libanon"}, {"city": "Ho-Chi-Minh-Stadt", "country": "Vietnam"}, {"city": "Bischkek", "country": "Kirgisistan"}, {"city": "Taschkent", "country": "Usbekistan"}, {"city": "Almaty", "country": "Kasachstan"}, {"city": "Baku", "country": "Aserbaidschan"}, {"city": "Tiflis", "country": "Georgien"}, {"city": "Eriwan", "country": "Armenien"}, {"city": "Muscat", "country": "Oman"}, {"city": "Doha", "country": "Katar"}, {"city": "Kuwait-Stadt", "country": "Kuwait"}, {"city": "Wladiwostok", "country": "Russland"}, {"city": "Lhasa", "country": "China"}, {"city": "Ulaanbaatar", "country": "Mongolei"}, {"city": "Thimphu", "country": "Bhutan"}, {"city": "Vientiane", "country": "Laos"}, {"city": "Cebu", "country": "Philippinen"}, {"city": "Phnom Penh", "country": "Kambodscha"}, {"city": "New York", "country": "USA"}, {"city": "Los Angeles", "country": "USA"}, {"city": "Chicago", "country": "USA"}, {"city": "Miami", "country": "USA"}, {"city": "San Francisco", "country": "USA"}, {"city": "Seattle", "country": "USA"}, {"city": "Toronto", "country": "Kanada"}, {"city": "Montreal", "country": "Kanada"}, {"city": "Vancouver", "country": "Kanada"}, {"city": "Mexiko-Stadt", "country": "Mexiko"}, {"city": "Havanna", "country": "Kuba"}, {"city": "Guatemala-Stadt", "country": "Guatemala"}, {"city": "San Jose", "country": "Costa Rica"}, {"city": "Kingston", "country": "Jamaika"}, {"city": "Santo Domingo", "country": "Dom. Republik"}, {"city": "Honolulu", "country": "USA"}, {"city": "Anchorage", "country": "USA"}, {"city": "Panama-Stadt", "country": "Panama"}, {"city": "Port-au-Prince", "country": "Haiti"}, {"city": "Nuuk", "country": "Groenland"}, {"city": "Rio de Janeiro", "country": "Brasilien"}, {"city": "Sao Paulo", "country": "Brasilien"}, {"city": "Buenos Aires", "country": "Argentinien"}, {"city": "Lima", "country": "Peru"}, {"city": "Bogota", "country": "Kolumbien"}, {"city": "Santiago", "country": "Chile"}, {"city": "La Paz", "country": "Bolivien"}, {"city": "Quito", "country": "Ecuador"}, {"city": "Montevideo", "country": "Uruguay"}, {"city": "Caracas", "country": "Venezuela"}, {"city": "Brasilia", "country": "Brasilien"}, {"city": "Medellin", "country": "Kolumbien"}, {"city": "Asuncion", "country": "Paraguay"}, {"city": "Ushuaia", "country": "Argentinien"}, {"city": "Punta Arenas", "country": "Chile"}, {"city": "Kairo", "country": "Aegypten"}, {"city": "Kapstadt", "country": "Suedafrika"}, {"city": "Nairobi", "country": "Kenia"}, {"city": "Marrakesch", "country": "Marokko"}, {"city": "Accra", "country": "Ghana"}, {"city": "Dakar", "country": "Senegal"}, {"city": "Addis Abeba", "country": "Aethiopien"}, {"city": "Dar es Salaam", "country": "Tansania"}, {"city": "Kigali", "country": "Ruanda"}, {"city": "Kinshasa", "country": "DR Kongo"}, {"city": "Luanda", "country": "Angola"}, {"city": "Abuja", "country": "Nigeria"}, {"city": "Algier", "country": "Algerien"}, {"city": "Tunis", "country": "Tunesien"}, {"city": "Port Louis", "country": "Mauritius"}, {"city": "Antananarivo", "country": "Madagaskar"}, {"city": "Johannesburg", "country": "Suedafrika"}, {"city": "Lagos", "country": "Nigeria"}, {"city": "Khartum", "country": "Sudan"}, {"city": "Casablanca", "country": "Marokko"}, {"city": "Sydney", "country": "Australien"}, {"city": "Melbourne", "country": "Australien"}, {"city": "Brisbane", "country": "Australien"}, {"city": "Perth", "country": "Australien"}, {"city": "Adelaide", "country": "Australien"}, {"city": "Darwin", "country": "Australien"}, {"city": "Auckland", "country": "Neuseeland"}, {"city": "Wellington", "country": "Neuseeland"}, {"city": "Suva", "country": "Fidschi"}, {"city": "Port Moresby", "country": "PNG"}, {"city": "Ljubljana", "country": "Slowenien"}, {"city": "Bratislava", "country": "Slowakei"}, {"city": "Kiev", "country": "Ukraine"}, {"city": "Minsk", "country": "Belarus"}, {"city": "Chisinau", "country": "Moldau"}, {"city": "Tirana", "country": "Albanien"}, {"city": "Skopje", "country": "Nordmazedonien"}, {"city": "Sarajevo", "country": "Bosnien"}, {"city": "Podgorica", "country": "Montenegro"}, {"city": "Malaga", "country": "Spanien"}, {"city": "Sevilla", "country": "Spanien"}, {"city": "Neapel", "country": "Italien"}, {"city": "Florenz", "country": "Italien"}, {"city": "Marseille", "country": "Frankreich"}, {"city": "Nizza", "country": "Frankreich"}, {"city": "Glasgow", "country": "UK"}, {"city": "Manchester", "country": "UK"}, {"city": "Birmingham", "country": "UK"}, {"city": "Rotterdam", "country": "Niederlande"}, {"city": "Koeln", "country": "Deutschland"}, {"city": "Frankfurt", "country": "Deutschland"}, {"city": "Stuttgart", "country": "Deutschland"}, {"city": "Salzburg", "country": "Oesterreich"}, {"city": "Innsbruck", "country": "Oesterreich"}, {"city": "Geneve", "country": "Schweiz"}, {"city": "Basel", "country": "Schweiz"}, {"city": "Antalya", "country": "Tuerkei"}, {"city": "Izmir", "country": "Tuerkei"}, {"city": "Ankara", "country": "Tuerkei"}, {"city": "Kyiv", "country": "Ukraine"}, {"city": "Stornoway", "country": "Schottland"}, {"city": "Slutsk", "country": "Belarus"}, {"city": "Lemvig", "country": "Daenemark"}, {"city": "Brest", "country": "Belarus"}, {"city": "Sizilien", "country": "Italien"}, {"city": "Shetland", "country": "Schottland"}, {"city": "Caceres", "country": "Spanien"}, {"city": "Nordfjordeid", "country": "Norwegen"}, {"city": "Bialystok", "country": "Polen"}, {"city": "Rostock", "country": "Deutschland"}, {"city": "Hannover", "country": "Deutschland"}, {"city": "Köln", "country": "Deutschland"}, {"city": "Dresden", "country": "Deutschland"}, {"city": "Leipzig", "country": "Deutschland"}, {"city": "Nürnberg", "country": "Deutschland"}, {"city": "Düsseldorf", "country": "Deutschland"}, {"city": "Bremen", "country": "Deutschland"}, {"city": "Graz", "country": "Österreich"}, {"city": "Bern", "country": "Schweiz"}, {"city": "Genf", "country": "Schweiz"}];
+
+function doShuffle() {
+  const status = document.getElementById('status');
+  status.textContent = 'Generiere neue Karten...';
+
+  // Pick 16 random locations
+  const pool = LOCS.map((l,i) => ({...l, id:i+1}));
+  pool.sort(() => Math.random() - 0.5);
+  const sel = pool.slice(0, 16);
+
+  // Update QR codes
+  const cells = document.querySelectorAll('.qr-cell');
+  let done = 0;
+  cells.forEach((cell, i) => {
+    const loc = sel[i];
+    const url = 'https://timoapple.github.io/GeoCheckr/?loc=' + loc.id;
+    const box = cell.querySelector('.qr-box');
+    const numEl = cell.querySelector('.qr-num span:last-child');
+    numEl.textContent = i + 1;
+
+    // Generate new QR
+    box.innerHTML = '';
+    QRCode.toCanvas(url, {width:140, margin:1, color:{dark:'#000', light:'#fff'}}, function(err, canvas) {
+      if (!err) {
+        canvas.style.borderRadius = '4px';
+        box.appendChild(canvas);
+      }
+      done++;
+      if (done === 16) status.textContent = '16 neue Karten — bereit!';
+    });
+  });
+
+  // Update City Cards
+  const cityCards = document.querySelectorAll('.city-card');
+  cityCards.forEach((card, i) => {
+    card.querySelector('.city-name').textContent = sel[i].city;
+    card.querySelector('.city-cty').textContent = sel[i].country;
+  });
+}
+</script>
 </body>
 </html>
