@@ -249,6 +249,9 @@ export default function App() {
     setScreen('scan');
   }, [resultScale]);
 
+  // Track already-scanned QR codes with error display
+  const [qrError, setQrError] = useState('');
+
   const handleQRScan = useCallback((data: string) => {
     if (qrScanned) return;
     let locId: number | null = null;
@@ -263,8 +266,16 @@ export default function App() {
     if (locId && locId > 0) {
       const loc = panoramaLocations.find(l => l.id === locId);
       if (loc) {
+        // Check if already used
+        if (usedLocations.includes(loc.id)) {
+          Vibration.vibrate(300);
+          setQrError(`${loc.city} was already scanned!`);
+          setTimeout(() => setQrError(''), 3000);
+          return;
+        }
         playClickSound();
         setQrScanned(true);
+        setQrError('');
         setLocation(loc);
         setUsedLocations(prev => [...prev, loc.id]);
         setTimer(timerSeconds);
@@ -277,7 +288,7 @@ export default function App() {
         setScreen('game');
       }
     }
-  }, [qrScanned, timerSeconds, resultScale]);
+  }, [qrScanned, timerSeconds, resultScale, usedLocations]);
 
   const startGame = () => {
     playClickSound();
@@ -454,7 +465,13 @@ export default function App() {
             <View style={[scanS.corner, { bottom: 0, left: 0, borderRightWidth: 0, borderTopWidth: 0, borderBottomLeftRadius: 8 }]} />
             <View style={[scanS.corner, { bottom: 0, right: 0, borderLeftWidth: 0, borderTopWidth: 0, borderBottomRightRadius: 8 }]} />
           </View>
-          <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 60 }}>Point camera at a QR card</Text>
+          {qrError ? (
+            <View style={{ backgroundColor: 'rgba(255,107,107,0.9)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 20, marginBottom: 60 }}>
+              <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>{qrError}</Text>
+            </View>
+          ) : (
+            <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 60 }}>Point camera at a QR card</Text>
+          )}
         </View>
       </View>
     );
