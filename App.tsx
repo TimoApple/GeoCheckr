@@ -69,7 +69,6 @@ const C = {
 interface Player { id: number; name: string; cardId: number | null; cardCity: string; }
 type Screen = 'tutorial' | 'setup' | 'assign' | 'scan' | 'game' | 'summary';
 type Phase = 'view' | 'answer' | 'result';
-type TutStep = 'welcome' | 'howto' | 'tokens';
 
 function buildStreetViewHtml(lat: number, lng: number): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><style>*{margin:0;padding:0;box-sizing:border-box}html,body,#pano{width:100%;height:100%;overflow:hidden;background:#000}#status{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#888;font-family:sans-serif;text-align:center}#status .spinner{width:32px;height:32px;border:3px solid #333;border-top-color:${C.green};border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}@keyframes spin{to{transform:rotate(360deg)}}</style></head><body><div id="pano"></div><div id="status"><div class="spinner"></div>Loading...</div><script>function init(){new google.maps.StreetViewService().getPanorama({location:{lat:${lat},lng:${lng}},radius:50000,preference:google.maps.StreetViewPreference.NEAREST,source:google.maps.StreetViewSource.OUTDOOR},function(d,s){if(s===google.maps.StreetViewStatus.OK){new google.maps.StreetViewPanorama(document.getElementById('pano'),{pano:d.location.pano,pov:{heading:Math.random()*360,pitch:0},zoom:0,addressControl:false,linksControl:true,panControl:true,zoomControl:true,fullscreenControl:false,motionTracking:false,enableCloseButton:false,clickToGo:true,scrollwheel:true});document.getElementById('status').style.display='none';window.ReactNativeWebView&&window.ReactNativeWebView.postMessage('loaded');}else{document.getElementById('status').innerHTML='No Street View here';window.ReactNativeWebView&&window.ReactNativeWebView.postMessage('error');}});}</script><script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init&libraries=streetView"></script></body></html>`;
@@ -281,28 +280,30 @@ export default function App() {
 
   // ═══ TUTORIAL ═══
   if (screen === 'tutorial') {
-    const steps: Record<TutStep, { title: string; text: string }> = {
-      welcome: { title: 'Welcome to GeoCheckr', text: 'Each player gets a City Card.\nScan a QR card to load a Street View.\nThe active player guesses which city\nis closest to the Street View location.' },
-      howto: { title: 'How to Play', text: '1. Scan a QR card to load Street View\n2. Explore the location on screen\n3. Look at the City Cards on the table\n4. Say the city name that\'s closest\n5. Closer guess = more points!' },
-      tokens: { title: 'Token Betting', text: 'Think another player guessed wrong?\nBet a token and say YOUR answer!\nIf you\'re right: bonus points!\nIf you\'re wrong: lose your token.' },
+    type TutStep = 'welcome' | 'scan' | 'guess' | 'speak' | 'tokens';
+    const steps: Record<TutStep, { bg: string; titleColor: string; textColor: string; icon: string; title: string; text: string }> = {
+      welcome: { bg: C.bg, titleColor: C.green, textColor: C.text, icon: '🌍', title: 'Welcome to GeoCheckr', text: 'Each player gets a City Card.\nScan a QR card to load Street View.\nGuess which city on the table is\nclosest to where you are!' },
+      scan: { bg: '#1a2744', titleColor: '#bdc2ff', textColor: '#d0d4ff', icon: '📷', title: 'Scan a QR Card', text: 'Pick a card from the deck and scan\nits QR code with the app camera.\nA Street View location loads\nand the timer starts ticking!' },
+      guess: { bg: '#1a2040', titleColor: '#88da7d', textColor: '#a8e6a0', icon: '🗺️', title: 'Make Your Guess', text: 'Look at the City Cards on the table.\nWhich city is closest to the\nStreet View location you see?\nSay the city name out loud!' },
+      speak: { bg: '#2a1a40', titleColor: '#af52de', textColor: '#d0a8f0', icon: '🎙️', title: 'Speak Up!', text: 'Tap the microphone and say the\ncity name. The app listens and\nlocks in your answer.\nThe closer you are, the more points!' },
+      tokens: { bg: '#0a2a0a', titleColor: '#a6d700', textColor: '#c8f040', icon: '🎯', title: 'Bet a Token', text: 'Think another player guessed wrong?\nBet a token and say YOUR answer!\nRight = bonus points!\nWrong = lose your token.' },
     };
-    const order: TutStep[] = ['welcome', 'howto', 'tokens'];
+    const order: TutStep[] = ['welcome', 'scan', 'guess', 'speak', 'tokens'];
     const idx = order.indexOf(tutStep);
     const s = steps[tutStep];
     return (
-      <View style={ss.c}><StatusBar hidden />
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40 }}>
-          <Text style={{ color: C.text, fontSize: 24, fontWeight: '700', marginBottom: 16, textAlign: 'center' }}>{s.title}</Text>
-          <Text style={{ color: C.outline, fontSize: 15, textAlign: 'center', lineHeight: 24 }}>{s.text}</Text>
+      <View style={{ flex: 1, backgroundColor: s.bg, justifyContent: 'center', alignItems: 'center' }}><StatusBar hidden />
+        <Text style={{ fontSize: 56, marginBottom: 12 }}>{s.icon}</Text>
+        <Text style={{ color: s.titleColor, fontSize: 30, fontWeight: '700', marginBottom: 20, textAlign: 'center' }}>{s.title}</Text>
+        <Text style={{ color: s.textColor, fontSize: 19, textAlign: 'center', lineHeight: 28, paddingHorizontal: 30 }}>{s.text}</Text>
+        <View style={{ position: 'absolute', bottom: 120, flexDirection: 'row', gap: 8 }}>
+          {order.map((_, i) => <View key={i} style={{ width: i === idx ? 28 : 8, height: 8, borderRadius: 4, backgroundColor: i === idx ? order[idx] === 'tokens' ? '#a6d700' : steps[order[i]].titleColor : 'rgba(255,255,255,0.2)', marginHorizontal: 2 }} />)}
         </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 32 }}>
-          {order.map((_, i) => <View key={i} style={{ width: i === idx ? 24 : 8, height: 8, borderRadius: 4, backgroundColor: i === idx ? C.green : C.surfaceHigh, marginHorizontal: 4 }} />)}
-        </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 30, paddingBottom: 50 }}>
-          {idx > 0 ? <TouchableOpacity onPress={() => setTutStep(order[idx - 1])}><Text style={{ color: C.outline, fontSize: 15, padding: 14 }}>Back</Text></TouchableOpacity> : <View />}
-          {idx < order.length - 1
-            ? <TouchableOpacity style={{ backgroundColor: C.blue, paddingVertical: 14, paddingHorizontal: 28, borderRadius: 12 }} onPress={() => setTutStep(order[idx + 1])}><Text style={{ color: C.accent, fontSize: 16, fontWeight: '600' }}>Next</Text></TouchableOpacity>
-            : <TouchableOpacity style={{ backgroundColor: C.green, paddingVertical: 14, paddingHorizontal: 28, borderRadius: 12 }} onPress={completeTutorial}><Text style={{ color: C.bg, fontSize: 16, fontWeight: '700' }}>Let's go!</Text></TouchableOpacity>}
+        <View style={{ position: 'absolute', bottom: 60, width: '100%', paddingHorizontal: 30, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <TouchableOpacity onPress={completeTutorial}><Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Skip Tutorial</Text></TouchableOpacity>
+          <TouchableOpacity style={{ backgroundColor: s.titleColor, paddingVertical: 14, paddingHorizontal: 28, borderRadius: 9999 }} onPress={() => idx < order.length - 1 ? setTutStep(order[idx + 1]) : completeTutorial()}>
+            <Text style={{ color: C.bg, fontSize: 17, fontWeight: '700' }}>{idx < order.length - 1 ? 'Next' : "Let's play!"}</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -406,7 +407,14 @@ export default function App() {
             <Text style={{ color: C.text, fontSize: 22, fontWeight: '700', marginBottom: 40 }}>Which city is closest?</Text>
             <TouchableOpacity onPress={listening ? stopVoice : startVoice} activeOpacity={0.7}>
               <Animated.View style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: listening ? C.green : C.surface, borderWidth: 3, borderColor: listening ? C.green : C.accent, justifyContent: 'center', alignItems: 'center', transform: [{ scale: micPulse }] }}>
-                <Text style={{ fontSize: 44, color: listening ? C.bg : C.accent }}>{listening ? '■' : '\u{1F399}'}</Text>
+                {listening ? (
+                  <View style={{ width: 24, height: 24, backgroundColor: C.bg, borderRadius: 4 }} />
+                ) : (
+                  <View style={{ alignItems: 'center' }}>
+                    <View style={{ width: 18, height: 28, borderRadius: 9, borderWidth: 3, borderColor: C.accent }} />
+                    <View style={{ width: 4, height: 10, backgroundColor: C.accent, marginTop: 2, borderRadius: 2 }} />
+                  </View>
+                )}
               </Animated.View>
             </TouchableOpacity>
             {listening && <Text style={{ color: C.green, fontSize: 48, fontWeight: '700', marginTop: 24 }}>{voiceCountdown}</Text>}
