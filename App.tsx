@@ -33,7 +33,7 @@ const C = {
 };
 
 interface Player { id: number; name: string; }
-type Screen = 'setup' | 'scan' | 'game' | 'summary';
+type Screen = 'tutorial' | 'setup' | 'scan' | 'game' | 'summary';
 type Phase = 'view' | 'answer' | 'result';
 
 // ═══════════════════════════════════════════════════════════════
@@ -57,7 +57,8 @@ else{document.getElementById('status').innerHTML='❌ No Street View here';windo
 }
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>('setup');
+  const [screen, setScreen] = useState<Screen>('tutorial');
+  const [tutStep, setTutStep] = useState(0);
   const [players, setPlayers] = useState<Player[]>([{ id: 1, name: '' }, { id: 2, name: '' }]);
   const [scores, setScores] = useState<number[]>([0, 0]);
   const [round, setRound] = useState(1);
@@ -80,6 +81,13 @@ export default function App() {
   // QR Scanner
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [qrScanned, setQrScanned] = useState(false);
+
+  // Check if tutorial was seen
+  useEffect(() => {
+    AsyncStorage.getItem('geocheckr_tutorial_done').then(v => {
+      if (v === 'true') setScreen('setup');
+    });
+  }, []);
 
   // Animations
   const timerPulse = useRef(new Animated.Value(1)).current;
@@ -177,8 +185,8 @@ export default function App() {
     setCurrentPlayer(0);
     setUsedLocations([]);
     setHistory([]);
-    startRound();
-    setScreen('game');
+    setQrScanned(false);
+    setScreen('scan');
   };
 
   const resolveAnswer = (dist: number, city: string) => {
@@ -220,7 +228,8 @@ export default function App() {
     if (next === 0 && round >= maxRounds) { setScreen('summary'); return; }
     if (next === 0) setRound(r => r + 1);
     setCurrentPlayer(next);
-    startRound();
+    setQrScanned(false);
+    setScreen('scan');
   };
 
   const addPlayer = () => {
@@ -240,6 +249,52 @@ export default function App() {
   // ═══════════════════════════════════════════════════════════
   // SCREENS
   // ═══════════════════════════════════════════════════════════
+
+  const completeTutorial = async () => {
+    try { await AsyncStorage.setItem('geocheckr_tutorial_done', 'true'); } catch { }
+    playClickSound();
+    setScreen('setup');
+  };
+
+  const TUTS = [
+    { icon: '🌍', title: 'Welcome to GeoCheckr!', text: 'You\'ll be dropped into a random Street View location.\nCan you figure out where in the world you are?' },
+    { icon: '📱', title: 'Scan QR Cards', text: 'Print the QR cards, then scan them with your camera.\nEach card opens a different Street View location.' },
+    { icon: '🏆', title: 'Guess & Score', text: 'Type the city name to guess.\nCloser guesses earn more points!\nMost points wins!' },
+  ];
+
+  // ── TUTORIAL ──
+  if (screen === 'tutorial') {
+    const t = TUTS[tutStep];
+    return (
+      <View style={ss.c}><StatusBar hidden />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40 }}>
+          <Text style={{ fontSize: 64, marginBottom: 16 }}>{t.icon}</Text>
+          <Text style={{ color: C.text, fontSize: 22, fontWeight: '700', marginBottom: 10, textAlign: 'center' }}>{t.title}</Text>
+          <Text style={{ color: C.outline, fontSize: 15, textAlign: 'center', lineHeight: 22 }}>{t.text}</Text>
+        </View>
+        {/* Dots */}
+        <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 30 }}>
+          {TUTS.map((_, i) => (
+            <View key={i} style={{ width: i === tutStep ? 24 : 8, height: 8, borderRadius: 4, backgroundColor: i === tutStep ? C.green : C.surfaceMax, marginHorizontal: 4 }} />
+          ))}
+        </View>
+        {/* Buttons */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 30, paddingBottom: 50 }}>
+          {tutStep > 0
+            ? <TouchableOpacity onPress={() => setTutStep(tutStep - 1)}><Text style={{ color: C.outline, fontSize: 15, paddingVertical: 14, paddingHorizontal: 20 }}>← Back</Text></TouchableOpacity>
+            : <View />}
+          {tutStep < TUTS.length - 1
+            ? <TouchableOpacity style={{ backgroundColor: C.blue, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 12 }} onPress={() => setTutStep(tutStep + 1)}>
+              <Text style={{ color: C.accent, fontSize: 16, fontWeight: '600' }}>Next →</Text>
+            </TouchableOpacity>
+            : <TouchableOpacity style={{ backgroundColor: C.green, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 12 }} onPress={completeTutorial}>
+              <Text style={{ color: C.bg, fontSize: 16, fontWeight: '700' }}>Let's go! 🚀</Text>
+            </TouchableOpacity>
+          }
+        </View>
+      </View>
+    );
+  }
 
   // ── SETUP ──
   if (screen === 'setup') return (
@@ -402,8 +457,8 @@ export default function App() {
           <View style={gs.error}>
             <Text style={{ fontSize: 48, marginBottom: 12 }}>❌</Text>
             <Text style={{ color: C.outline, fontSize: 14, marginBottom: 16 }}>Street View not available</Text>
-            <TouchableOpacity style={gs.skipBtn} onPress={nextTurn}>
-              <Text style={gs.skipBtnText}>Skip →</Text>
+            <TouchableOpacity style={gs.skipBtn} onPress={() => { setQrScanned(false); setScreen('scan'); }}>
+              <Text style={gs.skipBtnText}>Scan another QR →</Text>
             </TouchableOpacity>
           </View>
         )}
