@@ -1607,5 +1607,45 @@ export const panoramaLocations: PanoramaLocation[] = [
     "lat": 9.9312,
     "lng": 76.2673,
     "continent": "Asia"
+  },
+  {
+    "id": 201,
+    "city": "Mogadishu",
+    "country": "Somalia",
+    "lat": 2.0469,
+    "lng": 45.3182,
+    "continent": "Africa"
+  },
+  {
+    "id": 202,
+    "city": "Libreville",
+    "country": "Gabon",
+    "lat": 0.4162,
+    "lng": 9.4673,
+    "continent": "Africa"
+  },
+  {
+    "id": 203,
+    "city": "Bissau",
+    "country": "Guinea-Bissau",
+    "lat": 11.8628,
+    "lng": -15.5975,
+    "continent": "Africa"
+  },
+  {
+    "id": 204,
+    "city": "Praia",
+    "country": "Cape Verde",
+    "lat": 14.9331,
+    "lng": -23.5133,
+    "continent": "Africa"
+  },
+  {
+    "id": 205,
+    "city": "Moroni",
+    "country": "Comoros",
+    "lat": -11.7172,
+    "lng": 43.2473,
+    "continent": "Africa"
   }
 ];
