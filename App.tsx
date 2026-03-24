@@ -92,9 +92,17 @@ function levenshtein(a: string, b: string): number {
 function fuzzyMatchCity(voiceText: string): { city: string; country: string; lat: number; lng: number } | null {
   try {
     const allLocs = require('./src/data/locations_complete').default;
+    const { citySynonyms } = require('./src/data/citySynonyms');
     const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]/g, '');
     const n = normalize(voiceText);
     if (n.length < 2) return null;
+
+    // 0. Check synonyms
+    const synId = citySynonyms[n];
+    if (synId) {
+      const synMatch = allLocs.find((l: any) => l.id === synId);
+      if (synMatch) return synMatch;
+    }
 
     // 1. Exact match
     let match = allLocs.find((l: any) => normalize(l.city) === n);
