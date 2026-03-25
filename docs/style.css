@@ -1,12 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 :root {
-  /* TIMO'S PALETTE — NUR DIESE */
+  /* ═══ TIMO'S MASTER PALETTE — EXCLUSIVE ═══ */
   --bg: #111225;           /* Dunkelgrau/Hintergrund */
   --surface: #1d1e32;      /* Surface Container */
   --surface-high: #27283c; /* Hover / high surface */
   --surface-max: #323348;  /* Highest surface */
-  --accent: #bdc2ff;       /* Hellblau */
+  --accent: #bdc2ff;       /* Hellblau / Lavender */
   --green: #a6d700;        /* Intensiv Grün */
   --dark-blue: #3340ca;    /* Dunkelblau */
   --text: #e5e2e1;         /* Text */
@@ -14,6 +14,16 @@
   --outline: #8f8fa0;
   --outline-soft: #454654;
   --error: #ffb4ab;
+
+  /* ═══ ABSTUFUNGEN (aus Referenz-Screenshot) ═══ */
+  --bg-deep: #131225;              /* Noch dunkler (tiefer) */
+  --bg-surface-alt: #1c1b33;       /* Alternative Surface */
+  --bg-input: #262540;             /* Input-Felder */
+  --green-bright: #7ed957;         /* Helleres Grün */
+  --green-dark: #0b3d0b;           /* Dunkelgrün (Text auf Green-Buttons) */
+  --accent-bright: #bfc0ff;        /* Helleres Lavender */
+  --text-dim: #5d5c6f;             /* Tertiärtext / Labels */
+  --text-lavender: #8b8a9e;        /* Muted Lavender-Grey */
 
   /* Spacing */
   --sp-1: 4px;

@@ -8,17 +8,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 :root {
-  /* TIMO'S MASTER PALETTE — EXCLUSIVE */
+  /* ═══ TIMO'S MASTER PALETTE — EXCLUSIVE ═══ */
   --bg: #111225;
+  --bg-deep: #131225;
   --surface: #1a1b30;
   --surface-raised: #222340;
   --surface-overlay: #2a2b4a;
+  --bg-input: #262540;
   --accent: #bdc2ff;
+  --accent-bright: #bfc0ff;
   --green: #a6d700;
+  --green-bright: #7ed957;
+  --green-dark: #0b3d0b;
   --blue: #3340ca;
   --text: #e5e2e1;
   --text-muted: #8f8fa0;
-  --text-dim: #5a5a70;
+  --text-dim: #5d5c6f;
   --border: rgba(189, 194, 255, 0.08);
 
   /* Argon-specific shadows */
