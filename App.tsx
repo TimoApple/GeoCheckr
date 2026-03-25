@@ -180,7 +180,7 @@ export default function App() {
   const resultScale = useRef(new Animated.Value(0)).current;
   const micPulse = useRef(new Animated.Value(1)).current;
   const loadingFade = useRef(new Animated.Value(0)).current;
-  const textFade = useRef(new Animated.Value(0)).current;
+
   const tutScrollRef = useRef<ScrollView>(null);
 
   // ═══ EFFECTS ═══
@@ -197,12 +197,6 @@ export default function App() {
       Animated.timing(loadingFade, { toValue: 0, duration: 600, useNativeDriver: true }),
     ]).start(() => setShowLoading(false));
   }, [showLoading]);
-
-  // Tutorial text animation
-  useEffect(() => {
-    textFade.setValue(0);
-    Animated.timing(textFade, { toValue: 1, duration: 600, useNativeDriver: true, delay: 200 }).start();
-  }, [tutPage]);
 
   // Timer
   useEffect(() => {
@@ -373,10 +367,10 @@ export default function App() {
         >
           {pages.map((p, i) => (
             <View key={i} style={{ width: W, height: H, backgroundColor: p.bg, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 36 }}>
-              <Animated.View style={{ opacity: textFade, alignItems: 'center' }}>
+              <View style={{ alignItems: 'center' }}>
                 <Text style={{ color: p.titleColor, fontSize: 34, fontWeight: '700', fontFamily: FF.bold, textAlign: 'center', marginBottom: 32, lineHeight: 42 }}>{p.title}</Text>
                 <Text style={{ color: i === 3 ? '#c8f040' : C.text, fontSize: 21, fontFamily: FF.regular, textAlign: 'center', lineHeight: 32, opacity: 0.9 }}>{p.body}</Text>
-              </Animated.View>
+              </View>
             </View>
           ))}
         </ScrollView>
@@ -436,10 +430,10 @@ export default function App() {
                 </View>
                 {!hasCard && (
                   <TouchableOpacity
-                    style={{ width: 44, height: 44, borderRadius: 22, borderWidth: 2, borderColor: 'rgba(255,100,100,0.4)', backgroundColor: 'rgba(255,100,100,0.1)', justifyContent: 'center', alignItems: 'center' }}
+                    style={{ width: 52, height: 52, borderRadius: 14, borderWidth: 2, borderColor: 'rgba(255,100,100,0.4)', backgroundColor: 'rgba(255,100,100,0.1)', justifyContent: 'center', alignItems: 'center' }}
                     onPress={() => { setAssignCameraOpen(true); setScreen('assign'); setQrError(''); }}
                   >
-                    <Text style={{ color: '#ff6b6b', fontSize: 11, fontWeight: '700', fontFamily: FF.bold }}>QR</Text>
+                    <Text style={{ color: '#ff6b6b', fontSize: 13, fontWeight: '700', fontFamily: FF.bold }}>QR</Text>
                   </TouchableOpacity>
                 )}
               </View>
