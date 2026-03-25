@@ -10,6 +10,7 @@ import {
 import { WebView } from 'react-native-webview';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFonts, SpaceGrotesk_400Regular, SpaceGrotesk_500Medium, SpaceGrotesk_600SemiBold, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
 import { calculateDistance, calculatePoints, formatDistance } from './src/utils/distance';
 import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playTimerWarning, playTimerTick, playAnswerphoneBeep } from './src/utils/sounds';
 import { panoramaLocations, PanoramaLocation } from './src/data/panoramaLocations';
@@ -27,6 +28,7 @@ const C = {
   border: 'rgba(143,143,160,0.15)',
 };
 const PCOLORS = ['#bdc2ff', '#a6d700', '#88da7d', '#FF9500', '#ffb4ab', '#5ac8fa', '#af52de', '#ff6b6b'];
+const FF = { regular: 'SpaceGrotesk_400Regular', medium: 'SpaceGrotesk_500Medium', semi: 'SpaceGrotesk_600SemiBold', bold: 'SpaceGrotesk_700Bold' };
 
 // ═══════════════════════════════════════════════════════════════
 // QUOTES
@@ -141,6 +143,7 @@ function buildStreetViewHtml(lat: number, lng: number): string {
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════
 export default function App() {
+  const [fontsLoaded] = useFonts({ SpaceGrotesk_400Regular, SpaceGrotesk_500Medium, SpaceGrotesk_600SemiBold, SpaceGrotesk_700Bold });
   const [screen, setScreen] = useState<Screen>('tutorial');
   const [players, setPlayers] = useState<Player[]>([
     { id: 1, name: '', cardId: null, cardCity: '' },
@@ -264,12 +267,22 @@ export default function App() {
   }, [usedLocations]);
 
   const goToScan = useCallback(() => { setQrScanned(false); setVoiceText(''); setListening(false); setPhase('view'); resultScale.setValue(0); setScreen('scan'); }, [resultScale]);
+  const goToSetup = useCallback(() => { setScreen('setup'); setRound(1); setCurrentPlayer(0); setScores(prev => prev.map(() => 0)); setUsedLocations([]); setUsedCards([]); setHistory([]); }, []);
 
   // ═══ SCAN HANDLER ═══
   const handleScan = useCallback((data: string) => {
+    // Strip URLs — extract last path segment or number
+    let raw = data;
+    try {
+      if (data.includes('://')) {
+        const url = new URL(data);
+        const segs = url.pathname.split('/').filter(Boolean);
+        raw = segs.length ? segs[segs.length - 1] : url.searchParams.get('id') || data;
+      }
+    } catch {}
     // City card scan: "city:ID"
-    if (data.startsWith('city:')) {
-      const cardId = parseInt(data.split(':')[1]);
+    if (raw.startsWith('city:')) {
+      const cardId = parseInt(raw.split(':')[1]);
       if (cardId && !usedCards.includes(cardId)) {
         const loc = panoramaLocations.find(l => l.id === cardId);
         if (loc) {
@@ -285,7 +298,7 @@ export default function App() {
     }
     // Game QR: plain number
     if (qrScanned) return;
-    let locId: number | null = parseInt(data.replace(/[^0-9]/g, ''));
+    let locId: number | null = parseInt(raw.replace(/[^0-9]/g, ''));
     if (locId && locId > 0) {
       const loc = panoramaLocations.find(l => l.id === locId);
       if (loc) {
@@ -328,8 +341,8 @@ export default function App() {
         <StatusBar hidden />
         <Animated.View style={{ opacity: loadingFade, alignItems: 'center' }}>
           <Image source={require('./assets/icon.png')} style={{ width: 100, height: 100, marginBottom: 24 }} resizeMode="contain" />
-          <Text style={{ color: C.green, fontSize: 14, fontWeight: '700', letterSpacing: 3, marginBottom: 20 }}>GEOCHECKR</Text>
-          <Text style={{ color: C.muted, fontSize: 17, textAlign: 'center', fontStyle: 'italic', lineHeight: 26 }}>"{loadingQuote}"</Text>
+          <Text style={{ color: C.green, fontSize: 14, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 3, marginBottom: 20 }}>GEOCHECKR</Text>
+          <Text style={{ color: C.muted, fontSize: 17, fontFamily: FF.regular, textAlign: 'center', fontStyle: 'italic', lineHeight: 26 }}>"{loadingQuote}"</Text>
         </Animated.View>
         <View style={{ position: 'absolute', bottom: 80, flexDirection: 'row', gap: 6 }}>
           <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.green, opacity: 0.6 }} />
@@ -361,8 +374,8 @@ export default function App() {
           {pages.map((p, i) => (
             <View key={i} style={{ width: W, height: H, backgroundColor: p.bg, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 36 }}>
               <Animated.View style={{ opacity: textFade, alignItems: 'center' }}>
-                <Text style={{ color: p.titleColor, fontSize: 34, fontWeight: '700', textAlign: 'center', marginBottom: 32, lineHeight: 42 }}>{p.title}</Text>
-                <Text style={{ color: i === 3 ? '#c8f040' : C.text, fontSize: 21, textAlign: 'center', lineHeight: 32, opacity: 0.9 }}>{p.body}</Text>
+                <Text style={{ color: p.titleColor, fontSize: 34, fontWeight: '700', fontFamily: FF.bold, textAlign: 'center', marginBottom: 32, lineHeight: 42 }}>{p.title}</Text>
+                <Text style={{ color: i === 3 ? '#c8f040' : C.text, fontSize: 21, fontFamily: FF.regular, textAlign: 'center', lineHeight: 32, opacity: 0.9 }}>{p.body}</Text>
               </Animated.View>
             </View>
           ))}
@@ -374,11 +387,11 @@ export default function App() {
           <TouchableOpacity onPress={completeTutorial}><Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14 }}>Skip Tutorial</Text></TouchableOpacity>
           {tutPage < pages.length - 1 ? (
             <TouchableOpacity onPress={() => { tutScrollRef.current?.scrollTo({ x: (tutPage + 1) * W, animated: true }); setTutPage(tutPage + 1); }}>
-              <Text style={{ color: C.green, fontSize: 15, fontWeight: '600' }}>Swipe →</Text>
+              <Text style={{ color: C.green, fontSize: 15, fontWeight: '600', fontFamily: FF.semi }}>Swipe →</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity style={{ backgroundColor: C.green, paddingVertical: 14, paddingHorizontal: 28, borderRadius: 9999 }} onPress={completeTutorial}>
-              <Text style={{ color: C.bg, fontSize: 17, fontWeight: '700' }}>Let's play!</Text>
+              <Text style={{ color: C.bg, fontSize: 17, fontWeight: '700', fontFamily: FF.bold }}>Let's play!</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -393,10 +406,10 @@ export default function App() {
       <View style={ss.c}><StatusBar hidden />
         <ScrollView contentContainerStyle={{ padding: 28, alignItems: 'center', paddingTop: 50 }} keyboardShouldPersistTaps="handled">
           <Image source={require('./assets/icon.png')} style={{ width: 80, height: 80, marginBottom: 12 }} resizeMode="contain" />
-          <Text style={{ color: C.green, fontSize: 30, fontWeight: '700', marginBottom: 2 }}>GeoCheckr</Text>
-          <Text style={{ color: C.outline, fontSize: 13, marginBottom: 28, letterSpacing: 1 }}>QR CARD GAME</Text>
+          <Text style={{ color: C.green, fontSize: 30, fontWeight: '700', fontFamily: FF.bold, marginBottom: 2 }}>GeoCheckr</Text>
+          <Text style={{ color: C.outline, fontSize: 13, fontFamily: FF.regular, marginBottom: 28, letterSpacing: 1 }}>QR CARD GAME</Text>
 
-          <Text style={{ color: C.outline, fontSize: 11, fontWeight: '600', letterSpacing: 1.5, alignSelf: 'flex-start', marginBottom: 12 }}>PLAYERS</Text>
+          <Text style={{ color: C.outline, fontSize: 11, fontWeight: '600', fontFamily: FF.semi, letterSpacing: 1.5, alignSelf: 'flex-start', marginBottom: 12 }}>PLAYERS</Text>
           {players.map((p, i) => {
             const hasCard = p.cardId !== null;
             const borderColor = hasCard ? C.border : 'rgba(255,100,100,0.5)';
@@ -404,21 +417,21 @@ export default function App() {
             return (
               <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12, width: '100%' }}>
                 <View style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: PCOLORS[i], justifyContent: 'center', alignItems: 'center', backgroundColor: C.surface }}>
-                  <Text style={{ color: PCOLORS[i], fontSize: 14, fontWeight: '700' }}>{i + 1}</Text>
+                  <Text style={{ color: PCOLORS[i], fontSize: 14, fontWeight: '700', fontFamily: FF.bold }}>{i + 1}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <TextInput
-                    style={{ backgroundColor: C.surface, color: C.text, borderRadius: 14, paddingHorizontal: 18, paddingVertical: 13, fontSize: 16, borderWidth: 1, borderColor }}
+                    style={{ backgroundColor: C.surface, color: C.text, borderRadius: 14, paddingHorizontal: 18, paddingVertical: 13, fontSize: 16, fontFamily: FF.regular, borderWidth: 1, borderColor }}
                     placeholder={`Player ${i + 1}`} placeholderTextColor={C.outline}
                     value={p.name}
                     onChangeText={t => setPlayers(prev => { const n = [...prev]; n[i] = { ...n[i], name: t }; return n; })}
                     maxLength={20} autoCapitalize="words"
                   />
                   {hasCard && (
-                    <Text style={{ color: C.green, fontSize: 11, marginTop: 3, marginLeft: 12 }}>✓ {p.cardCity}</Text>
+                    <Text style={{ color: C.green, fontSize: 11, fontFamily: FF.regular, marginTop: 3, marginLeft: 12 }}>✓ {p.cardCity}</Text>
                   )}
                   {!hasCard && (
-                    <Text style={{ color: '#ff6b6b', fontSize: 11, marginTop: 3, marginLeft: 12 }}>⚠ Scan city card required</Text>
+                    <Text style={{ color: '#ff6b6b', fontSize: 11, fontFamily: FF.regular, marginTop: 3, marginLeft: 12 }}>⚠ Scan city card required</Text>
                   )}
                 </View>
                 {!hasCard && (
@@ -426,35 +439,35 @@ export default function App() {
                     style={{ width: 44, height: 44, borderRadius: 22, borderWidth: 2, borderColor: 'rgba(255,100,100,0.4)', backgroundColor: 'rgba(255,100,100,0.1)', justifyContent: 'center', alignItems: 'center' }}
                     onPress={() => { setAssignCameraOpen(true); setScreen('assign'); setQrError(''); }}
                   >
-                    <Text style={{ color: '#ff6b6b', fontSize: 11, fontWeight: '700' }}>QR</Text>
+                    <Text style={{ color: '#ff6b6b', fontSize: 11, fontWeight: '700', fontFamily: FF.bold }}>QR</Text>
                   </TouchableOpacity>
                 )}
               </View>
             );
           })}
-          {cardError ? <Text style={{ color: '#ff6b6b', fontSize: 13, marginBottom: 12 }}>{cardError}</Text> : null}
+          {cardError ? <Text style={{ color: '#ff6b6b', fontSize: 13, fontFamily: FF.regular, marginBottom: 12 }}>{cardError}</Text> : null}
 
           <View style={{ flexDirection: 'row', gap: 16, marginTop: 4, alignSelf: 'flex-start' }}>
-            {players.length < 8 && <TouchableOpacity onPress={() => { setPlayers(prev => [...prev, { id: prev.length + 1, name: '', cardId: null, cardCity: '' }]); setScores(prev => [...prev, 0]); }}><Text style={{ color: C.accent, fontSize: 14, fontWeight: '600' }}>+ Add Player</Text></TouchableOpacity>}
-            {players.length > 2 && <TouchableOpacity onPress={() => { setPlayers(prev => prev.slice(0, -1)); setScores(prev => prev.slice(0, -1)); }}><Text style={{ color: '#ff6b6b', fontSize: 14, fontWeight: '600' }}>- Remove</Text></TouchableOpacity>}
+            {players.length < 8 && <TouchableOpacity onPress={() => { setPlayers(prev => [...prev, { id: prev.length + 1, name: '', cardId: null, cardCity: '' }]); setScores(prev => [...prev, 0]); }}><Text style={{ color: C.accent, fontSize: 14, fontWeight: '600', fontFamily: FF.semi }}>+ Add Player</Text></TouchableOpacity>}
+            {players.length > 2 && <TouchableOpacity onPress={() => { setPlayers(prev => prev.slice(0, -1)); setScores(prev => prev.slice(0, -1)); }}><Text style={{ color: '#ff6b6b', fontSize: 14, fontWeight: '600', fontFamily: FF.semi }}>- Remove</Text></TouchableOpacity>}
           </View>
 
-          <Text style={{ color: C.outline, fontSize: 11, fontWeight: '600', letterSpacing: 1.5, alignSelf: 'flex-start', marginTop: 24, marginBottom: 12 }}>TIMER</Text>
+          <Text style={{ color: C.outline, fontSize: 11, fontWeight: '600', fontFamily: FF.semi, letterSpacing: 1.5, alignSelf: 'flex-start', marginTop: 24, marginBottom: 12 }}>TIMER</Text>
           <View style={{ flexDirection: 'row', gap: 10, width: '100%' }}>
             {[5, 15, 30].map(t => (
               <TouchableOpacity key={t} style={{ flex: 1, paddingVertical: 14, borderRadius: 9999, borderWidth: 1.5, borderColor: timerSeconds === t ? C.accent : C.border, backgroundColor: timerSeconds === t ? 'rgba(189,194,255,0.1)' : C.surface, alignItems: 'center' }}
                 onPress={() => setTimerSeconds(t)}>
-                <Text style={{ color: timerSeconds === t ? C.accent : C.outline, fontSize: 15, fontWeight: '600' }}>{t}s</Text>
+                <Text style={{ color: timerSeconds === t ? C.accent : C.outline, fontSize: 15, fontWeight: '600', fontFamily: FF.semi }}>{t}s</Text>
               </TouchableOpacity>
             ))}
           </View>
 
-          <Text style={{ color: C.outline, fontSize: 11, fontWeight: '600', letterSpacing: 1.5, alignSelf: 'flex-start', marginTop: 24, marginBottom: 12 }}>ROUNDS</Text>
+          <Text style={{ color: C.outline, fontSize: 11, fontWeight: '600', fontFamily: FF.semi, letterSpacing: 1.5, alignSelf: 'flex-start', marginTop: 24, marginBottom: 12 }}>ROUNDS</Text>
           <View style={{ flexDirection: 'row', gap: 10, width: '100%' }}>
             {[5, 10, 15].map(r => (
               <TouchableOpacity key={r} style={{ flex: 1, paddingVertical: 14, borderRadius: 9999, borderWidth: 1.5, borderColor: maxRounds === r ? C.accent : C.border, backgroundColor: maxRounds === r ? 'rgba(189,194,255,0.1)' : C.surface, alignItems: 'center' }}
                 onPress={() => setMaxRounds(r)}>
-                <Text style={{ color: maxRounds === r ? C.accent : C.outline, fontSize: 15, fontWeight: '600' }}>{r}</Text>
+                <Text style={{ color: maxRounds === r ? C.accent : C.outline, fontSize: 15, fontWeight: '600', fontFamily: FF.semi }}>{r}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -463,7 +476,7 @@ export default function App() {
             style={{ backgroundColor: allCardsAssigned ? C.blue : 'rgba(51,64,202,0.3)', paddingVertical: 16, borderRadius: 9999, alignItems: 'center', width: '100%', marginTop: 28 }}
             onPress={startGame}
           >
-            <Text style={{ color: allCardsAssigned ? C.accent : C.outline, fontSize: 18, fontWeight: '700' }}>{allCardsAssigned ? 'Start Game' : 'Scan all cards first'}</Text>
+            <Text style={{ color: allCardsAssigned ? C.accent : C.outline, fontSize: 18, fontWeight: '700', fontFamily: FF.bold }}>{allCardsAssigned ? 'Start Game' : 'Scan all cards first'}</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -474,9 +487,9 @@ export default function App() {
   if (screen === 'assign') {
     if (!cameraPermission?.granted) {
       return <View style={ss.c}><StatusBar hidden /><View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 30 }}>
-        <Text style={{ color: C.text, fontSize: 20, fontWeight: '700', marginBottom: 12 }}>Camera Required</Text>
+        <Text style={{ color: C.text, fontSize: 20, fontWeight: '700', fontFamily: FF.bold, marginBottom: 12 }}>Camera Required</Text>
         <TouchableOpacity style={{ backgroundColor: C.blue, paddingVertical: 14, paddingHorizontal: 28, borderRadius: 9999 }} onPress={requestCameraPermission}>
-          <Text style={{ color: C.accent, fontSize: 16, fontWeight: '700' }}>Grant Permission</Text>
+          <Text style={{ color: C.accent, fontSize: 16, fontWeight: '700', fontFamily: FF.bold }}>Grant Permission</Text>
         </TouchableOpacity>
       </View></View>;
     }
@@ -489,13 +502,13 @@ export default function App() {
         <CameraView style={{ flex: 1 }} facing="back" onBarcodeScanned={({ data }) => handleScan(data)} barcodeScannerSettings={{ barcodeTypes: ['qr'] }} />
         <View style={{ ...StyleSheet.absoluteFillObject, justifyContent: 'space-between', alignItems: 'center', paddingTop: 50, paddingBottom: 60 }}>
           <View style={{ alignItems: 'center' }}>
-            <Text style={{ color: C.accent, fontSize: 13, fontWeight: '600', letterSpacing: 1, marginBottom: 6 }}>ASSIGN CARD</Text>
-            <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>{p.name || `Player ${nextUnassigned + 1}`}</Text>
+            <Text style={{ color: C.accent, fontSize: 13, fontWeight: '600', fontFamily: FF.semi, letterSpacing: 1, marginBottom: 6 }}>ASSIGN CARD</Text>
+            <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700', fontFamily: FF.bold }}>{p.name || `Player ${nextUnassigned + 1}`}</Text>
           </View>
           <View style={{ width: 220, height: 220, position: 'relative' }}>
             {[{top:0,left:0,bt:3,bl:3,bt2:0,bl2:0},{top:0,right:0,bt:3,br:3,bt2:0,br2:0},{bottom:0,left:0,bb:3,bl:3,bb2:0,bl2:0},{bottom:0,right:0,bb:3,br:3,bb2:0,br2:0}].map((s,i)=>(<View key={i} style={{position:'absolute',...s,width:28,height:28,borderColor:C.green,borderWidth:3,borderRightWidth:s.right!==undefined?0:undefined,borderLeftWidth:s.left!==undefined?0:undefined,borderTopWidth:s.top!==undefined?0:undefined,borderBottomWidth:s.bottom!==undefined?0:undefined,borderRadius:6}}/>))}
           </View>
-          {qrError ? <View style={{ backgroundColor: 'rgba(255,100,100,0.9)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 20 }}><Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>{qrError}</Text></View> : <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14 }}>Scan the city card QR code</Text>}
+          {qrError ? <View style={{ backgroundColor: 'rgba(255,100,100,0.9)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 20 }}><Text style={{ color: '#fff', fontSize: 15, fontWeight: '600', fontFamily: FF.semi }}>{qrError}</Text></View> : <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14 }}>Scan the city card QR code</Text>}
         </View>
       </View>
     );
@@ -505,9 +518,9 @@ export default function App() {
   if (screen === 'scan') {
     if (!cameraPermission?.granted) {
       return <View style={ss.c}><StatusBar hidden /><View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 30 }}>
-        <Text style={{ color: C.text, fontSize: 20, fontWeight: '700', marginBottom: 12 }}>Camera Required</Text>
+        <Text style={{ color: C.text, fontSize: 20, fontWeight: '700', fontFamily: FF.bold, marginBottom: 12 }}>Camera Required</Text>
         <TouchableOpacity style={{ backgroundColor: C.blue, paddingVertical: 14, paddingHorizontal: 28, borderRadius: 9999 }} onPress={requestCameraPermission}>
-          <Text style={{ color: C.accent, fontSize: 16, fontWeight: '700' }}>Grant Permission</Text>
+          <Text style={{ color: C.accent, fontSize: 16, fontWeight: '700', fontFamily: FF.bold }}>Grant Permission</Text>
         </TouchableOpacity>
       </View></View>;
     }
@@ -518,14 +531,17 @@ export default function App() {
         <View style={{ ...StyleSheet.absoluteFillObject, justifyContent: 'space-between', alignItems: 'center', paddingTop: 50, paddingBottom: 60 }}>
           <View style={{ alignItems: 'center' }}>
             <View style={{ backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 9999, paddingVertical: 6, paddingHorizontal: 16, marginBottom: 8 }}>
-              <Text style={{ color: C.green, fontSize: 13, fontWeight: '600' }}>Round {round}</Text>
+              <Text style={{ color: C.green, fontSize: 13, fontWeight: '600', fontFamily: FF.semi }}>Round {round}</Text>
             </View>
-            <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>{players[currentPlayer]?.name || `Player ${currentPlayer + 1}`}</Text>
+            <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700', fontFamily: FF.bold }}>{players[currentPlayer]?.name || `Player ${currentPlayer + 1}`}</Text>
           </View>
           <View style={{ width: 220, height: 220, position: 'relative' }}>
             {[{top:0,left:0},{top:0,right:0},{bottom:0,left:0},{bottom:0,right:0}].map((s,i)=>(<View key={i} style={{position:'absolute',...s,width:28,height:28,borderColor:C.green,borderWidth:3,borderRightWidth:s.right!==undefined?0:undefined,borderLeftWidth:s.left!==undefined?0:undefined,borderTopWidth:s.top!==undefined?0:undefined,borderBottomWidth:s.bottom!==undefined?0:undefined,borderRadius:6}}/>))}
           </View>
-          {qrError ? <View style={{ backgroundColor: 'rgba(255,100,100,0.9)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 20 }}><Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>{qrError}</Text></View> : <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14 }}>Scan a QR card to start</Text>}
+          {qrError ? <View style={{ backgroundColor: 'rgba(255,100,100,0.9)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 20 }}><Text style={{ color: '#fff', fontSize: 15, fontWeight: '600', fontFamily: FF.bold }}>{qrError}</Text></View> : <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, fontFamily: FF.regular }}>Scan a QR card to start</Text>}
+          <TouchableOpacity onPress={goToSetup} style={{ position: 'absolute', bottom: 20, left: 20, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 16 }}>
+            <Text style={{ color: '#ff6b6b', fontSize: 14, fontWeight: '600', fontFamily: FF.semi }}>✕ Abort</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -542,8 +558,8 @@ export default function App() {
           <StatusBar hidden />
           <WebView ref={voiceWebViewRef} source={{ html: VOICE_HTML }} style={{ width: 0, height: 0, position: 'absolute' }} onMessage={handleVoiceMessage} javaScriptEnabled domStorageEnabled allowsInlineMediaPlayback mediaPlaybackRequiresUserAction={false} />
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 30 }}>
-            <Text style={{ color: C.accent, fontSize: 14, fontWeight: '600', letterSpacing: 1, marginBottom: 12 }}>{players[currentPlayer]?.name || `Player ${currentPlayer + 1}`}</Text>
-            <Text style={{ color: C.text, fontSize: 26, fontWeight: '700', marginBottom: 48 }}>Which city is closest?</Text>
+            <Text style={{ color: C.accent, fontSize: 14, fontWeight: '600', fontFamily: FF.semi, letterSpacing: 1, marginBottom: 12 }}>{players[currentPlayer]?.name || `Player ${currentPlayer + 1}`}</Text>
+            <Text style={{ color: C.text, fontSize: 26, fontWeight: '700', fontFamily: FF.bold, marginBottom: 48 }}>Which city is closest?</Text>
 
             <TouchableOpacity onPress={listening ? stopVoice : startVoice} activeOpacity={0.7}>
               <Animated.View style={{ width: 110, height: 110, borderRadius: 55, backgroundColor: listening ? C.green : C.surface, borderWidth: 3, borderColor: listening ? C.green : C.accent, justifyContent: 'center', alignItems: 'center', transform: [{ scale: micPulse }] }}>
@@ -559,17 +575,17 @@ export default function App() {
               </Animated.View>
             </TouchableOpacity>
 
-            {listening && <Text style={{ color: C.green, fontSize: 52, fontWeight: '700', marginTop: 28 }}>{voiceCountdown}</Text>}
-            <Text style={{ color: C.outline, fontSize: 16, marginTop: 18 }}>{listening ? 'Listening...' : voiceText ? 'Tap to retry' : 'Tap microphone to speak'}</Text>
+            {listening && <Text style={{ color: C.green, fontSize: 52, fontWeight: '700', fontFamily: FF.bold, marginTop: 28 }}>{voiceCountdown}</Text>}
+            <Text style={{ color: C.outline, fontSize: 16, fontFamily: FF.regular, marginTop: 18 }}>{listening ? 'Listening...' : voiceText ? 'Tap to retry' : 'Tap microphone to speak'}</Text>
 
             {voiceText.length > 0 && (
               <Animated.View style={{ backgroundColor: C.surface, borderRadius: 16, padding: 24, marginTop: 28, width: '100%', borderWidth: 1, borderColor: C.green }}>
-                <Text style={{ color: C.green, fontSize: 36, fontWeight: '700', textAlign: 'center' }}>{voiceText}</Text>
+                <Text style={{ color: C.green, fontSize: 36, fontWeight: '700', fontFamily: FF.bold, textAlign: 'center' }}>{voiceText}</Text>
               </Animated.View>
             )}
 
             <TouchableOpacity style={{ marginTop: 36, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 9999, borderWidth: 1, borderColor: C.border }} onPress={() => resolveAnswer(20000, '')}>
-              <Text style={{ color: C.outline, fontSize: 14, fontWeight: '600' }}>Skip round</Text>
+              <Text style={{ color: C.outline, fontSize: 14, fontWeight: '600', fontFamily: FF.semi }}>Skip round</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -584,28 +600,28 @@ export default function App() {
       return (
         <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(17,18,37,0.95)', justifyContent: 'center', paddingHorizontal: 20, zIndex: 50 }}>
           <Animated.View style={{ backgroundColor: C.surface, borderRadius: 20, padding: 28, alignItems: 'center', borderWidth: 1, borderColor: pts > 0 ? C.green : 'rgba(255,100,100,0.3)', transform: [{ scale: resultScale }] }}>
-            <Text style={{ fontSize: 48, marginBottom: 12 }}>{pts >= 3 ? '\u{1F3AF}' : pts >= 2 ? '\u{1F44D}' : pts >= 1 ? '\u{1F610}' : '\u{1F605}'}</Text>
-            <Text style={{ fontSize: 28, fontWeight: '700', color: pts > 0 ? C.green : '#ff6b6b', marginBottom: 20 }}>{pts >= 3 ? 'Perfect!' : pts >= 2 ? 'Good!' : pts >= 1 ? 'Not bad!' : 'Wrong!'}</Text>
+            <Text style={{ fontSize: 48, fontFamily: FF.regular, marginBottom: 12 }}>{pts >= 3 ? '\u{1F3AF}' : pts >= 2 ? '\u{1F44D}' : pts >= 1 ? '\u{1F610}' : '\u{1F605}'}</Text>
+            <Text style={{ fontSize: 28, fontWeight: '700', fontFamily: FF.bold, color: pts > 0 ? C.green : '#ff6b6b', marginBottom: 20 }}>{pts >= 3 ? 'Perfect!' : pts >= 2 ? 'Good!' : pts >= 1 ? 'Not bad!' : 'Wrong!'}</Text>
 
             <View style={{ width: '100%', marginBottom: 16 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.border }}>
                 <Text style={{ color: C.outline, fontSize: 16 }}>Your guess</Text>
-                <Text style={{ color: C.text, fontSize: 16, fontWeight: '600' }}>{guessCity}</Text>
+                <Text style={{ color: C.text, fontSize: 16, fontWeight: '600', fontFamily: FF.semi }}>{guessCity}</Text>
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.border }}>
                 <Text style={{ color: C.outline, fontSize: 16 }}>Correct</Text>
-                <Text style={{ color: C.green, fontSize: 16, fontWeight: '600' }}>{location.city}</Text>
+                <Text style={{ color: C.green, fontSize: 16, fontWeight: '600', fontFamily: FF.semi }}>{location.city}</Text>
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12 }}>
                 <Text style={{ color: C.outline, fontSize: 16 }}>Distance</Text>
-                <Text style={{ color: C.text, fontSize: 16, fontWeight: '600' }}>{formatDistance(dist)}</Text>
+                <Text style={{ color: C.text, fontSize: 16, fontWeight: '600', fontFamily: FF.semi }}>{formatDistance(dist)}</Text>
               </View>
             </View>
 
-            <Text style={{ fontSize: 36, fontWeight: '700', color: C.green, marginBottom: 24 }}>+{pts} pts</Text>
+            <Text style={{ fontSize: 36, fontWeight: '700', fontFamily: FF.bold, color: C.green, marginBottom: 24 }}>+{pts} pts</Text>
 
             <TouchableOpacity style={{ backgroundColor: C.blue, paddingVertical: 16, paddingHorizontal: 28, borderRadius: 12, width: '100%', alignItems: 'center' }} onPress={nextTurn}>
-              <Text style={{ color: C.accent, fontSize: 17, fontWeight: '700' }}>
+              <Text style={{ color: C.accent, fontSize: 17, fontWeight: '700', fontFamily: FF.bold }}>
                 {(currentPlayer + 1) % players.length === 0 && round >= maxRounds ? 'Results' : `${players[(currentPlayer + 1) % players.length]?.name || 'Next'}'s turn`}
               </Text>
             </TouchableOpacity>
@@ -621,7 +637,7 @@ export default function App() {
         <WebView key={`${location.lat}-${location.lng}`} source={{ html: buildStreetViewHtml(location.lat, location.lng) }} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} javaScriptEnabled domStorageEnabled allowsInlineMediaPlayback mediaPlaybackRequiresUserAction={false} mixedContentMode="compatibility" onError={() => setSvError(true)} onMessage={e => { const m = e.nativeEvent.data; if (m === 'loaded') setSvLoaded(true); if (m.startsWith('error')) setSvError(true); }} userAgent="Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36" />
 
         {!svLoaded && !svError && <View style={{ ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg, zIndex: 5 }}><Text style={{ color: C.outline, fontSize: 14 }}>Loading...</Text></View>}
-        {svError && <View style={{ ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg, zIndex: 10 }}><Text style={{ color: C.outline, fontSize: 14, marginBottom: 16 }}>Street View unavailable</Text><TouchableOpacity style={{ backgroundColor: C.blue, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 12 }} onPress={goToScan}><Text style={{ color: C.accent, fontSize: 15, fontWeight: '600' }}>Scan another</Text></TouchableOpacity></View>}
+        {svError && <View style={{ ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg, zIndex: 10 }}><Text style={{ color: C.outline, fontSize: 14, fontFamily: FF.regular, marginBottom: 16 }}>Street View unavailable</Text><TouchableOpacity style={{ backgroundColor: C.blue, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 12 }} onPress={goToScan}><Text style={{ color: C.accent, fontSize: 15, fontWeight: '600', fontFamily: FF.semi }}>Scan another</Text></TouchableOpacity></View>}
 
         {svLoaded && <>
           {/* Score bar */}
@@ -630,24 +646,28 @@ export default function App() {
               {players.map((p, i) => (
                 <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 9999, paddingVertical: 5, paddingHorizontal: 10, borderWidth: 2, borderColor: currentPlayer === i ? C.green : 'transparent' }}>
                   <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: PCOLORS[i] }} />
-                  <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600' }}>{p.name}</Text>
-                  <Text style={{ color: C.green, fontSize: 11, fontWeight: '700' }}>{scores[i]}</Text>
+                  <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600', fontFamily: FF.semi }}>{p.name}</Text>
+                  <Text style={{ color: C.green, fontSize: 11, fontWeight: '700', fontFamily: FF.bold }}>{scores[i]}</Text>
                 </View>
               ))}
             </View>
             <View style={{ alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 9999, paddingVertical: 4, paddingHorizontal: 12, marginTop: 6 }}>
-              <Text style={{ color: C.muted, fontSize: 11, fontWeight: '600' }}>Round {round}/{maxRounds}</Text>
+              <Text style={{ color: C.muted, fontSize: 11, fontWeight: '600', fontFamily: FF.semi }}>Round {round}/{maxRounds}</Text>
             </View>
           </View>
 
           {/* Timer */}
           <Animated.View style={{ position: 'absolute', top: 100, right: 12, width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(0,0,0,0.85)', borderWidth: 3, borderColor: tc, justifyContent: 'center', alignItems: 'center', zIndex: 20, transform: [{ scale: timerPulse }] }}>
-            <Text style={{ color: tc, fontSize: 22, fontWeight: '700' }}>{timer}</Text>
+            <Text style={{ color: tc, fontSize: 22, fontWeight: '700', fontFamily: FF.bold }}>{timer}</Text>
           </Animated.View>
 
           {/* I know it button */}
           <TouchableOpacity style={{ position: 'absolute', bottom: 50, alignSelf: 'center', zIndex: 20, backgroundColor: 'rgba(0,0,0,0.8)', paddingVertical: 14, paddingHorizontal: 32, borderRadius: 9999, borderWidth: 1.5, borderColor: C.green }} onPress={() => { playClickSound(); setTimerPaused(true); setPhase('answer'); setTimeout(() => { playAnswerphoneBeep(); startVoice(); }, 300); }}>
-            <Text style={{ color: C.green, fontSize: 17, fontWeight: '600' }}>I know it!</Text>
+            <Text style={{ color: C.green, fontSize: 18, fontWeight: '600', fontFamily: FF.semi }}>I know it!</Text>
+          </TouchableOpacity>
+          {/* Abort button */}
+          <TouchableOpacity style={{ position: 'absolute', bottom: 12, left: 16, zIndex: 20, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 20, paddingVertical: 6, paddingHorizontal: 14 }} onPress={goToSetup}>
+            <Text style={{ color: '#ff6b6b', fontSize: 13, fontWeight: '600', fontFamily: FF.semi }}>✕ Abort</Text>
           </TouchableOpacity>
         </>}
       </View>
@@ -660,30 +680,30 @@ export default function App() {
   return (
     <View style={ss.c}><StatusBar hidden />
       <ScrollView contentContainerStyle={{ padding: 24, alignItems: 'center', paddingTop: 50 }}>
-        <Text style={{ fontSize: 56, marginBottom: 8 }}>{'\u{1F3C6}'}</Text>
-        <Text style={{ color: C.text, fontSize: 28, fontWeight: '700', marginBottom: 4 }}>Game Over!</Text>
-        <Text style={{ color: C.outline, fontSize: 14, marginBottom: 24 }}>{maxRounds} Rounds</Text>
+        <Text style={{ fontSize: 56, fontFamily: FF.regular, marginBottom: 8 }}>{'\u{1F3C6}'}</Text>
+        <Text style={{ color: C.text, fontSize: 28, fontWeight: '700', fontFamily: FF.bold, marginBottom: 4 }}>Game Over!</Text>
+        <Text style={{ color: C.outline, fontSize: 14, fontFamily: FF.regular, marginBottom: 24 }}>{maxRounds} Rounds</Text>
 
         {sorted.map((p, i) => (
           <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: C.surface, borderRadius: 12, padding: 14, marginBottom: 8, width: '100%', borderWidth: 1, borderColor: i === 0 ? C.green : C.border }}>
-            <Text style={{ fontSize: 22, marginRight: 12 }}>{medals[i] || `#${i + 1}`}</Text>
-            <Text style={{ flex: 1, color: C.text, fontSize: 16, fontWeight: '600' }}>{p.name}{p.cardCity ? ` (${p.cardCity})` : ''}</Text>
-            <Text style={{ color: C.green, fontSize: 16, fontWeight: '700' }}>{p.score} pts</Text>
+            <Text style={{ fontSize: 22, fontFamily: FF.regular, marginRight: 12 }}>{medals[i] || `#${i + 1}`}</Text>
+            <Text style={{ flex: 1, color: C.text, fontSize: 16, fontWeight: '600', fontFamily: FF.semi }}>{p.name}{p.cardCity ? ` (${p.cardCity})` : ''}</Text>
+            <Text style={{ color: C.green, fontSize: 16, fontWeight: '700', fontFamily: FF.bold }}>{p.score} pts</Text>
           </View>
         ))}
 
-        <Text style={{ color: C.text, fontSize: 16, fontWeight: '700', marginTop: 20, marginBottom: 12 }}>Round History</Text>
+        <Text style={{ color: C.text, fontSize: 16, fontWeight: '700', fontFamily: FF.bold, marginTop: 20, marginBottom: 12 }}>Round History</Text>
         {history.map((h, i) => (
           <View key={i} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: C.border, width: '100%' }}>
-            <Text style={{ color: C.outline, fontSize: 12, width: 32 }}>R{h.round}</Text>
-            <Text style={{ color: C.text, fontSize: 13, flex: 1 }}>{players[h.playerIdx]?.name}</Text>
-            <Text style={{ color: C.muted, fontSize: 13, flex: 1 }}>{h.city}</Text>
-            <Text style={{ color: C.green, fontSize: 14, fontWeight: '700', width: 44, textAlign: 'right' }}>+{h.points}</Text>
+            <Text style={{ color: C.outline, fontSize: 12, fontFamily: FF.regular, width: 32 }}>R{h.round}</Text>
+            <Text style={{ color: C.text, fontSize: 13, fontFamily: FF.regular, flex: 1 }}>{players[h.playerIdx]?.name}</Text>
+            <Text style={{ color: C.muted, fontSize: 13, fontFamily: FF.regular, flex: 1 }}>{h.city}</Text>
+            <Text style={{ color: C.green, fontSize: 14, fontWeight: '700', fontFamily: FF.bold, width: 44, textAlign: 'right' }}>+{h.points}</Text>
           </View>
         ))}
 
         <TouchableOpacity style={{ backgroundColor: C.blue, paddingVertical: 16, borderRadius: 9999, alignItems: 'center', width: '100%', marginTop: 24 }} onPress={() => setScreen('setup')}>
-          <Text style={{ color: C.accent, fontSize: 17, fontWeight: '700' }}>Play Again</Text>
+          <Text style={{ color: C.accent, fontSize: 17, fontWeight: '700', fontFamily: FF.bold }}>Play Again</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
