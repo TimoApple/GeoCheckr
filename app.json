@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#282828"
+      "backgroundColor": "#111225"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -23,7 +23,7 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png",
-        "backgroundColor": "#282828"
+        "backgroundColor": "#111225"
       },
       "package": "com.geocheckr.app",
       "config": {
