@@ -1,7 +1,8 @@
 // ═══════════════════════════════════════════════════════════════
-// GeoCheckr V1 — QR Card Game Engine
-// Design: Timo's Palette — Space Grotesk + 4 Farben
-// Street View: UNVERÄNDERT (Vorlage 2 — 6 Tage!)
+// GeoCheckr — Argon Material Version
+// Font: EXCLUSIVELY Space Grotesk
+// Colors: #bdc2ff, #a6d700, #3340ca, #111225
+// Style: Argon Design System (rounded, shadows, cards)
 // ═══════════════════════════════════════════════════════════════
 
 const LOCATIONS = ALL_LOCATIONS.map((l, i) => ({...l, id: i+1}));
@@ -23,11 +24,11 @@ const state = {
   usedLocations: [],
 };
 
-// Player colors — Timo's palette
-const PLAYER_COLORS = ['#bdc2ff', '#a6d700', '#88da7d', '#FF9500', '#ffb4ab'];
+// Player colors — Timo's 4 master + accent
+const PLAYER_COLORS = ['#bdc2ff', '#a6d700', '#3340ca', '#88da7d', '#ffb4ab'];
 
 // ═══════════════════════════════════════════════════════════════
-// AUDIO (UNVERÄNDERT)
+// AUDIO
 // ═══════════════════════════════════════════════════════════════
 let audioCtx = null;
 function getAudio() {
@@ -57,7 +58,7 @@ function playWarning() { beep(440,0.3,0.4); setTimeout(()=>beep(440,0.3,0.4),350
 function playScan() { beep(1200, 0.08, 0.2); setTimeout(()=>beep(1600, 0.12, 0.25),100); }
 
 // ═══════════════════════════════════════════════════════════════
-// UTILS (UNVERÄNDERT)
+// UTILS
 // ═══════════════════════════════════════════════════════════════
 function calcDistance(lat1, lng1, lat2, lng2) {
   const R = 6371;
@@ -68,7 +69,7 @@ function calcDistance(lat1, lng1, lat2, lng2) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// STREET VIEW — UNVERÄNDERT (Vorlage 2 — 6 Tage!)
+// STREET VIEW — UNVERÄNDERT
 // ═══════════════════════════════════════════════════════════════
 let panorama = null;
 let svService = null;
@@ -85,7 +86,7 @@ function loadPanorama(lat, lng) {
   const container = document.getElementById('streetview-container');
   if (!container) return;
   if (!ensureMapReady()) {
-    container.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--outline);font-family:Space Grotesk,sans-serif;"><div style="text-align:center;"><div style="font-size:24px;">⏳</div><div style="margin-top:10px;">Lade Maps API...</div></div></div>';
+    container.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#8f8fa0;font-family:Space Grotesk,sans-serif;"><div style="text-align:center;"><div style="font-size:24px;">⏳</div><div style="margin-top:10px;">Lade Maps API...</div></div></div>';
     setTimeout(() => loadPanorama(lat, lng), 1000);
     return;
   }
@@ -101,13 +102,13 @@ function loadPanorama(lat, lng) {
     });
     state.streetViewLoaded = true;
   } catch(e) {
-    container.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--outline);font-family:Space Grotesk,sans-serif;"><div style="text-align:center;">Street View not available</div></div>';
+    container.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#111225;color:#8f8fa0;font-family:Space Grotesk,sans-serif;"><div style="text-align:center;">Street View not available</div></div>';
     state.streetViewLoaded = false;
   }
 }
 
 // ═══════════════════════════════════════════════════════════════
-// QR CODE (UNVERÄNDERT)
+// QR CODE
 // ═══════════════════════════════════════════════════════════════
 let qrScanner = null;
 
@@ -122,7 +123,7 @@ function startQRScanner() {
   const container = document.getElementById('qr-reader');
   if (!container) return;
   if (typeof Html5Qrcode === 'undefined') {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--outline);">QR-Scanner wird geladen...</div>';
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#8f8fa0;">QR-Scanner wird geladen...</div>';
     setTimeout(startQRScanner, 1000);
     return;
   }
@@ -149,7 +150,7 @@ function startQRScanner() {
     },
     () => {}
   ).catch(() => {
-    container.innerHTML = '<div style="text-align:center;padding:40px;"><p style="color:var(--error);">Kamera nicht verfügbar</p><p style="color:var(--outline);font-size:13px;margin-top:8px;">Bitte Kamera-Berechtigung erlauben.</p></div>';
+    container.innerHTML = '<div style="text-align:center;padding:40px;"><p style="color:#ff6b6b;">Kamera nicht verfügbar</p><p style="color:#8f8fa0;font-size:13px;margin-top:8px;">Bitte Kamera-Berechtigung erlauben.</p></div>';
   });
 }
 
@@ -182,7 +183,7 @@ function render() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// SETUP
+// SETUP — Argon Style (Card-heavy, shadows, badges)
 // ═══════════════════════════════════════════════════════════════
 function renderSetup(el) {
   if (state.players.length === 0) {
@@ -191,53 +192,55 @@ function renderSetup(el) {
   }
   
   el.innerHTML = `
-    <div class="screen animate-in" style="padding:var(--sp-8) var(--sp-6);max-width:440px;margin:0 auto;">
+    <div class="screen anim-up" style="padding:48px 24px;max-width:440px;margin:0 auto;">
       
-      <!-- Logo -->
-      <div style="text-align:center;margin-bottom:var(--sp-8);">
-        <div style="width:56px;height:56px;border-radius:16px;background:var(--surface);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-4);">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>
+      <!-- Logo — Argon Card -->
+      <div class="card" style="text-align:center;margin-bottom:32px;padding:32px 24px;">
+        <div style="width:64px;height:64px;border-radius:18px;background:rgba(51,64,202,0.2);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 4px 20px rgba(51,64,202,0.15);">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#bdc2ff" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>
         </div>
-        <h1 style="font-size:32px;font-weight:700;color:var(--text);line-height:1.1;">GeoCheckr</h1>
-        <p class="label_sm" style="margin-top:var(--sp-2);">QR Card Game</p>
+        <h1 style="font-size:34px;font-weight:700;color:#e5e2e1;line-height:1.1;letter-spacing:-0.5px;">GeoCheckr</h1>
+        <span class="badge badge-accent" style="margin-top:12px;">QR Card Game</span>
       </div>
       
-      <!-- Spieler -->
-      <div style="margin-bottom:var(--sp-8);">
-        <p class="label_sm" style="margin-bottom:var(--sp-3);">Spieler</p>
+      <!-- Spieler Card -->
+      <div class="card" style="margin-bottom:24px;">
+        <p class="label_sm" style="margin-bottom:16px;">Spieler</p>
         ${state.players.map((p, i) => `
-          <div style="display:flex;align-items:center;gap:var(--sp-3);margin-bottom:var(--sp-2);">
-            <div style="width:32px;height:32px;border-radius:50%;background:var(--surface-max);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:${PLAYER_COLORS[i]};flex-shrink:0;">${i+1}</div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <div class="avatar" style="background:${PLAYER_COLORS[i]}18;color:${PLAYER_COLORS[i]};border:1.5px solid ${PLAYER_COLORS[i]}33;">
+              ${i+1}
+            </div>
             <input type="text" class="input" value="${p.name}" 
                    onchange="state.players[${i}].name=this.value"
                    placeholder="Spieler ${i+1}" maxlength="20"
                    style="flex:1;">
           </div>
         `).join('')}
-        <div style="display:flex;gap:var(--sp-2);margin-top:var(--sp-3);">
+        <div style="display:flex;gap:8px;margin-top:16px;">
           ${state.players.length < 5 ? `<button class="btn btn-ghost btn-sm" style="flex:1;" onclick="addPlayer()">+ Spieler</button>` : ''}
-          ${state.players.length > 2 ? `<button class="btn btn-ghost btn-sm" style="flex:1;color:var(--error);" onclick="removePlayer()">− Entfernen</button>` : ''}
+          ${state.players.length > 2 ? `<button class="btn btn-ghost btn-sm" style="flex:1;color:#ff6b6b;" onclick="removePlayer()">− Entfernen</button>` : ''}
         </div>
       </div>
       
-      <!-- Timer -->
-      <div style="margin-bottom:var(--sp-8);">
-        <p class="label_sm" style="margin-bottom:var(--sp-3);">Timer</p>
-        <div style="display:flex;gap:var(--sp-2);">
+      <!-- Timer Card -->
+      <div class="card" style="margin-bottom:32px;">
+        <p class="label_sm" style="margin-bottom:16px;">Timer</p>
+        <div style="display:flex;gap:8px;">
           ${[30, 60, 90, 120].map(t => `
             <button class="diff-btn ${state.timerSeconds===t?'active':''}" onclick="state.timerSeconds=${t};render()" style="flex:1;">${t}s</button>
           `).join('')}
         </div>
       </div>
       
-      <!-- Start -->
-      <button class="btn btn-primary btn-lg" onclick="startGame()" style="width:100%;">
+      <!-- Start Button -->
+      <button class="btn btn-green btn-lg" onclick="startGame()" style="width:100%;box-shadow:0 6px 20px rgba(166,215,0,0.25);">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         Start
       </button>
       
-      <p style="text-align:center;margin-top:var(--sp-4);color:var(--outline);font-size:13px;">
-        Karten drucken: <a href="cards.html" style="color:var(--accent);text-decoration:none;">cards.html</a>
+      <p style="text-align:center;margin-top:16px;color:#5a5a70;font-size:13px;">
+        Karten drucken: <a href="cards.html" style="color:#bdc2ff;text-decoration:none;">cards.html</a>
       </p>
     </div>
   `;
@@ -256,39 +259,38 @@ function startGame() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// SCAN
+// SCAN — Argon Style (Glass card for scanner)
 // ═══════════════════════════════════════════════════════════════
 function renderScan(el) {
   const cp = state.currentPlayer;
   el.innerHTML = `
-    <div class="screen animate-in" style="display:flex;flex-direction:column;padding:var(--sp-6);height:100vh;height:100dvh;">
+    <div class="screen anim-up" style="display:flex;flex-direction:column;padding:24px;height:100vh;height:100dvh;">
       
-      <!-- Header HUD -->
-      <div class="glass" style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);border-radius:9999px;margin-bottom:var(--sp-6);width:fit-content;">
-        <span class="label_sm" style="color:var(--green);margin:0;">Runde ${state.round}</span>
-        <span style="width:1px;height:16px;background:var(--outline-soft);"></span>
-        <span style="font-size:14px;font-weight:600;color:var(--text);">${state.players[cp].name}</span>
+      <!-- Header — Argon Badge -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+        <span class="badge badge-green">Runde ${state.round}</span>
+        <span class="badge badge-blue">${state.players[cp].name}</span>
       </div>
       
       <!-- Scanner Area -->
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div style="text-align:center;margin-bottom:var(--sp-6);">
-          <div style="width:64px;height:64px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-4);">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><line x1="20" y1="14" x2="20" y2="20"/><line x1="14" y1="20" x2="20" y2="20"/></svg>
+        <div class="card" style="text-align:center;padding:40px 24px;margin-bottom:24px;max-width:340px;width:100%;">
+          <div style="width:72px;height:72px;border-radius:20px;background:rgba(51,64,202,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;box-shadow:0 4px 16px rgba(51,64,202,0.1);">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#bdc2ff" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><line x1="20" y1="14" x2="20" y2="20"/><line x1="14" y1="20" x2="20" y2="20"/></svg>
           </div>
-          <p style="color:var(--text-muted);font-size:15px;">QR-Code scannen</p>
-          <p class="label_sm" style="margin-top:var(--sp-1);">Kamera auf den Code richten</p>
+          <p style="color:#e5e2e1;font-size:16px;font-weight:600;">QR-Code scannen</p>
+          <p style="color:#5a5a70;font-size:13px;margin-top:6px;">Kamera auf den Code richten</p>
         </div>
         
-        <div id="qr-reader" style="width:100%;max-width:300px;border-radius:16px;overflow:hidden;"></div>
-        <div id="qr-status" style="color:var(--outline);font-size:13px;margin-top:var(--sp-3);text-align:center;"></div>
+        <div id="qr-reader" style="width:100%;max-width:300px;border-radius:20px;overflow:hidden;box-shadow:var(--shadow-lg);"></div>
+        <div id="qr-status" style="color:#8f8fa0;font-size:13px;margin-top:12px;text-align:center;"></div>
       </div>
       
       <!-- Score Button -->
-      <div style="padding-top:var(--sp-4);">
-        <button class="btn btn-ghost" onclick="viewScore()" style="width:100%;">
+      <div style="padding-top:16px;">
+        <button class="btn btn-outline" onclick="viewScore()" style="width:100%;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
-          Score
+          Scoreboard
         </button>
       </div>
     </div>
@@ -297,7 +299,7 @@ function renderScan(el) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// VIEW — Street View + Timer (STREET VIEW CODE UNVERÄNDERT)
+// VIEW — Argon Style (Floating glass cards, stronger shadows)
 // ═══════════════════════════════════════════════════════════════
 function renderView(el) {
   el.innerHTML = `
@@ -306,45 +308,42 @@ function renderView(el) {
       <!-- Street View Container -->
       <div id="streetview-container" style="position:absolute;top:0;left:0;right:0;bottom:0;z-index:0;"></div>
       
-      <!-- Timer — Glass HUD -->
-      <div class="glass" style="position:absolute;top:40px;right:var(--sp-4);z-index:10;border-radius:9999px;padding:var(--sp-2) var(--sp-5);display:flex;align-items:center;gap:var(--sp-2);">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <!-- Timer — Argon Glass -->
+      <div class="card-glass" style="position:absolute;top:44px;right:16px;z-index:10;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8f8fa0" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <span id="timer-display" class="timer-display">${state.timer}</span>
       </div>
       
-      <!-- Round + Player — Glass HUD -->
-      <div class="glass" style="position:absolute;top:40px;left:var(--sp-4);z-index:10;border-radius:12px;padding:var(--sp-2) var(--sp-4);display:flex;align-items:center;gap:var(--sp-3);">
-        <span class="label_sm" style="color:var(--green);margin:0;">R${state.round}</span>
-        <span style="width:1px;height:14px;background:var(--outline-soft);"></span>
-        <span style="font-size:13px;font-weight:600;color:var(--text);">${state.players[state.currentPlayer].name}</span>
+      <!-- Round + Player — Argon Glass -->
+      <div class="card-glass" style="position:absolute;top:44px;left:16px;z-index:10;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,0.4);">
+        <span class="badge badge-green" style="padding:4px 10px;font-size:11px;">R${state.round}</span>
+        <span style="font-size:13px;font-weight:600;color:#e5e2e1;">${state.players[state.currentPlayer].name}</span>
       </div>
       
-      <!-- Player Badges — Floating -->
-      <div class="glass" style="position:absolute;bottom:90px;left:var(--sp-4);right:var(--sp-4);z-index:10;border-radius:16px;padding:var(--sp-3) var(--sp-4);display:flex;gap:var(--sp-2);overflow-x:auto;">
+      <!-- Player Badges — Argon Cards -->
+      <div class="card-glass" style="position:absolute;bottom:100px;left:16px;right:16px;z-index:10;display:flex;gap:8px;overflow-x:auto;box-shadow:0 4px 24px rgba(0,0,0,0.4);">
         ${state.players.map((p, i) => `
           <div class="player-badge ${i===state.currentPlayer?'active':''}" style="white-space:nowrap;">
             <div class="dot" style="background:${PLAYER_COLORS[i]};"></div>
             ${p.name}
-            <span style="font-weight:700;margin-left:2px;">${state.scores[i]}</span>
+            <span style="font-weight:700;margin-left:4px;">${state.scores[i]}</span>
           </div>
         `).join('')}
       </div>
       
-      <!-- Skip Button -->
-      <div style="position:absolute;bottom:28px;left:50%;transform:translateX(-50%);z-index:10;">
-        <button onclick="skipTimer()" class="btn btn-primary" style="padding:var(--sp-3) var(--sp-8);">
+      <!-- Skip Button — Argon Green -->
+      <div style="position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:10;">
+        <button onclick="skipTimer()" class="btn btn-green" style="padding:14px 36px;box-shadow:0 6px 20px rgba(166,215,0,0.25);">
           Fertig
         </button>
       </div>
     </div>
   `;
   
-  // Street View laden
   setTimeout(() => {
     if (state.currentLocation) loadPanorama(state.currentLocation.lat, state.currentLocation.lng);
   }, 100);
   
-  // Timer starten
   clearInterval(state.timerInterval);
   state.timerInterval = setInterval(() => {
     if (state.timer > 0) {
@@ -373,48 +372,50 @@ function skipTimer() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// ANSWER — Stadt + Land
+// ANSWER — Argon Style (Card-based player selection)
 // ═══════════════════════════════════════════════════════════════
 function renderAnswer(el) {
   const loc = state.currentLocation;
   const cp = state.currentPlayer;
   
   el.innerHTML = `
-    <div class="screen animate-scale" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--sp-8);min-height:100vh;min-height:100dvh;">
+    <div class="screen anim-scale" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;min-height:100vh;min-height:100dvh;">
       
-      <!-- Answer Reveal -->
-      <div style="text-align:center;margin-bottom:var(--sp-8);">
-        <div style="width:56px;height:56px;border-radius:50%;background:rgba(166,215,0,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-4);">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>
+      <!-- Answer Reveal Card -->
+      <div class="card" style="text-align:center;margin-bottom:32px;padding:32px;box-shadow:0 8px 32px rgba(166,215,0,0.1);">
+        <div style="width:64px;height:64px;border-radius:18px;background:rgba(166,215,0,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 4px 16px rgba(166,215,0,0.1);">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#a6d700" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>
         </div>
-        <h2 style="font-size:32px;font-weight:700;color:var(--green);line-height:1.1;">${loc.city}</h2>
-        <p style="font-size:18px;color:var(--text-muted);margin-top:var(--sp-1);">${loc.country}</p>
+        <h2 style="font-size:34px;font-weight:700;color:#a6d700;line-height:1.1;letter-spacing:-0.5px;">${loc.city}</h2>
+        <p style="font-size:18px;color:#8f8fa0;margin-top:6px;">${loc.country}</p>
       </div>
       
       <!-- Question -->
-      <p style="color:var(--text-muted);font-size:14px;margin-bottom:var(--sp-5);text-align:center;">
+      <p style="color:#8f8fa0;font-size:14px;margin-bottom:20px;text-align:center;">
         Wer hat den richtigen Ort?
       </p>
       
-      <!-- Player Buttons -->
-      <div style="display:flex;flex-direction:column;gap:var(--sp-3);width:100%;max-width:340px;">
+      <!-- Player Cards — Argon style with hover shadow -->
+      <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:360px;">
         ${state.players.map((p, i) => `
-          <button onclick="givePoint(${i})" class="card-high" style="
-            display:flex;align-items:center;gap:var(--sp-3);
-            padding:var(--sp-4) var(--sp-5);
+          <button onclick="givePoint(${i})" class="card-raised" style="
+            display:flex;align-items:center;gap:12px;
+            padding:16px 20px;
             cursor:pointer;border:none;text-align:left;
-            transition:all 0.2s;
-          ">
-            <div style="width:28px;height:28px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:${PLAYER_COLORS[i]};flex-shrink:0;border:1px solid ${PLAYER_COLORS[i]}33;">${i+1}</div>
-            <span style="flex:1;font-size:15px;font-weight:600;color:var(--text);">${p.name}</span>
-            ${i === cp ? '<span class="label_sm" style="color:var(--green);margin:0;">DRAN</span>' : ''}
-            <span class="score-sm" style="font-size:14px;color:var(--text-muted);">${state.scores[i]}</span>
+            transition:all 0.25s;
+          " onmouseover="this.style.boxShadow='0 6px 24px rgba(0,0,0,0.4)'" onmouseout="this.style.boxShadow=''">
+            <div class="avatar" style="background:${PLAYER_COLORS[i]}18;color:${PLAYER_COLORS[i]};border:1.5px solid ${PLAYER_COLORS[i]}33;">
+              ${i+1}
+            </div>
+            <span style="flex:1;font-size:15px;font-weight:600;color:#e5e2e1;">${p.name}</span>
+            ${i === cp ? '<span class="badge badge-green" style="padding:4px 10px;font-size:10px;">DRAN</span>' : ''}
+            <span class="score-sm" style="font-size:14px;color:#8f8fa0;">${state.scores[i]}</span>
           </button>
         `).join('')}
       </div>
       
       <!-- No Point -->
-      <div style="margin-top:var(--sp-6);width:100%;max-width:340px;">
+      <div style="margin-top:24px;width:100%;max-width:360px;">
         <button onclick="noPoint()" class="btn btn-ghost" style="width:100%;">
           Niemand
         </button>
@@ -439,7 +440,7 @@ function noPoint() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// SCORE
+// SCORE — Argon Style (Card leaderboard with gradient bars)
 // ═══════════════════════════════════════════════════════════════
 function renderScore(el) {
   const sorted = state.players.map((p, i) => ({ ...p, idx: i, score: state.scores[i] }))
@@ -448,32 +449,32 @@ function renderScore(el) {
   const medals = ['🥇', '🥈', '🥉'];
   
   el.innerHTML = `
-    <div class="screen animate-in" style="display:flex;flex-direction:column;align-items:center;padding:var(--sp-8) var(--sp-6);min-height:100vh;min-height:100dvh;">
+    <div class="screen anim-up" style="display:flex;flex-direction:column;align-items:center;padding:48px 24px;min-height:100vh;min-height:100dvh;">
       
-      <!-- Header -->
-      <div style="text-align:center;margin-bottom:var(--sp-8);">
-        <h2 style="font-size:24px;font-weight:700;color:var(--text);">Scoreboard</h2>
-        <p class="label_sm" style="margin-top:var(--sp-1);">Runde ${state.round}</p>
+      <!-- Header Card -->
+      <div class="card" style="text-align:center;margin-bottom:32px;width:100%;max-width:400px;">
+        <h2 style="font-size:26px;font-weight:700;color:#e5e2e1;">Scoreboard</h2>
+        <span class="badge badge-accent" style="margin-top:8px;">Runde ${state.round}</span>
       </div>
       
-      <!-- Scoreboard -->
-      <div style="width:100%;max-width:380px;">
+      <!-- Scoreboard — Argon Cards -->
+      <div style="width:100%;max-width:400px;">
         ${sorted.map((p, i) => `
-          <div style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-4) 0;">
-            <span style="font-size:${i===0?'20':'16'}px;width:28px;text-align:center;">
-              ${i < 3 ? medals[i] : '<span style="color:var(--outline);font-size:13px;">#'+(i+1)+'</span>'}
+          <div class="card" style="display:flex;align-items:center;gap:12px;padding:16px 20px;margin-bottom:10px;">
+            <span style="font-size:${i===0?'22':'16'}px;width:32px;text-align:center;">
+              ${i < 3 ? medals[i] : '<span style="color:#5a5a70;font-size:13px;">#'+(i+1)+'</span>'}
             </span>
-            <span style="flex:1;font-size:15px;font-weight:600;color:var(--text);">${p.name}</span>
+            <span style="flex:1;font-size:15px;font-weight:600;color:#e5e2e1;">${p.name}</span>
             <span class="score-sm">${p.score}</span>
           </div>
-          <div class="progress-bar" style="margin-bottom:var(--sp-3);">
-            <div class="fill" style="width:${(p.score/maxScore)*100}%;"></div>
+          <div class="progress-track" style="margin-bottom:12px;margin-top:-2px;">
+            <div class="progress-fill" style="width:${(p.score/maxScore)*100}%;"></div>
           </div>
         `).join('')}
       </div>
       
       <!-- Next Round -->
-      <div style="margin-top:auto;width:100%;max-width:380px;padding-top:var(--sp-6);">
+      <div style="margin-top:auto;width:100%;max-width:400px;padding-top:24px;">
         <button onclick="nextRound()" class="btn btn-primary btn-lg" style="width:100%;">
           Nächste Runde → Runde ${state.round}
         </button>

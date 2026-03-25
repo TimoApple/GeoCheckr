@@ -28,10 +28,10 @@ For floating HUD elements (like coordinates or timers), use **Glassmorphism**. A
 ---
 
 ## 3. Typography: Technical Precision
-The typography balances the utilitarian clarity of **Manrope** with the futuristic, geometric quirks of **Space Grotesk**.
+**EXCLUSIVELY Space Grotesk** — no other font anywhere.
 
-- **Display & Headlines (Space Grotesk):** Used for "Hard Data"—scores, location names, and navigational headers. It conveys the high-tech, cartographic personality.
-- **Body & Titles (Manrope):** Used for "Soft Intel"—narrative descriptions, settings, and instructions. It ensures long-term readability during extended play sessions.
+- **All text (Space Grotesk):** Headlines, body, labels, buttons, inputs, timers — everything. The geometric, slightly quirky letterforms give GeoCheckr its distinct high-tech identity.
+- **Weights:** Regular (400), Medium (500), SemiBold (600), Bold (700).
 - **Labels (Space Grotesk):** Mono-spaced-like appearance for coordinates (Lat/Long) and technical metadata.
 
 *Director's Tip: Use `label_sm` in all caps with a tracking (letter-spacing) of 0.1rem for secondary technical data to mimic architectural blueprints.*
