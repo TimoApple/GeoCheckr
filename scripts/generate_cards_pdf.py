@@ -42,6 +42,72 @@ pdfmetrics.registerFont(TTFont('SpaceGrotesk-SemiBold', f'{FONT_DIR}/SpaceGrotes
 pdfmetrics.registerFont(TTFont('NotoSans', f'{FONT_DIR}/NotoSans-Regular.ttf'))
 pdfmetrics.registerFont(TTFont('NotoSans-Bold', f'{FONT_DIR}/NotoSans-Bold.ttf'))
 
+# Script-specific Noto Sans fonts
+SCRIPT_FONTS = {}
+def _reg(name, path):
+    try:
+        pdfmetrics.registerFont(TTFont(name, path))
+        SCRIPT_FONTS[name] = True
+    except Exception: pass
+
+_reg('NotoSansSC', f'{FONT_DIR}/NotoSansSC-VF.ttf')
+_reg('NotoSansSC-Bold', f'{FONT_DIR}/NotoSansSC-Bold.ttf')
+_reg('NotoSansArabic', f'{FONT_DIR}/NotoSansArabic-Regular.ttf')
+_reg('NotoSansDevanagari', f'{FONT_DIR}/NotoSansDevanagari-Regular.ttf')
+_reg('NotoSansThai', f'{FONT_DIR}/NotoSansThai-Regular.ttf')
+_reg('NotoSansGeorgian', f'{FONT_DIR}/NotoSansGeorgian-Regular.ttf')
+_reg('NotoSansArmenian', f'{FONT_DIR}/NotoSansArmenian-Regular.ttf')
+_reg('NotoSansEthiopic', f'{FONT_DIR}/NotoSansEthiopic-Regular.ttf')
+_reg('NotoSansHebrew', f'{FONT_DIR}/NotoSansHebrew-Regular.ttf')
+_reg('NotoSansBengali', f'{FONT_DIR}/NotoSansBengali-Regular.ttf')
+_reg('NotoSansTelugu', f'{FONT_DIR}/NotoSansTelugu-Regular.ttf')
+_reg('NotoSansGujarati', f'{FONT_DIR}/NotoSansGujarati-Regular.ttf')
+_reg('NotoSansTamil', f'{FONT_DIR}/NotoSansTamil-Regular.ttf')
+_reg('NotoSansKhmer', f'{FONT_DIR}/NotoSansKhmer-Regular.ttf')
+_reg('NotoSansMyanmar', f'{FONT_DIR}/NotoSansMyanmar-Regular.ttf')
+_reg('NotoSansSinhala', f'{FONT_DIR}/NotoSansSinhala-Regular.ttf')
+
+
+def get_local_font(text):
+    """Detect script and return the best font name for local names."""
+    for ch in text:
+        cp = ord(ch)
+        if 0x4E00 <= cp <= 0x9FFF or 0x3400 <= cp <= 0x4DBF or 0xF900 <= cp <= 0xFAFF:
+            if 'NotoSansSC' in SCRIPT_FONTS: return 'NotoSansSC'
+        if 0x3040 <= cp <= 0x309F or 0x30A0 <= cp <= 0x30FF:
+            if 'NotoSansSC' in SCRIPT_FONTS: return 'NotoSansSC'
+        if 0xAC00 <= cp <= 0xD7AF or 0x1100 <= cp <= 0x11FF:
+            if 'NotoSansSC' in SCRIPT_FONTS: return 'NotoSansSC'
+        if 0x0600 <= cp <= 0x06FF or 0xFB50 <= cp <= 0xFDFF:
+            if 'NotoSansArabic' in SCRIPT_FONTS: return 'NotoSansArabic'
+        if 0x0900 <= cp <= 0x097F:
+            if 'NotoSansDevanagari' in SCRIPT_FONTS: return 'NotoSansDevanagari'
+        if 0x0980 <= cp <= 0x09FF:
+            if 'NotoSansBengali' in SCRIPT_FONTS: return 'NotoSansBengali'
+        if 0x0E00 <= cp <= 0x0E7F:
+            if 'NotoSansThai' in SCRIPT_FONTS: return 'NotoSansThai'
+        if 0x10A0 <= cp <= 0x10FF:
+            if 'NotoSansGeorgian' in SCRIPT_FONTS: return 'NotoSansGeorgian'
+        if 0x0530 <= cp <= 0x058F:
+            if 'NotoSansArmenian' in SCRIPT_FONTS: return 'NotoSansArmenian'
+        if 0x1200 <= cp <= 0x137F:
+            if 'NotoSansEthiopic' in SCRIPT_FONTS: return 'NotoSansEthiopic'
+        if 0x0590 <= cp <= 0x05FF:
+            if 'NotoSansHebrew' in SCRIPT_FONTS: return 'NotoSansHebrew'
+        if 0x0C00 <= cp <= 0x0C7F:
+            if 'NotoSansTelugu' in SCRIPT_FONTS: return 'NotoSansTelugu'
+        if 0x0A80 <= cp <= 0x0AFF:
+            if 'NotoSansGujarati' in SCRIPT_FONTS: return 'NotoSansGujarati'
+        if 0x0B80 <= cp <= 0x0BFF:
+            if 'NotoSansTamil' in SCRIPT_FONTS: return 'NotoSansTamil'
+        if 0x1780 <= cp <= 0x17FF:
+            if 'NotoSansKhmer' in SCRIPT_FONTS: return 'NotoSansKhmer'
+        if 0x1000 <= cp <= 0x109F:
+            if 'NotoSansMyanmar' in SCRIPT_FONTS: return 'NotoSansMyanmar'
+        if 0x0D80 <= cp <= 0x0DFF:
+            if 'NotoSansSinhala' in SCRIPT_FONTS: return 'NotoSansSinhala'
+    return 'NotoSans'
+
 # ── LOAD LOCATIONS ──
 def load_locations():
     with open('/home/donatello/.openclaw/workspace/GeoCheckr_App/src/data/panoramaLocations.ts', 'r') as f:
@@ -69,7 +135,7 @@ LOCAL_NAMES = {
     "Addis Ababa":"አዲስ አበባ","Jakarta":"Jakarta","Hanoi":"Hà Nội",
     "Manila":"Maynila","Casablanca":"الدار البيضاء","Baku":"Bakı",
     "Hamburg":"Hamburg","Sarajevo":"Sarajevo","Tirana":"Tirana",
-    "Hong Kong":"Hong Kong","Kathmandu":"काठमाडौं","Dhaka":"ঢাকা",
+    "Hong Kong":"香港","Kathmandu":"काठमाडौं","Dhaka":"ঢাকা",
     "Tehran":"تهران","Baghdad":"بغداد","Jerusalem":"ירושלים",
     "Colombo":"කොළඹ","Ulaanbaatar":"Улаанбаатар","Doha":"الدوحة",
     "Damascus":"دمشق","Beirut":"بيروت","Islamabad":"اسلام آباد",
@@ -102,75 +168,54 @@ LOCAL_NAMES = {
     "Oslo":"Oslo","Stockholm":"Stockholm","Helsinki":"Helsinki",
     "Zurich":"Zürich","Brussels":"Bruxelles","Amsterdam":"Amsterdam",
     "Dublin":"Dublin","London":"London",
+    "Ljubljana":"Ljubljana","Kiev":"Київ","Singapore":"新加坡",
+    "Kuala Lumpur":"کوالا لمڤور","Amman":"عمّان","Muscat":"مسقط",
+    "Kuwait City":"الكويت","Phnom Penh":"ភ្នំពេញ","Vientiane":"ວຽງຈັນ",
+    "Yangon":"ရန်ကုန်","Almaty":"Алматы","Tashkent":"Toshkent",
+    "Ankara":"Ankara","Lagos":"Lagos","Ouagadougou":"Ouagadougou",
+    "Windhoek":"Windhoek","Gaborone":"Gaborone","Lome":"Lomé",
+    "Freetown":"Freetown","Monrovia":"Monrovia",
+    "Brazzaville":"Brazzaville","N'Djamena":"N'Djamena","Niamey":"Niamey",
+    "Conakry":"Conakry","Banjul":"Banjul",
+    "Panama City":"Ciudad de Panamá","San Jose":"San José",
+    "Guatemala City":"Ciudad de Guatemala",
+    "New Orleans":"New Orleans","Seattle":"Seattle","Denver":"Denver",
+    "Montreal":"Montréal","Boston":"Boston","Washington DC":"Washington DC",
+    "Phoenix":"Phoenix","Honolulu":"Honolulu","Anchorage":"Anchorage",
+    "Kingston":"Kingston","Santo Domingo":"Santo Domingo","Nassau":"Nassau",
+    "San Juan":"San Juan","Sao Paulo":"São Paulo","Bogota":"Bogotá",
+    "Asuncion":"Asunción","La Paz":"La Paz","Medellin":"Medellín",
+    "Valparaiso":"Valparaíso","Salvador":"Salvador",
+    "Buenaventura":"Buenaventura","Georgetown":"Georgetown",
+    "Paramaribo":"Paramaribo","Sucre":"Sucre","Cordoba":"Córdoba",
+    "Curitiba":"Curitiba","Mendoza":"Mendoza","Iquique":"Iquique",
+    "Adelaide":"Adelaide","Darwin":"Darwin","Hobart":"Hobart",
+    "Cairns":"Cairns","Suva":"Suva","Nuku'alofa":"Nukuʻalofa",
+    "Port Moresby":"Port Moresby","Noumea":"Nouméa","Apia":"Apia",
+    "Ngerulmud":"Ngerulmud","Bissau":"Bissau","Praia":"Praia","Moroni":"Moroni",
 }
 
-# ── QR CODE DRAWING ──
+# ── QR CODE DRAWING (real QR codes) ──
+import qrcode
+
 def draw_qr(c, data, x, y, size, fg_color=C_BLUE):
-    """Draw a QR-code-like pattern — fg_color is the module color"""
-    h = hashlib.md5(data.encode()).hexdigest()
-    cells = 21
+    """Draw a real QR code — fg_color is the module color (e.g. #3340ca)"""
+    # Generate real QR matrix
+    qr = qrcode.QRCode(version=None, error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=1, border=0)
+    qr.add_data(data)
+    qr.make(fit=True)
+    matrix = qr.get_matrix()
+    cells = len(matrix)
     cs = size / cells
-    
-    # Dark background for QR area
-    pad = 2 * mm
-    c.setFillColor(C_DARK)
-    c.roundRect(x - pad, y - pad, size + 2*pad, size + 2*pad, 2*mm, fill=1, stroke=0)
-    
-    # QR finder patterns (7×7 each)
-    for fx, fy in [(0,0), (cells-7,0), (0,cells-7)]:
-        px = x + fx * cs
-        if fy == 0:
-            py = y + (cells - 7) * cs if fx == 0 else y + (cells - 7) * cs
-        else:
-            py = y
-        
-        if fx == cells-7:
-            px_right = x + (cells - 7) * cs
-            py_top = y + (cells - 7) * cs
-            # Outer
-            c.setFillColor(fg_color)
-            c.rect(px_right, py_top, 7*cs, 7*cs, fill=1, stroke=0)
-            # Inner white
-            c.setFillColor(C_DARK)
-            c.rect(px_right + cs, py_top + cs, 5*cs, 5*cs, fill=1, stroke=0)
-            # Center
-            c.setFillColor(fg_color)
-            c.rect(px_right + 2*cs, py_top + 2*cs, 3*cs, 3*cs, fill=1, stroke=0)
-        elif fx == 0 and fy == cells-7:
-            py_bottom = y
-            # Outer
-            c.setFillColor(fg_color)
-            c.rect(px, py_bottom, 7*cs, 7*cs, fill=1, stroke=0)
-            # Inner white
-            c.setFillColor(C_DARK)
-            c.rect(px + cs, py_bottom + cs, 5*cs, 5*cs, fill=1, stroke=0)
-            # Center
-            c.setFillColor(fg_color)
-            c.rect(px + 2*cs, py_bottom + 2*cs, 3*cs, 3*cs, fill=1, stroke=0)
-        else:
-            # Top-left
-            py_tl = y + (cells - 7) * cs
-            c.setFillColor(fg_color)
-            c.rect(px, py_tl, 7*cs, 7*cs, fill=1, stroke=0)
-            c.setFillColor(C_DARK)
-            c.rect(px + cs, py_tl + cs, 5*cs, 5*cs, fill=1, stroke=0)
-            c.setFillColor(fg_color)
-            c.rect(px + 2*cs, py_tl + 2*cs, 3*cs, 3*cs, fill=1, stroke=0)
-    
-    # Data modules
+
+    # Draw modules
     c.setFillColor(fg_color)
-    idx = 0
     for row in range(cells):
         for col in range(cells):
-            if (row < 7 and col < 7) or (row < 7 and col >= cells-7) or (row >= cells-7 and col < 7):
-                continue
-            if idx < len(h) * 4:
-                bit = int(h[idx // 4], 16) >> (idx % 4) & 1
-                if bit:
-                    px = x + col * cs
-                    py = y + (cells - 1 - row) * cs
-                    c.rect(px, py, cs, cs, fill=1, stroke=0)
-                idx += 1
+            if matrix[row][col]:
+                px = x + col * cs
+                py = y + (cells - 1 - row) * cs
+                c.rect(px, py, cs, cs, fill=1, stroke=0)
 
 # ── DRAW FRONT (CITY NAME) — bg #3340ca, city #c6ff00, local #0a0b1f ──
 def draw_front(c, loc, card_x, card_y):
@@ -194,20 +239,31 @@ def draw_front(c, loc, card_x, card_y):
     else:
         fs = 21
     
+    # City name (English) — Space Grotesk Bold, 21pt, #c6ff00
+    c.setFillColor(C_GREEN)
+
+    if len(city) > 14:
+        fs = 16
+    elif len(city) > 10:
+        fs = 18
+    else:
+        fs = 21
+
     c.setFont('SpaceGrotesk-Bold', fs)
-    c.drawCentredString(card_x + CARD_SIZE/2, card_y + CARD_SIZE * 0.62, city)
-    
-    # Local name — Noto Sans Bold, 21pt, #0a0b1f
+    c.drawCentredString(card_x + CARD_SIZE/2, card_y + CARD_SIZE * 0.58, city)
+
+    # Local name — script-specific Noto Sans, 21pt, #0a0b1f
     c.setFillColor(C_DARK)
-    
+
     if len(local) > 14:
         local_fs = 16
     elif len(local) > 10:
         local_fs = 18
     else:
         local_fs = 21
-    
-    c.setFont('NotoSans-Bold', local_fs)
+
+    local_font = get_local_font(local)
+    c.setFont(local_font, local_fs)
     c.drawCentredString(card_x + CARD_SIZE/2, card_y + CARD_SIZE * 0.42, local)
     
     # ID badge — small, bottom center
@@ -223,20 +279,26 @@ def draw_front(c, loc, card_x, card_y):
     c.drawCentredString(card_x + CARD_SIZE/2, badge_y + 1*mm, f"#{lid}")
 
 # ── DRAW BACK (QR CODE) — bg #c6ff00, QR #3340ca, 0.5cm margin ──
+QR_DIR = '/tmp/qr_codes'
+
 def draw_back(c, loc, card_x, card_y):
-    """Draw the QR CODE side of a card — green background, blue QR"""
+    """Draw the QR CODE side of a card — green background, blue QR from pre-generated PNG"""
     lid = f"{loc['id']:03d}"
-    
+
     # Background — neon green
     c.setFillColor(C_GREEN)
     c.roundRect(card_x, card_y, CARD_SIZE, CARD_SIZE, 3*mm, fill=1, stroke=0)
-    
-    # QR Code — centered, 0.5cm margin = 5mm from each edge
+
+    # QR Code — from pre-generated PNG, 0.5cm margin
     margin = 5 * mm
     qr_size = CARD_SIZE - 2 * margin
-    qr_x = card_x + margin
-    qr_y = card_y + margin
-    draw_qr(c, f"geocheckr:{lid}", qr_x, qr_y, qr_size, fg_color=C_BLUE)
+    qr_path = os.path.join(QR_DIR, f"qr_{lid}.png")
+    if os.path.exists(qr_path):
+        c.drawImage(qr_path, card_x + margin, card_y + margin, width=qr_size, height=qr_size, mask='auto')
+    else:
+        # Fallback: draw placeholder
+        c.setFillColor(C_BLUE)
+        c.rect(card_x + margin, card_y + margin, qr_size, qr_size, fill=1, stroke=0)
 
 # ── GET CARD POSITIONS ──
 def get_card_positions():
