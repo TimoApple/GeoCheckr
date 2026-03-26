@@ -121,7 +121,7 @@ def generate_card_front(loc, out_path):
     # Background — straight rectangle, no rounded corners
     draw.rectangle([0, 0, CARD_PX, CARD_PX], fill=BG_COLOR)
 
-    # City name (English) — Space Grotesk Bold, centered
+    # City name (English) — Space Grotesk Bold, centered, MUST fit card width
     if len(city) > 14:
         city_size = 56
     elif len(city) > 10:
@@ -132,6 +132,12 @@ def generate_card_front(loc, out_path):
     city_font = get_font(FONT_SG_BOLD, city_size)
     bbox = draw.textbbox((0, 0), city, font=city_font)
     tw = bbox[2] - bbox[0]
+    # Scale down if too wide (max 90% of card)
+    while tw > CARD_PX * 0.9 and city_size > 20:
+        city_size -= 2
+        city_font = get_font(FONT_SG_BOLD, city_size)
+        bbox = draw.textbbox((0, 0), city, font=city_font)
+        tw = bbox[2] - bbox[0]
     city_x = (CARD_PX - tw) / 2
     city_y = CARD_PX * 0.30  # centered vertically
     draw.text((city_x, city_y), city, fill=TEXT_GREEN, font=city_font)
@@ -148,6 +154,12 @@ def generate_card_front(loc, out_path):
     local_font = get_font(local_font_path, local_size)
     bbox2 = draw.textbbox((0, 0), local, font=local_font)
     lw = bbox2[2] - bbox2[0]
+    # Scale down if too wide (max 90% of card)
+    while lw > CARD_PX * 0.9 and local_size > 20:
+        local_size -= 2
+        local_font = get_font(local_font_path, local_size)
+        bbox2 = draw.textbbox((0, 0), local, font=local_font)
+        lw = bbox2[2] - bbox2[0]
     local_x = (CARD_PX - lw) / 2
     local_y = city_y + city_size + 10  # 10px gap — close together
     draw.text((local_x, local_y), local, fill=TEXT_DARK, font=local_font)

@@ -105,6 +105,7 @@ export default function App() {
   const [playerCityId, setPlayerCityId] = useState<number | null>(null);
   const [difficulty, setDifficulty] = useState<'leicht' | 'mittel' | 'schwer'>('leicht');
   const [showScanner, setShowScanner] = useState(false);
+  const [scanned, setScanned] = useState(false);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
   // Game state
@@ -241,22 +242,23 @@ export default function App() {
 
   // ===================== SCAN HANDLER =====================
   const handleScan = ({ data }: { data: string }) => {
+    if (scanned) return;
     playClickSound();
-    // Parse scanned data: could be "geocheckr:042" (QR) or "#042" or "042" (number)
-    let id: number | null = null;
+    setScanned(true);
     
-    // QR format: "geocheckr:042"
-    const qrMatch = data.match(/geocheckr:(\d+)/);
-    if (qrMatch) {
-      id = parseInt(qrMatch[1], 10);
+    // ONLY accept #numbers or plain numbers — BLOCK URLs and QR data
+    // Reject anything that looks like a URL or geocheckr: protocol
+    if (data.includes('http') || data.includes('geocheckr:') || data.includes('://')) {
+      // This is a QR code with link — IGNORE IT
+      setScanned(false);
+      return;
     }
     
-    // Number format: "#042" or "042" or "GC042"
-    if (id === null) {
-      const numMatch = data.match(/#?(\d+)/);
-      if (numMatch) {
-        id = parseInt(numMatch[1], 10);
-      }
+    // Parse: "#042" or "042" or "GC042"
+    let id: number | null = null;
+    const numMatch = data.match(/#?(\d+)/);
+    if (numMatch) {
+      id = parseInt(numMatch[1], 10);
     }
     
     if (id !== null && id >= 0 && id < panoramaLocations.length) {
@@ -265,22 +267,14 @@ export default function App() {
         setPlayerCity(loc.city);
         setPlayerCityId(id);
         setShowScanner(false);
+        setScanned(false);
         Vibration.vibrate(100);
         return;
       }
     }
     
-    // If we got here, try to find by city name text
-    const cityName = data.trim();
-    const locByName = panoramaLocations.find(l => 
-      l.city.toLowerCase() === cityName.toLowerCase()
-    );
-    if (locByName) {
-      setPlayerCity(locByName.city);
-      setPlayerCityId(locByName.id);
-      setShowScanner(false);
-      Vibration.vibrate(100);
-    }
+    // Reset for next scan
+    setScanned(false);
   };
 
   // ===================== SCANNER MODAL =====================
@@ -308,15 +302,15 @@ export default function App() {
         <CameraView
           style={{ flex: 1 }}
           facing="back"
-          onBarcodeScanned={({ data }) => handleScan({ data })}
+          onBarcodeScanned={scanned ? undefined : ({ data }) => handleScan({ data })}
           barcodeScannerSettings={{
-            barcodeTypes: ['qr', 'code128', 'code39', 'ean13', 'ean8'],
+            barcodeTypes: ['code128', 'code39', 'ean13', 'ean8'],
           }}
         >
           <View style={s.scanOverlay}>
             <View style={s.scanFrame}>
-              <Text style={s.scanHint}>Stadt-Karte scannen</Text>
-              <Text style={s.scanHintSub}>QR-Rückseite oder #Nummer auf der Vorderseite</Text>
+              <Text style={s.scanHint}>#Nummer scannen</Text>
+              <Text style={s.scanHintSub}>Halte die Vorderseite der Karte{'\n'}mit der #Nummer in den Rahmen</Text>
             </View>
             <TouchableOpacity style={s.scanCloseBtn} onPress={() => setShowScanner(false)}>
               <Text style={s.scanCloseBtnText}>✕ Schließen</Text>
@@ -391,17 +385,18 @@ export default function App() {
           <Text style={s.setupLabel}>DEINE STADT-KARTE</Text>
           {playerCity ? (
             <View style={s.cityCard}>
-              <Text style={s.cityName}>🏙️ {playerCity}</Text>
-              <Text style={s.cityId}>#{playerCityId?.toString().padStart(3, '0')}</Text>
+              <View style={s.cityInfo}>
+                <Text style={s.cityName}>🏙️ {playerCity}</Text>
+                <Text style={s.cityId}>#{playerCityId?.toString().padStart(3, '0')}</Text>
+              </View>
               <TouchableOpacity style={s.rescanBtn} onPress={() => setShowScanner(true)}>
-                <Text style={s.rescanText}>🔄 Neu scannen</Text>
+                <Text style={s.rescanText}>🔄 Neu</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <TouchableOpacity style={s.scanBtn} onPress={() => setShowScanner(true)}>
-              <Text style={s.scanBtnIcon}>📷</Text>
-              <Text style={s.scanBtnText}>Karte scannen</Text>
-              <Text style={s.scanBtnHint}>QR-Rückseite oder #Nummer</Text>
+              <Text style={s.scanBtnText}>📷 Karte scannen</Text>
+              <Text style={s.scanBtnHint}>#Nummer auf der Vorderseite</Text>
             </TouchableOpacity>
           )}
 
@@ -666,16 +661,16 @@ const s = StyleSheet.create({
   setupInput: { backgroundColor: '#16213e', color: '#fff', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, borderWidth: 1, borderColor: '#2a2a4a', marginBottom: 25 },
 
   // Scan button (no city yet)
-  scanBtn: { backgroundColor: '#16213e', borderRadius: 12, borderWidth: 2, borderColor: '#e94560', borderStyle: 'dashed', paddingVertical: 20, alignItems: 'center', marginBottom: 25 },
-  scanBtnIcon: { fontSize: 32, marginBottom: 6 },
+  scanBtn: { backgroundColor: '#16213e', borderRadius: 12, borderWidth: 2, borderColor: '#e94560', borderStyle: 'dashed', paddingVertical: 16, paddingHorizontal: 20, alignItems: 'center', marginBottom: 25 },
   scanBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   scanBtnHint: { color: '#888', fontSize: 12, marginTop: 4 },
 
   // City card (city assigned)
-  cityCard: { backgroundColor: '#16213e', borderRadius: 12, borderWidth: 2, borderColor: '#4CAF50', padding: 16, marginBottom: 25 },
-  cityName: { color: '#fff', fontSize: 18, fontWeight: 'bold', marginBottom: 4 },
-  cityId: { color: '#4CAF50', fontSize: 16, fontWeight: '600' },
-  rescanBtn: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, backgroundColor: 'rgba(233,69,96,0.2)', marginTop: 8, alignSelf: 'flex-end' },
+  cityCard: { backgroundColor: '#16213e', borderRadius: 12, borderWidth: 2, borderColor: '#4CAF50', padding: 14, marginBottom: 25, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  cityInfo: { flex: 1 },
+  cityName: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  cityId: { color: '#4CAF50', fontSize: 14, fontWeight: '600', marginTop: 2 },
+  rescanBtn: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 8, backgroundColor: 'rgba(233,69,96,0.15)' },
   rescanText: { color: '#e94560', fontSize: 13, fontWeight: '600' },
 
   // Scanner overlay
