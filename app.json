@@ -49,7 +49,18 @@
     },
     "plugins": [
       "expo-camera",
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./node_modules/@expo-google-fonts/space-grotesk/400Regular/SpaceGrotesk_400Regular.ttf",
+            "./node_modules/@expo-google-fonts/space-grotesk/500Medium/SpaceGrotesk_500Medium.ttf",
+            "./node_modules/@expo-google-fonts/space-grotesk/600SemiBold/SpaceGrotesk_600SemiBold.ttf",
+            "./node_modules/@expo-google-fonts/space-grotesk/700Bold/SpaceGrotesk_700Bold.ttf"
+          ]
+        }
+      ]
     ],
     "extra": {
       "eas": {
