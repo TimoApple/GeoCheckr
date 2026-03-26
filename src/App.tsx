@@ -5,6 +5,7 @@ import {
   Vibration, Platform, KeyboardAvoidingView, StatusBar, ScrollView, Dimensions
 } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { calculateDistance, calculatePoints, formatDistance } from './utils/distance';
 import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playTimerWarning, playTimerTick, playAnswerphoneBeep } from './utils/sounds';
 import { panoramaLocations, PanoramaLocation } from './data/panoramaLocations';
@@ -15,7 +16,7 @@ const API_KEY = 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
 // ============================================================
 // TYPES
 // ============================================================
-interface Player { id: number; name: string; }
+interface Player { id: number; name: string; city?: string; cityId?: number; }
 type Screen = 'tutorial' | 'setup' | 'game' | 'result';
 type AnswerMode = 'text' | 'map';
 
@@ -100,7 +101,11 @@ export default function App() {
 
   // Setup state
   const [playerName, setPlayerName] = useState('');
+  const [playerCity, setPlayerCity] = useState('');
+  const [playerCityId, setPlayerCityId] = useState<number | null>(null);
   const [difficulty, setDifficulty] = useState<'leicht' | 'mittel' | 'schwer'>('leicht');
+  const [showScanner, setShowScanner] = useState(false);
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
   // Game state
   const [players] = useState<Player[]>([{ id: 1, name: 'Spieler 1' }]);
@@ -157,13 +162,15 @@ export default function App() {
   const startGame = () => {
     playClickSound();
     const pName = playerName.trim() || 'Spieler 1';
-    players[0] = { id: 1, name: pName };
+    players[0] = { id: 1, name: pName, city: playerCity, cityId: playerCityId ?? undefined };
     setScores({ 1: 0 });
     setRound(1);
     setUsedLocations([]);
     startRound();
     setScreen('game');
   };
+
+  const canStart = playerName.trim().length > 0 && playerCityId !== null;
 
   const startRound = useCallback(() => {
     const loc = getRandomLocation();
@@ -232,7 +239,93 @@ export default function App() {
     { icon: '📍', title: 'Rate den Ort', sub: 'Tippe den Stadtnamen\noder zeige auf die Karte' },
   ];
 
-  // ===================== RENDER =====================
+  // ===================== SCAN HANDLER =====================
+  const handleScan = ({ data }: { data: string }) => {
+    playClickSound();
+    // Parse scanned data: could be "geocheckr:042" (QR) or "#042" or "042" (number)
+    let id: number | null = null;
+    
+    // QR format: "geocheckr:042"
+    const qrMatch = data.match(/geocheckr:(\d+)/);
+    if (qrMatch) {
+      id = parseInt(qrMatch[1], 10);
+    }
+    
+    // Number format: "#042" or "042" or "GC042"
+    if (id === null) {
+      const numMatch = data.match(/#?(\d+)/);
+      if (numMatch) {
+        id = parseInt(numMatch[1], 10);
+      }
+    }
+    
+    if (id !== null && id >= 0 && id < panoramaLocations.length) {
+      const loc = panoramaLocations.find(l => l.id === id);
+      if (loc) {
+        setPlayerCity(loc.city);
+        setPlayerCityId(id);
+        setShowScanner(false);
+        Vibration.vibrate(100);
+        return;
+      }
+    }
+    
+    // If we got here, try to find by city name text
+    const cityName = data.trim();
+    const locByName = panoramaLocations.find(l => 
+      l.city.toLowerCase() === cityName.toLowerCase()
+    );
+    if (locByName) {
+      setPlayerCity(locByName.city);
+      setPlayerCityId(locByName.id);
+      setShowScanner(false);
+      Vibration.vibrate(100);
+    }
+  };
+
+  // ===================== SCANNER MODAL =====================
+  if (showScanner) {
+    if (!cameraPermission?.granted) {
+      return (
+        <View style={s.container}>
+          <StatusBar hidden />
+          <View style={s.scanPermView}>
+            <Text style={s.scanPermText}>Kamera-Berechtigung benötigt</Text>
+            <TouchableOpacity style={s.scanPermBtn} onPress={requestCameraPermission}>
+              <Text style={s.scanPermBtnText}>Berechtigung erteilen</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.scanCloseBtn} onPress={() => setShowScanner(false)}>
+              <Text style={s.scanCloseBtnText}>Abbrechen</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+    
+    return (
+      <View style={s.container}>
+        <StatusBar hidden />
+        <CameraView
+          style={{ flex: 1 }}
+          facing="back"
+          onBarcodeScanned={({ data }) => handleScan({ data })}
+          barcodeScannerSettings={{
+            barcodeTypes: ['qr', 'code128', 'code39', 'ean13', 'ean8'],
+          }}
+        >
+          <View style={s.scanOverlay}>
+            <View style={s.scanFrame}>
+              <Text style={s.scanHint}>Stadt-Karte scannen</Text>
+              <Text style={s.scanHintSub}>QR-Rückseite oder #Nummer auf der Vorderseite</Text>
+            </View>
+            <TouchableOpacity style={s.scanCloseBtn} onPress={() => setShowScanner(false)}>
+              <Text style={s.scanCloseBtnText}>✕ Schließen</Text>
+            </TouchableOpacity>
+          </View>
+        </CameraView>
+      </View>
+    );
+  }
   const timerColor = timer <= 5 ? '#ff4444' : timer <= 10 ? '#ffaa00' : '#e94560';
 
   // ---------- TUTORIAL ----------
@@ -295,6 +388,23 @@ export default function App() {
             autoCapitalize="words"
           />
 
+          <Text style={s.setupLabel}>DEINE STADT-KARTE</Text>
+          {playerCity ? (
+            <View style={s.cityCard}>
+              <Text style={s.cityName}>🏙️ {playerCity}</Text>
+              <Text style={s.cityId}>#{playerCityId?.toString().padStart(3, '0')}</Text>
+              <TouchableOpacity style={s.rescanBtn} onPress={() => setShowScanner(true)}>
+                <Text style={s.rescanText}>🔄 Neu scannen</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity style={s.scanBtn} onPress={() => setShowScanner(true)}>
+              <Text style={s.scanBtnIcon}>📷</Text>
+              <Text style={s.scanBtnText}>Karte scannen</Text>
+              <Text style={s.scanBtnHint}>QR-Rückseite oder #Nummer</Text>
+            </TouchableOpacity>
+          )}
+
           <Text style={s.setupLabel}>SCHWIERIGKEIT</Text>
           <View style={s.diffRow}>
             {(['leicht', 'mittel', 'schwer'] as const).map(d => (
@@ -311,7 +421,7 @@ export default function App() {
             ))}
           </View>
 
-          <TouchableOpacity style={s.startBtn} onPress={startGame}>
+          <TouchableOpacity style={[s.startBtn, !canStart && s.startBtnDisabled]} disabled={!canStart} onPress={startGame}>
             <Text style={s.startBtnText}>Starten 🚀</Text>
           </TouchableOpacity>
         </View>
@@ -554,13 +664,47 @@ const s = StyleSheet.create({
   setupSub: { color: '#888', fontSize: 16, textAlign: 'center', marginBottom: 35 },
   setupLabel: { color: '#888', fontSize: 12, marginBottom: 6, fontWeight: '600', letterSpacing: 1 },
   setupInput: { backgroundColor: '#16213e', color: '#fff', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, borderWidth: 1, borderColor: '#2a2a4a', marginBottom: 25 },
+
+  // Scan button (no city yet)
+  scanBtn: { backgroundColor: '#16213e', borderRadius: 12, borderWidth: 2, borderColor: '#e94560', borderStyle: 'dashed', paddingVertical: 20, alignItems: 'center', marginBottom: 25 },
+  scanBtnIcon: { fontSize: 32, marginBottom: 6 },
+  scanBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  scanBtnHint: { color: '#888', fontSize: 12, marginTop: 4 },
+
+  // City card (city assigned)
+  cityCard: { backgroundColor: '#16213e', borderRadius: 12, borderWidth: 2, borderColor: '#4CAF50', padding: 16, marginBottom: 25 },
+  cityName: { color: '#fff', fontSize: 18, fontWeight: 'bold', marginBottom: 4 },
+  cityId: { color: '#4CAF50', fontSize: 16, fontWeight: '600' },
+  rescanBtn: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, backgroundColor: 'rgba(233,69,96,0.2)', marginTop: 8, alignSelf: 'flex-end' },
+  rescanText: { color: '#e94560', fontSize: 13, fontWeight: '600' },
+
+  // Scanner overlay
+  scanOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  scanFrame: { width: 280, height: 280, borderWidth: 3, borderColor: '#e94560', borderRadius: 16, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)' },
+  scanHint: { color: '#fff', fontSize: 18, fontWeight: '600', textAlign: 'center' },
+  scanHintSub: { color: '#aaa', fontSize: 12, textAlign: 'center', marginTop: 8, paddingHorizontal: 20 },
+
+  // Scanner permission
+  scanPermView: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 30 },
+  scanPermText: { color: '#fff', fontSize: 18, marginBottom: 20, textAlign: 'center' },
+  scanPermBtn: { backgroundColor: '#e94560', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 12, marginBottom: 12 },
+  scanPermBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+
+  // Scanner close button
+  scanCloseBtn: { position: 'absolute', bottom: 60, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.8)', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 20 },
+  scanCloseBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+
+  // Difficulty
   diffRow: { flexDirection: 'row', gap: 10, marginBottom: 30 },
   diffBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, borderWidth: 2, borderColor: '#333', backgroundColor: '#16213e', alignItems: 'center' },
   diffBtnActive: { borderColor: '#e94560' },
   diffIcon: { fontSize: 24, marginBottom: 4 },
   diffText: { color: '#888', fontSize: 13, fontWeight: '600' },
   diffTextActive: { color: '#fff' },
+
+  // Start button
   startBtn: { backgroundColor: '#e94560', paddingVertical: 18, borderRadius: 14, alignItems: 'center' },
+  startBtnDisabled: { backgroundColor: '#333' },
   startBtnText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
 
   // Game — Street View

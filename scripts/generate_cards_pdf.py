@@ -33,6 +33,7 @@ C_WHITE = (0xf5/255, 0xf5/255, 0xf0/255)          # #f5f5f0 — white (secondary
 COLS = 3
 ROWS = 4
 CARDS_PER_PAGE = COLS * ROWS  # 12
+CARD_GAP = 2 * mm  # small gap between cards so they don't touch
 
 # ── FONTS ──
 FONT_DIR = '/tmp'
@@ -195,99 +196,35 @@ LOCAL_NAMES = {
     "Ngerulmud":"Ngerulmud","Bissau":"Bissau","Praia":"Praia","Moroni":"Moroni",
 }
 
-# ── QR CODE DRAWING (real QR codes) ──
+# ── QR CODE (pre-generated PNGs) ──
 import qrcode
 
-def draw_qr(c, data, x, y, size, fg_color=C_BLUE):
-    """Draw a real QR code — fg_color is the module color (e.g. #3340ca)"""
-    # Generate real QR matrix
-    qr = qrcode.QRCode(version=None, error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=1, border=0)
-    qr.add_data(data)
-    qr.make(fit=True)
-    matrix = qr.get_matrix()
-    cells = len(matrix)
-    cs = size / cells
-
-    # Draw modules
-    c.setFillColor(fg_color)
-    for row in range(cells):
-        for col in range(cells):
-            if matrix[row][col]:
-                px = x + col * cs
-                py = y + (cells - 1 - row) * cs
-                c.rect(px, py, cs, cs, fill=1, stroke=0)
+QR_DIR = '/tmp/qr_codes'
+FRONT_DIR = '/tmp/card_fronts'
 
 # ── DRAW FRONT (CITY NAME) — bg #3340ca, city #c6ff00, local #0a0b1f ──
 def draw_front(c, loc, card_x, card_y):
-    """Draw the CITY NAME side of a card — this is the main design side"""
-    city = loc['city']
-    local = LOCAL_NAMES.get(city, city)
+    """Draw the CITY NAME side — using pre-generated high-res PNG (all fonts supported)"""
     lid = f"{loc['id']:03d}"
-    
-    # Background — accent blue
-    c.setFillColor(C_BLUE)
-    c.roundRect(card_x, card_y, CARD_SIZE, CARD_SIZE, 3*mm, fill=1, stroke=0)
-    
-    # City name (English) — Space Grotesk Bold, 21pt, #c6ff00
-    c.setFillColor(C_GREEN)
-    
-    # Dynamic font size based on name length (scale down for long names)
-    if len(city) > 14:
-        fs = 16
-    elif len(city) > 10:
-        fs = 18
+    front_path = os.path.join(FRONT_DIR, f"front_{lid}.png")
+    if os.path.exists(front_path):
+        c.drawImage(front_path, card_x, card_y, width=CARD_SIZE, height=CARD_SIZE)
     else:
-        fs = 21
-    
-    # City name (English) — Space Grotesk Bold, 21pt, #c6ff00
-    c.setFillColor(C_GREEN)
-
-    if len(city) > 14:
-        fs = 16
-    elif len(city) > 10:
-        fs = 18
-    else:
-        fs = 21
-
-    c.setFont('SpaceGrotesk-Bold', fs)
-    c.drawCentredString(card_x + CARD_SIZE/2, card_y + CARD_SIZE * 0.58, city)
-
-    # Local name — script-specific Noto Sans, 21pt, #0a0b1f
-    c.setFillColor(C_DARK)
-
-    if len(local) > 14:
-        local_fs = 16
-    elif len(local) > 10:
-        local_fs = 18
-    else:
-        local_fs = 21
-
-    local_font = get_local_font(local)
-    c.setFont(local_font, local_fs)
-    c.drawCentredString(card_x + CARD_SIZE/2, card_y + CARD_SIZE * 0.42, local)
-    
-    # ID badge — small, bottom center
-    badge_w = 14 * mm
-    badge_h = 5 * mm
-    badge_x = card_x + (CARD_SIZE - badge_w) / 2
-    badge_y = card_y + 4 * mm
-    c.setFillColor(C_DARK)
-    c.setFillColor((*C_DARK, 0.3))
-    c.roundRect(badge_x, badge_y, badge_w, badge_h, 2.5*mm, fill=1, stroke=0)
-    c.setFillColor(C_WHITE)
-    c.setFont('SpaceGrotesk-Bold', 6)
-    c.drawCentredString(card_x + CARD_SIZE/2, badge_y + 1*mm, f"#{lid}")
+        # Fallback: solid blue background
+        c.setFillColor(C_BLUE)
+        c.roundRect(card_x, card_y, CARD_SIZE, CARD_SIZE, 3*mm, fill=1, stroke=0)
+        c.setFillColor(C_GREEN)
+        c.setFont('SpaceGrotesk-Bold', 18)
+        c.drawCentredString(card_x + CARD_SIZE/2, card_y + CARD_SIZE/2, loc['city'])
 
 # ── DRAW BACK (QR CODE) — bg #c6ff00, QR #3340ca, 0.5cm margin ──
-QR_DIR = '/tmp/qr_codes'
-
 def draw_back(c, loc, card_x, card_y):
     """Draw the QR CODE side of a card — green background, blue QR from pre-generated PNG"""
     lid = f"{loc['id']:03d}"
 
-    # Background — neon green
+    # Background — neon green, NO rounded corners
     c.setFillColor(C_GREEN)
-    c.roundRect(card_x, card_y, CARD_SIZE, CARD_SIZE, 3*mm, fill=1, stroke=0)
+    c.rect(card_x, card_y, CARD_SIZE, CARD_SIZE, fill=1, stroke=0)
 
     # QR Code — from pre-generated PNG, 0.5cm margin
     margin = 5 * mm
@@ -302,17 +239,17 @@ def draw_back(c, loc, card_x, card_y):
 
 # ── GET CARD POSITIONS ──
 def get_card_positions():
-    """Calculate card positions on A4 page"""
+    """Calculate card positions on A4 page — with gaps between cards"""
     usable_w = PAGE_W - 2 * MARGIN_X
     usable_h = PAGE_H - MARGIN_Y_TOP - MARGIN_Y_BOT
-    gap_x = (usable_w - COLS * CARD_SIZE) / (COLS - 1) if COLS > 1 else 0
-    gap_y = (usable_h - ROWS * CARD_SIZE) / (ROWS - 1) if ROWS > 1 else 0
-    
+    gap_x = (usable_w - COLS * CARD_SIZE - (COLS - 1) * CARD_GAP) / (COLS - 1) if COLS > 1 else 0
+    gap_y = (usable_h - ROWS * CARD_SIZE - (ROWS - 1) * CARD_GAP) / (ROWS - 1) if ROWS > 1 else 0
+
     positions = []
     for row in range(ROWS):
         for col in range(COLS):
-            x = MARGIN_X + col * (CARD_SIZE + gap_x)
-            y = PAGE_H - MARGIN_Y_TOP - (row + 1) * CARD_SIZE - row * gap_y
+            x = MARGIN_X + col * (CARD_SIZE + CARD_GAP)
+            y = PAGE_H - MARGIN_Y_TOP - (row + 1) * CARD_SIZE - row * CARD_GAP
             positions.append((x, y))
     return positions
 
