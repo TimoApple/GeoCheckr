@@ -361,19 +361,17 @@ export default function App() {
   // ── TUTORIAL (Animated Slides) ──
   if (screen === 'tutorial') {
     const pages = [
-      { bg: C.bg, titleColor: C.green, title: 'You Had One Job.', body: 'A Street View drops somewhere on Earth.\nYou\'re holding a City Card.\nFigure out which city on the table\nis closest to what you\'re looking at.\n\nSimple? Sure. Easy? Absolutely not.' },
-      { bg: C.blue, titleColor: C.accent, title: 'Flip. Scan. Clock\'s Ticking.', body: 'Grab a card from the deck.\nScan the QR code with the app.\nA Street View loads instantly —\nand the timer starts\nwhether you\'re ready or not.' },
-      { bg: C.bg, titleColor: C.accent, title: 'Name That City.', body: 'Study the Street View.\nPick the closest city from the\ncards on the table.\nTap the mic and say it out loud —\nthe app locks in your answer.\n\nThe closer you are, the more points.' },
-      { bg: '#0a2a0a', titleColor: C.green, title: 'Feeling Dangerous?', body: 'Think someone guessed wrong?\nBet a token and name YOUR city.\n\nRight → bonus points.\nWrong → goodbye, token.\n\n→ Let\'s play!' },
+      { bg: C.bg, titleColor: C.green, title: 'You Had One Job.', body: 'A Street View drops somewhere on Earth. You\'re holding a City Card. Figure out which city on the table is closest to what you\'re looking at.\n\nSimple? Sure. Easy? Absolutely not.' },
+      { bg: C.blue, titleColor: C.accent, title: 'Flip. Scan. Clock\'s Ticking.', body: 'Grab a card from the deck. Scan the QR code with the app. A Street View loads instantly — and the timer starts whether you\'re ready or not.' },
+      { bg: C.bg, titleColor: C.accent, title: 'Name That City.', body: 'Study the Street View. Pick the closest city from the cards on the table. Tap the mic and say it out loud — the app locks in your answer.\n\nThe closer you are, the more points.' },
+      { bg: '#0a2a0a', titleColor: C.green, title: 'Feeling Dangerous?', body: 'Think someone guessed wrong? Bet a token and name YOUR city.\n\nRight → bonus points.\nWrong → goodbye, token.\n\n→ Let\'s play!' },
     ];
     const goToPage = (idx: number) => {
       if (idx < 0 || idx >= pages.length || idx === tutPage) return;
-      // Fade out current, slide in next
-      Animated.timing(tutOpacity, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => {
-        tutScrollRef.current?.scrollTo({ x: idx * W, animated: false });
-        setTutPage(idx);
-        Animated.timing(tutOpacity, { toValue: 1, duration: 350, easing: require('react-native/Libraries/Animated/Easing').out(require('react-native/Libraries/Animated/Easing').cubic), useNativeDriver: true }).start();
-      });
+      tutOpacity.setValue(0);
+      tutScrollRef.current?.scrollTo({ x: idx * W, animated: false });
+      setTutPage(idx);
+      Animated.timing(tutOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
     };
     return (
       <View style={{ flex: 1 }}>
@@ -386,18 +384,17 @@ export default function App() {
           onMomentumScrollEnd={(e) => {
             const newPage = Math.round(e.nativeEvent.contentOffset.x / W);
             if (newPage !== tutPage) {
-              Animated.timing(tutOpacity, { toValue: 0, duration: 100, useNativeDriver: true }).start(() => {
-                setTutPage(newPage);
-                Animated.timing(tutOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
-              });
+              tutOpacity.setValue(0);
+              setTutPage(newPage);
+              Animated.timing(tutOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
             }
           }}
         >
           {pages.map((p, i) => (
             <View key={i} style={{ width: W, height: H, backgroundColor: p.bg, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 36 }}>
-              <Animated.View style={{ opacity: tutPage === i ? tutOpacity : 0.3, alignItems: 'center', transform: [{ translateX: tutPage === i ? 0 : (i < tutPage ? -30 : 30) }] }}>
-                <Text style={{ color: p.titleColor, fontSize: 34, fontWeight: '700', fontFamily: FF.bold, textAlign: 'center', marginBottom: 32, lineHeight: 42 }}>{p.title}</Text>
-                <Text style={{ color: i === 3 ? '#c8f040' : C.text, fontSize: 21, fontFamily: FF.regular, textAlign: 'center', lineHeight: 32, opacity: 0.9 }}>{p.body}</Text>
+              <Animated.View style={{ opacity: tutPage === i ? tutOpacity : 0.15, alignItems: 'center', paddingHorizontal: 10 }}>
+                <Text style={{ color: p.titleColor, fontSize: 40, fontWeight: '700', fontFamily: FF.bold, textAlign: 'center', marginBottom: 36, lineHeight: 48 }}>{p.title}</Text>
+                <Text style={{ color: i === 3 ? '#c8f040' : C.text, fontSize: 24, fontFamily: FF.regular, textAlign: 'center', lineHeight: 38, opacity: 0.95 }}>{p.body}</Text>
               </Animated.View>
             </View>
           ))}
