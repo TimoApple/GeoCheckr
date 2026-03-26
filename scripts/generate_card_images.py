@@ -38,6 +38,7 @@ SCRIPT_FONTS = {
     'devanagari': f'{FONT_DIR}/NotoSansDevanagari-Bold.ttf',
     'bengali': f'{FONT_DIR}/NotoSansBengali-Bold.ttf',
     'thai': f'{FONT_DIR}/NotoSansThai-Bold.ttf',
+    'lao': f'{FONT_DIR}/NotoSansLao-Bold.ttf',
     'hebrew': f'{FONT_DIR}/NotoSansHebrew-Bold.ttf',
     'georgian': f'{FONT_DIR}/NotoSansGeorgian-Regular.ttf',
     'armenian': f'{FONT_DIR}/NotoSansArmenian-Regular.ttf',
@@ -69,6 +70,8 @@ def get_script_font(text):
             if os.path.exists(SCRIPT_FONTS['devanagari']): return SCRIPT_FONTS['devanagari']
         if 0x0980 <= cp <= 0x09FF:
             if os.path.exists(SCRIPT_FONTS['bengali']): return SCRIPT_FONTS['bengali']
+        if 0x0E80 <= cp <= 0x0EFF:
+            if os.path.exists(SCRIPT_FONTS.get('lao', '')): return SCRIPT_FONTS['lao']
         if 0x0E00 <= cp <= 0x0E7F:
             if os.path.exists(SCRIPT_FONTS['thai']): return SCRIPT_FONTS['thai']
         if 0x0590 <= cp <= 0x05FF:
@@ -149,23 +152,24 @@ def generate_card_front(loc, out_path):
     local_y = city_y + city_size + 10  # 10px gap — close together
     draw.text((local_x, local_y), local, fill=TEXT_DARK, font=local_font)
 
-    # ID badge — pill shape, sized to text, perfectly centered
+    # ID badge — pill shape, PERFECTLY centered with anchor="mm"
     badge_text = f"#{lid}"
-    badge_font = get_font(FONT_SG_BOLD, 24)
-    bbox3 = draw.textbbox((0, 0), badge_text, font=badge_font)
-    btw = bbox3[2] - bbox3[0]
-    bth = bbox3[3] - bbox3[1]
-    pad_x = 24
-    pad_y = 12
-    badge_w = btw + 2 * pad_x
+    badge_font = get_font(FONT_SG_BOLD, 22)
+    tw = draw.textlength(badge_text, font=badge_font)
+    bth = 28  # font height
+    pad_x = 22
+    pad_y = 10
+    badge_w = int(tw) + 2 * pad_x
     badge_h = bth + 2 * pad_y
     badge_x = (CARD_PX - badge_w) / 2
-    badge_y = CARD_PX - 80
+    badge_y = CARD_PX - 75
     # Pill = rounded rect with radius = height/2
     draw.rounded_rectangle([badge_x, badge_y, badge_x + badge_w, badge_y + badge_h],
                           radius=badge_h // 2, fill=BADGE_BG)
-    # Text centered in pill
-    draw.text((badge_x + pad_x, badge_y + pad_y), badge_text, fill=BADGE_TEXT, font=badge_font)
+    # Text — anchor="mm" = perfectly centered in pill
+    center_x = badge_x + badge_w / 2
+    center_y = badge_y + badge_h / 2
+    draw.text((center_x, center_y), badge_text, fill=BADGE_TEXT, font=badge_font, anchor="mm")
 
     # Save
     img.save(out_path, 'PNG', dpi=(DPI, DPI))
