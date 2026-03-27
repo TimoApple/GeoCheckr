@@ -1,4 +1,5 @@
-// GeoCheckr — Self-contained App (no navigation library, state-based)
+// GeoCheckr — QR Card Game mit Multi-City Tracking
+// Design System: "The Tactical Cartographer"
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput, Animated,
@@ -6,22 +7,61 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { calculateDistance, calculatePoints, formatDistance } from './utils/distance';
+import { calculateDistance, formatDistance } from './utils/distance';
 import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playTimerWarning, playTimerTick, playAnswerphoneBeep } from './utils/sounds';
 import { panoramaLocations, PanoramaLocation } from './data/panoramaLocations';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 const API_KEY = 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
+
+// ============================================================
+// CI COLORS — "The Tactical Cartographer"
+// ============================================================
+const C = {
+  bg: '#111225',
+  surfaceLow: '#191a2d',
+  surface: '#1d1e31',
+  surfaceHigh: '#27283c',
+  surfaceHighest: '#323348',
+  primary: '#a6d700',
+  primaryBright: '#c1f432',
+  onPrimary: '#273500',
+  onPrimaryContainer: '#445a00',
+  secondary: '#bdc2ff',
+  secondaryContainer: '#2734c0',
+  onSecondaryContainer: '#acb3ff',
+  onSurface: '#e1e0fb',
+  outline: '#444934',
+  outlineVariant: '#444934',
+  error: '#ffb4ab',
+};
 
 // ============================================================
 // TYPES
 // ============================================================
-interface Player { id: number; name: string; city?: string; cityId?: number; }
+interface Player {
+  id: number;
+  name: string;
+  city: string;
+  cityId: number;
+  lat: number;
+  lng: number;
+  score: number;
+}
+
+interface TableCity {
+  city: string;
+  lat: number;
+  lng: number;
+  ownerPlayerId: number | null;
+  isPlayerCity: boolean;
+}
+
 type Screen = 'tutorial' | 'setup' | 'game' | 'result';
-type AnswerMode = 'text' | 'map';
+type ScanMode = 'player-city' | 'qr-card';
 
 // ============================================================
-// STREET VIEW HTML BUILDER (same as #170 — UNCHANGED)
+// STREET VIEW HTML BUILDER
 // ============================================================
 function buildStreetViewHtml(lat: number, lng: number): string {
   return `<!DOCTYPE html>
@@ -33,13 +73,13 @@ function buildStreetViewHtml(lat: number, lng: number): string {
 *{margin:0;padding:0;box-sizing:border-box}
 html,body,#pano{width:100%;height:100%;overflow:hidden;background:#000}
 #status{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#888;font-family:sans-serif;text-align:center;font-size:14px;z-index:999}
-#status .spinner{width:32px;height:32px;border:3px solid #333;border-top-color:#e94560;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+#status .spinner{width:32px;height:32px;border:3px solid #333;border-top-color:#a6d700;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 <div id="pano"></div>
-<div id="status"><div class="spinner"></div>Lade Street View...</div>
+<div id="status"><div class="spinner"></div>Loading Street View...</div>
 <script>
 function init(){
   var sv=new google.maps.StreetViewService();
@@ -56,7 +96,7 @@ function init(){
       document.getElementById('status').style.display='none';
       window.ReactNativeWebView&&window.ReactNativeWebView.postMessage('loaded');
     }else{
-      document.getElementById('status').innerHTML='❌ Kein Street View';
+      document.getElementById('status').innerHTML='No Street View';
       window.ReactNativeWebView&&window.ReactNativeWebView.postMessage('error:'+st);
     }
   });
@@ -67,32 +107,6 @@ function init(){
 }
 
 // ============================================================
-// MAP HTML for answer
-// ============================================================
-const MAP_HTML = `<!DOCTYPE html>
-<html><head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<style>*{margin:0;padding:0}html,body,#map{width:100%;height:100%}
-#info{position:fixed;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);
-color:#fff;padding:8px 16px;border-radius:20px;font-family:sans-serif;font-size:14px;z-index:999;pointer-events:none}</style>
-</head><body>
-<div id="map"></div>
-<div id="info">Tippe auf die Karte</div>
-<script>
-var map=L.map('map',{attributionControl:false}).setView([20,0],2);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(map);
-var marker=null;
-map.on('click',function(e){
-  if(marker)map.removeLayer(marker);
-  marker=L.marker(e.latlng).addTo(map);
-  window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify({lat:e.latlng.lat,lng:e.latlng.lng}));
-});
-</script></body></html>`;
-
-// ============================================================
 // MAIN APP
 // ============================================================
 export default function App() {
@@ -100,36 +114,44 @@ export default function App() {
   const [tutorialPage, setTutorialPage] = useState(0);
 
   // Setup state
-  const [playerName, setPlayerName] = useState('');
-  const [playerCity, setPlayerCity] = useState('');
-  const [playerCityId, setPlayerCityId] = useState<number | null>(null);
-  const [difficulty, setDifficulty] = useState<'leicht' | 'mittel' | 'schwer'>('leicht');
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [newPlayerName, setNewPlayerName] = useState('');
   const [showScanner, setShowScanner] = useState(false);
+  const [scanMode, setScanMode] = useState<ScanMode>('player-city');
   const [scanned, setScanned] = useState(false);
+  const [scanningForPlayerIdx, setScanningForPlayerIdx] = useState<number | null>(null);
+  const [timerSetting, setTimerSetting] = useState(15);
+  const [roundsSetting, setRoundsSetting] = useState(10);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
   // Game state
-  const [players] = useState<Player[]>([{ id: 1, name: 'Spieler 1' }]);
-  const [scores, setScores] = useState<Record<number, number>>({ 1: 0 });
+  const [tableCities, setTableCities] = useState<TableCity[]>([]);
+  const [activePlayerIdx, setActivePlayerIdx] = useState(0);
   const [round, setRound] = useState(1);
-  const [maxRounds] = useState(10);
+  const [maxRounds, setMaxRounds] = useState(10);
   const [location, setLocation] = useState<PanoramaLocation>(panoramaLocations[0]);
   const [usedLocations, setUsedLocations] = useState<number[]>([]);
-  const [phase, setPhase] = useState<'view' | 'answer' | 'result'>('view');
+  const [phase, setPhase] = useState<'scan-qr' | 'view' | 'pick' | 'result'>('scan-qr');
   const [timer, setTimer] = useState(30);
   const [timerPaused, setTimerPaused] = useState(false);
   const [svLoaded, setSvLoaded] = useState(false);
   const [svError, setSvError] = useState(false);
-  const [answerMode, setAnswerMode] = useState<AnswerMode>('text');
-  const [showMap, setShowMap] = useState(false);
-  const [textInput, setTextInput] = useState('');
-  const [distance, setDistance] = useState(0);
-  const [points, setPoints] = useState(0);
+  const [closestCityIdx, setClosestCityIdx] = useState<number | null>(null);
+  const [distances, setDistances] = useState<number[]>([]);
+  const [winnerId, setWinnerId] = useState<number | null>(null);
 
   const timerPulse = useRef(new Animated.Value(1)).current;
   const resultScale = useRef(new Animated.Value(0)).current;
+  const scrollRef = useRef<ScrollView>(null);
 
-  // ===================== TIMER =====================
+  // ============================================================
+  // COMPUTED
+  // ============================================================
+  const allPlayersScanned = players.length >= 2 && players.every(p => p.city.length > 0);
+
+  // ============================================================
+  // TIMER
+  // ============================================================
   useEffect(() => {
     if (phase !== 'view' || timerPaused || timer <= 0) return;
     const interval = setInterval(() => setTimer(t => t - 1), 1000);
@@ -137,7 +159,7 @@ export default function App() {
   }, [phase, timerPaused, timer]);
 
   useEffect(() => {
-    if (timer <= 5 && timer > 0 && phase === 'view') {
+    if (timer <= 10 && timer > 0 && phase === 'view') {
       playTimerTick();
       Vibration.vibrate(200);
       Animated.sequence([
@@ -148,154 +170,203 @@ export default function App() {
     if (timer === 0 && phase === 'view') {
       playTimerWarning();
       Vibration.vibrate(500);
-      setPhase('answer');
-      setTimeout(() => playAnswerphoneBeep(), 100);
+      setPhase('pick');
     }
   }, [timer, phase]);
 
-  // ===================== GAME LOGIC =====================
+  // ============================================================
+  // GAME LOGIC
+  // ============================================================
   const getRandomLocation = useCallback(() => {
     const available = panoramaLocations.filter(l => !usedLocations.includes(l.id));
     const pool = available.length > 0 ? available : panoramaLocations;
     return pool[Math.floor(Math.random() * pool.length)];
   }, [usedLocations]);
 
-  const startGame = () => {
+  const addPlayer = () => {
+    if (!newPlayerName.trim()) return;
+    const newP: Player = {
+      id: Date.now(),
+      name: newPlayerName.trim(),
+      city: '', cityId: -1, lat: 0, lng: 0, score: 0,
+    };
+    setPlayers(prev => [...prev, newP]);
+    setNewPlayerName('');
     playClickSound();
-    const pName = playerName.trim() || 'Spieler 1';
-    players[0] = { id: 1, name: pName, city: playerCity, cityId: playerCityId ?? undefined };
-    setScores({ 1: 0 });
+  };
+
+  const removePlayer = (id: number) => {
+    setPlayers(prev => prev.filter(p => p.id !== id));
+  };
+
+  const openScannerForPlayer = (playerIdx: number) => {
+    setScanningForPlayerIdx(playerIdx);
+    setScanMode('player-city');
+    setShowScanner(true);
+    setScanned(false);
+  };
+
+  const startGame = () => {
+    if (!allPlayersScanned) return;
+    playClickSound();
+    const initialTable: TableCity[] = players.map(p => ({
+      city: p.city, lat: p.lat, lng: p.lng,
+      ownerPlayerId: p.id, isPlayerCity: true,
+    }));
+    setTableCities(initialTable);
     setRound(1);
+    setMaxRounds(roundsSetting);
+    setActivePlayerIdx(0);
     setUsedLocations([]);
-    startRound();
+    setPhase('scan-qr');
     setScreen('game');
   };
 
-  const canStart = playerName.trim().length > 0 && playerCityId !== null;
-
   const startRound = useCallback(() => {
-    const loc = getRandomLocation();
-    setUsedLocations(prev => [...prev, loc.id]);
-    setLocation(loc);
-    setTimer(30);
-    setTimerPaused(false);
-    setPhase('view');
+    setPhase('scan-qr');
     setSvLoaded(false);
     setSvError(false);
-    setTextInput('');
-    setAnswerMode('text');
-    setShowMap(false);
+    setClosestCityIdx(null);
+    setDistances([]);
+    setWinnerId(null);
+    setTimer(timerSetting);
+    setTimerPaused(false);
     resultScale.setValue(0);
-  }, [getRandomLocation, resultScale]);
+  }, [timerSetting, resultScale]);
 
-  const resolveAnswer = (dist: number) => {
-    const pts = calculatePoints(dist);
-    const timeBonus = (difficulty === 'schwer' && timer > 10 && pts > 0) ? 1 : 0;
-    const totalPts = pts + timeBonus;
-    if (totalPts >= 3) { playPerfectSound(); Vibration.vibrate([100, 50, 100]); }
-    else if (totalPts > 0) { playSuccessSound(); Vibration.vibrate([100, 50, 100]); }
+  const onQrScanned = useCallback((loc: PanoramaLocation) => {
+    setLocation(loc);
+    setUsedLocations(prev => [...prev, loc.id]);
+    setTimer(timerSetting);
+    setTimerPaused(false);
+    setPhase('view');
+    setShowScanner(false);
+    setScanned(false);
+    Vibration.vibrate(100);
+  }, [timerSetting]);
+
+  const pickCity = useCallback((pickedIdx: number) => {
+    playClickSound();
+    setTimerPaused(true);
+    const dists = tableCities.map(tc =>
+      calculateDistance(location.lat, location.lng, tc.lat, tc.lng)
+    );
+    setDistances(dists);
+    let minIdx = 0;
+    for (let i = 1; i < dists.length; i++) {
+      if (dists[i] < dists[minIdx]) minIdx = i;
+    }
+    setClosestCityIdx(minIdx);
+    const correct = pickedIdx === minIdx;
+    if (correct) { playPerfectSound(); Vibration.vibrate([100, 50, 100]); }
     else { playErrorSound(); Vibration.vibrate(500); }
-    setDistance(dist);
-    setPoints(totalPts);
-    setScores(prev => ({ ...prev, [1]: prev[1] + totalPts }));
+    const actualWinner = tableCities[minIdx].ownerPlayerId;
+    if (actualWinner !== null) {
+      setPlayers(prev => prev.map(p =>
+        p.id === actualWinner ? { ...p, score: p.score + 1 } : p
+      ));
+    }
+    setWinnerId(actualWinner);
+    setTableCities(prev => [...prev, {
+      city: location.city, lat: location.lat, lng: location.lng,
+      ownerPlayerId: null, isPlayerCity: false,
+    }]);
     Animated.spring(resultScale, { toValue: 1, friction: 6, useNativeDriver: true }).start();
     setPhase('result');
-  };
-
-  const submitTextAnswer = () => {
-    let dist = 20000;
-    if (textInput.trim()) {
-      try {
-        const allLocs = require('./data/locations_complete').default;
-        const normalized = textInput.toLowerCase().trim()
-          .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
-        let match = allLocs.find((l: any) => l.city.toLowerCase() === normalized);
-        if (!match) match = allLocs.find((l: any) => l.city.toLowerCase().includes(normalized) || normalized.includes(l.city.toLowerCase()));
-        if (match) dist = calculateDistance(location.lat, location.lng, match.lat, match.lng);
-      } catch (e) {}
-    }
-    resolveAnswer(dist);
-  };
-
-  const submitMapAnswer = (lat: number, lng: number) => {
-    setShowMap(false);
-    const dist = calculateDistance(location.lat, location.lng, lat, lng);
-    resolveAnswer(dist);
-  };
+  }, [tableCities, location, resultScale]);
 
   const nextTurn = () => {
     playClickSound();
-    if (round >= maxRounds) {
-      setScreen('result');
-      return;
-    }
+    if (round >= maxRounds) { setScreen('result'); return; }
+    setActivePlayerIdx(prev => (prev + 1) % players.length);
     setRound(r => r + 1);
     startRound();
   };
 
-  // ===================== TUTORIAL =====================
-  const TUTORIAL_SLIDES = [
-    { icon: '🌍', title: 'GeoCheckr', sub: 'Finde heraus wo du bist!' },
-    { icon: '👆', title: 'Navigiere', sub: 'Bewege dich durch Street View\nKlicke auf Pfeile um zu laufen' },
-    { icon: '📍', title: 'Rate den Ort', sub: 'Tippe den Stadtnamen\noder zeige auf die Karte' },
-  ];
-
-  // ===================== SCAN HANDLER =====================
+  // ============================================================
+  // SCAN HANDLER — BLOCK QR IN SETUP, ALLOW #NUMBERS
+  // ============================================================
   const handleScan = ({ data }: { data: string }) => {
     if (scanned) return;
     playClickSound();
     setScanned(true);
-    
-    // ONLY accept #numbers or plain numbers — BLOCK URLs and QR data
-    // Reject anything that looks like a URL or geocheckr: protocol
+
+    // BLOCK: URLs and protocols
     if (data.includes('http') || data.includes('geocheckr:') || data.includes('://')) {
-      // This is a QR code with link — IGNORE IT
       setScanned(false);
       return;
     }
-    
-    // Parse: "#042" or "042" or "GC042"
+
+    // PARSE: "#042" or "042" or "GC042"
     let id: number | null = null;
     const numMatch = data.match(/#?(\d+)/);
-    if (numMatch) {
-      id = parseInt(numMatch[1], 10);
-    }
-    
+    if (numMatch) id = parseInt(numMatch[1], 10);
+
     if (id !== null && id >= 0 && id < panoramaLocations.length) {
       const loc = panoramaLocations.find(l => l.id === id);
       if (loc) {
-        setPlayerCity(loc.city);
-        setPlayerCityId(id);
-        setShowScanner(false);
-        setScanned(false);
-        Vibration.vibrate(100);
-        return;
+        if (scanMode === 'player-city' && scanningForPlayerIdx !== null) {
+          // ASSIGN CITY TO PLAYER
+          setPlayers(prev => prev.map((p, i) =>
+            i === scanningForPlayerIdx
+              ? { ...p, city: loc.city, cityId: id!, lat: loc.lat, lng: loc.lng }
+              : p
+          ));
+          setShowScanner(false);
+          setScanned(false);
+          setScanningForPlayerIdx(null);
+          Vibration.vibrate(100);
+          return;
+        } else if (scanMode === 'qr-card') {
+          // GAME: QR card → Street View
+          onQrScanned(loc);
+          return;
+        }
       }
     }
-    
-    // Reset for next scan
     setScanned(false);
   };
 
-  // ===================== SCANNER MODAL =====================
+  // ============================================================
+  // TUTORIAL SLIDES
+  // ============================================================
+  const TUTORIAL_SLIDES = [
+    { icon: '🌍', title: 'GEOCHECKR', sub: 'The QR Card Game' },
+    { icon: '🃏', title: 'CITY CARDS', sub: 'Each player gets a city card\nplaced face-up on the table' },
+    { icon: '📷', title: 'DRAW & SCAN', sub: 'Draw a QR card → see the location\nWhich table city is closest?' },
+    { icon: '🏆', title: 'SCORE', sub: 'Correct guess = point\nRevealed city joins the table' },
+  ];
+
+  const onTutorialScroll = (e: any) => {
+    const page = Math.round(e.nativeEvent.contentOffset.x / width);
+    setTutorialPage(page);
+    // Auto-advance to setup on last slide swipe
+    if (page >= TUTORIAL_SLIDES.length) {
+      setScreen('setup');
+    }
+  };
+
+
+  // ============================================================
+  // SCANNER MODAL
+  // ============================================================
   if (showScanner) {
     if (!cameraPermission?.granted) {
       return (
         <View style={s.container}>
           <StatusBar hidden />
-          <View style={s.scanPermView}>
-            <Text style={s.scanPermText}>Kamera-Berechtigung benötigt</Text>
-            <TouchableOpacity style={s.scanPermBtn} onPress={requestCameraPermission}>
-              <Text style={s.scanPermBtnText}>Berechtigung erteilen</Text>
+          <View style={s.centerScreen}>
+            <Text style={s.permText}>Camera permission required</Text>
+            <TouchableOpacity style={s.primaryBtn} onPress={requestCameraPermission}>
+              <Text style={s.primaryBtnText}>Grant Permission</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={s.scanCloseBtn} onPress={() => setShowScanner(false)}>
-              <Text style={s.scanCloseBtnText}>Abbrechen</Text>
+            <TouchableOpacity style={s.tertiaryBtn} onPress={() => { setShowScanner(false); setScanned(false); }}>
+              <Text style={s.tertiaryBtnText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
       );
     }
-    
     return (
       <View style={s.container}>
         <StatusBar hidden />
@@ -309,27 +380,37 @@ export default function App() {
         >
           <View style={s.scanOverlay}>
             <View style={s.scanFrame}>
-              <Text style={s.scanHint}>#Nummer scannen</Text>
-              <Text style={s.scanHintSub}>Halte die Vorderseite der Karte{'\n'}mit der #Nummer in den Rahmen</Text>
+              <Text style={s.scanTitle}>
+                {scanMode === 'player-city' ? 'SCAN CITY CARD' : 'SCAN QR CARD'}
+              </Text>
+              <Text style={s.scanSub}>
+                {scanMode === 'player-city'
+                  ? 'Hold the #number side of the city card in frame'
+                  : 'Hold the QR card in frame to load Street View'}
+              </Text>
             </View>
-            <TouchableOpacity style={s.scanCloseBtn} onPress={() => setShowScanner(false)}>
-              <Text style={s.scanCloseBtnText}>✕ Schließen</Text>
+            <TouchableOpacity style={s.scanClose} onPress={() => { setShowScanner(false); setScanned(false); }}>
+              <Text style={s.scanCloseText}>CLOSE</Text>
             </TouchableOpacity>
           </View>
         </CameraView>
       </View>
     );
   }
-  const timerColor = timer <= 5 ? '#ff4444' : timer <= 10 ? '#ffaa00' : '#e94560';
 
-  // ---------- TUTORIAL ----------
+  // ============================================================
+  // TUTORIAL — 4 slides, swipe right on last = setup
+  // ============================================================
   if (screen === 'tutorial') {
     return (
       <View style={s.container}>
         <StatusBar hidden />
         <ScrollView
-          horizontal pagingEnabled showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={(e) => setTutorialPage(Math.round(e.nativeEvent.contentOffset.x / width))}
+          ref={scrollRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={onTutorialScroll}
         >
           {TUTORIAL_SLIDES.map((sl, i) => (
             <View key={i} style={[s.tutSlide, { width }]}>
@@ -345,16 +426,19 @@ export default function App() {
           ))}
         </View>
         <View style={s.tutBtnRow}>
-          <TouchableOpacity style={s.tutSkip} onPress={() => setScreen('setup')}>
-            <Text style={s.tutSkipText}>Überspringen</Text>
+          <TouchableOpacity style={s.tertiaryBtn} onPress={() => setScreen('setup')}>
+            <Text style={s.tertiaryBtnText}>SKIP</Text>
           </TouchableOpacity>
-          {tutorialPage < 2 ? (
-            <TouchableOpacity style={s.tutNext} onPress={() => setTutorialPage(tutorialPage + 1)}>
-              <Text style={s.tutNextText}>Weiter →</Text>
+          {tutorialPage < TUTORIAL_SLIDES.length - 1 ? (
+            <TouchableOpacity style={s.secondaryBtn} onPress={() => {
+              scrollRef.current?.scrollTo({ x: (tutorialPage + 1) * width, animated: true });
+              setTutorialPage(tutorialPage + 1);
+            }}>
+              <Text style={s.secondaryBtnText}>NEXT</Text>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity style={s.tutStart} onPress={() => setScreen('setup')}>
-              <Text style={s.tutStartText}>Los geht's! 🚀</Text>
+            <TouchableOpacity style={s.primaryBtn} onPress={() => setScreen('setup')}>
+              <Text style={s.primaryBtnText}>LET'S GO</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -362,433 +446,594 @@ export default function App() {
     );
   }
 
-  // ---------- SETUP ----------
+  // ============================================================
+  // SETUP — Timo's HTML Design in React Native
+  // ============================================================
   if (screen === 'setup') {
     return (
-      <KeyboardAvoidingView style={s.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={s.container}>
         <StatusBar hidden />
-        <View style={s.setupCenter}>
-          <Text style={s.setupTitle}>GeoCheckr</Text>
-          <Text style={s.setupSub}>Spieler einrichten</Text>
+        <ScrollView contentContainerStyle={s.setupScroll} keyboardShouldPersistTaps="handled">
+          {/* HEADER */}
+          <Text style={s.setupHeader}>GEOCHECKR</Text>
 
-          <Text style={s.setupLabel}>DEIN NAME</Text>
-          <TextInput
-            style={s.setupInput}
-            placeholder="Name..."
-            placeholderTextColor="#555"
-            value={playerName}
-            onChangeText={setPlayerName}
-            maxLength={20}
-            autoCapitalize="words"
-          />
-
-          <Text style={s.setupLabel}>DEINE STADT-KARTE</Text>
-          {playerCity ? (
-            <View style={s.cityCard}>
-              <View style={s.cityInfo}>
-                <Text style={s.cityName}>🏙️ {playerCity}</Text>
-                <Text style={s.cityId}>#{playerCityId?.toString().padStart(3, '0')}</Text>
-              </View>
-              <TouchableOpacity style={s.rescanBtn} onPress={() => setShowScanner(true)}>
-                <Text style={s.rescanText}>🔄 Neu</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <TouchableOpacity style={s.scanBtn} onPress={() => setShowScanner(true)}>
-              <Text style={s.scanBtnText}>📷 Karte scannen</Text>
-              <Text style={s.scanBtnHint}>#Nummer auf der Vorderseite</Text>
-            </TouchableOpacity>
-          )}
-
-          <Text style={s.setupLabel}>SCHWIERIGKEIT</Text>
-          <View style={s.diffRow}>
-            {(['leicht', 'mittel', 'schwer'] as const).map(d => (
-              <TouchableOpacity
-                key={d}
-                style={[s.diffBtn, difficulty === d && s.diffBtnActive]}
-                onPress={() => setDifficulty(d)}
-              >
-                <Text style={s.diffIcon}>{d === 'leicht' ? '😊' : d === 'mittel' ? '🤔' : '🔥'}</Text>
-                <Text style={[s.diffText, difficulty === d && s.diffTextActive]}>
-                  {d.charAt(0).toUpperCase() + d.slice(1)}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          {/* SETUP SESSION */}
+          <View style={s.setupSection}>
+            <Text style={s.setupTitle}>SETUP SESSION</Text>
+            <View style={s.titleBar} />
           </View>
 
-          <TouchableOpacity style={[s.startBtn, !canStart && s.startBtnDisabled]} disabled={!canStart} onPress={startGame}>
-            <Text style={s.startBtnText}>Starten 🚀</Text>
+          {/* PLAYER MANAGEMENT */}
+          <View style={s.sectionLabel}>
+            <Text style={s.sectionLabelText}>PLAYER MANAGEMENT</Text>
+          </View>
+
+          {players.map((p, i) => (
+            <View key={p.id} style={s.playerRow}>
+              <TextInput
+                style={s.playerInput}
+                value={p.name}
+                onChangeText={(text) => setPlayers(prev => prev.map((pp, idx) => idx === i ? { ...pp, name: text } : pp))}
+                placeholder="Player name..."
+                placeholderTextColor="rgba(225,224,251,0.3)"
+              />
+              <TouchableOpacity
+                style={[s.scanBtn, p.city.length > 0 && s.scanBtnDone]}
+                onPress={() => openScannerForPlayer(i)}
+              >
+                <Text style={[s.scanBtnIcon, p.city.length > 0 && s.scanBtnIconDone]}>
+                  {p.city.length > 0 ? '✓' : '#'}
+                </Text>
+              </TouchableOpacity>
+              {players.length > 1 && (
+                <TouchableOpacity style={s.removeBtn} onPress={() => removePlayer(p.id)}>
+                  <Text style={s.removeBtnText}>✕</Text>
+                </TouchableOpacity>
+              )}
+              {p.city.length > 0 && (
+                <Text style={s.cityLabel}>{p.city}</Text>
+              )}
+            </View>
+          ))}
+
+          <TouchableOpacity style={s.recruitBtn} onPress={addPlayer}>
+            <Text style={s.recruitBtnText}>+ RECRUIT</Text>
           </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
+
+          {players.length === 0 && (
+            <View style={s.nameRow}>
+              <TextInput
+                style={s.playerInput}
+                value={newPlayerName}
+                onChangeText={setNewPlayerName}
+                placeholder="Enter name and press + RECRUIT"
+                placeholderTextColor="rgba(225,224,251,0.3)"
+                onSubmitEditing={addPlayer}
+                returnKeyType="done"
+              />
+            </View>
+          )}
+
+          {players.length > 0 && (
+            <View style={s.nameRow}>
+              <TextInput
+                style={s.playerInput}
+                value={newPlayerName}
+                onChangeText={setNewPlayerName}
+                placeholder="Next player name..."
+                placeholderTextColor="rgba(225,224,251,0.3)"
+                onSubmitEditing={addPlayer}
+                returnKeyType="done"
+              />
+            </View>
+          )}
+
+          {/* TIMER & ROUNDS */}
+          <View style={s.gridRow}>
+            <View style={s.gridCol}>
+              <View style={s.sectionLabel}>
+                <Text style={s.sectionLabelText}>TIMER</Text>
+              </View>
+              <View style={s.chipRow}>
+                {[5, 15, 30].map(t => (
+                  <TouchableOpacity
+                    key={t}
+                    style={[s.chip, timerSetting === t && s.chipActive]}
+                    onPress={() => setTimerSetting(t)}
+                  >
+                    <Text style={[s.chipText, timerSetting === t && s.chipTextActive]}>{t}s</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+            <View style={s.gridCol}>
+              <View style={s.sectionLabel}>
+                <Text style={s.sectionLabelText}>ROUNDS</Text>
+              </View>
+              <View style={s.chipRow}>
+                {[5, 10, 15].map(r => (
+                  <TouchableOpacity
+                    key={r}
+                    style={[s.chip, roundsSetting === r && s.chipActive]}
+                    onPress={() => setRoundsSetting(r)}
+                  >
+                    <Text style={[s.chipText, roundsSetting === r && s.chipTextActive]}>{r}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </View>
+
+          {/* MAIN ACTION BUTTON */}
+          <View style={s.actionSection}>
+            <TouchableOpacity
+              style={[s.mainBtn, !allPlayersScanned && s.mainBtnDisabled]}
+              disabled={!allPlayersScanned}
+              onPress={startGame}
+            >
+              <Text style={s.mainBtnText}>
+                {allPlayersScanned ? 'ALL SET, LET\'S GO!' : 'SCAN ALL CARDS FIRST'}
+              </Text>
+            </TouchableOpacity>
+            <Text style={s.actionHint}>
+              {allPlayersScanned
+                ? `${players.length} players ready`
+                : `Scan city cards for all players`}
+            </Text>
+          </View>
+        </ScrollView>
+      </View>
     );
   }
 
-  // ---------- GAME ----------
+
+  // ============================================================
+  // GAME SCREEN
+  // ============================================================
   if (screen === 'game') {
+    const activePlayer = players[activePlayerIdx];
+    const timerColor = timer <= 10 ? C.error : C.primary;
+
     return (
       <View style={s.container}>
         <StatusBar hidden />
 
-        {/* FULL SCREEN STREET VIEW */}
-        <WebView
-          key={`${location.lat}-${location.lng}`}
-          source={{ html: buildStreetViewHtml(location.lat, location.lng) }}
-          style={s.svWebview}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          allowsInlineMediaPlayback={true}
-          mediaPlaybackRequiresUserAction={false}
-          mixedContentMode="compatibility"
-          scrollEnabled={true}
-          onError={() => setSvError(true)}
-          onMessage={(e) => {
-            const msg = e.nativeEvent.data;
-            if (msg === 'loaded') setSvLoaded(true);
-            if (msg.startsWith('error')) setSvError(true);
-          }}
-          userAgent="Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
-        />
+        {/* TOP BAR */}
+        <View style={s.gameTopBar}>
+          <Text style={s.gameActivePlayer}>{activePlayer.name}</Text>
+          <Text style={s.gameRound}>R{round}/{maxRounds}</Text>
+        </View>
 
-        {/* Loading */}
-        {!svLoaded && !svError && (
-          <View style={s.loadingOverlay}>
-            <Text style={s.loadingText}>🌍 Lade Street View...</Text>
-          </View>
-        )}
+        {/* PHASE: SCAN QR */}
+        {phase === 'scan-qr' && (
+          <View style={s.centerScreen}>
+            <Text style={s.phaseEmoji}>📷</Text>
+            <Text style={s.phaseTitle}>{activePlayer.name}, draw a QR card!</Text>
+            <Text style={s.phaseSub}>Scan the QR card to reveal the location</Text>
 
-        {/* Error */}
-        {svError && (
-          <View style={s.errorOverlay}>
-            <Text style={s.errorEmoji}>❌</Text>
-            <Text style={s.errorCity}>{location.city}</Text>
-            <TouchableOpacity style={s.retryBtn} onPress={nextTurn}>
-              <Text style={s.retryText}>Nächste Location →</Text>
+            {/* TABLE CITIES */}
+            <View style={s.tableList}>
+              <Text style={s.tableListTitle}>CITIES ON TABLE</Text>
+              {tableCities.map((tc, i) => (
+                <View key={i} style={[s.tableRow, i % 2 === 0 ? s.tableRowEven : s.tableRowOdd]}>
+                  <Text style={s.tableDot}>{tc.isPlayerCity ? '◉' : '◈'}</Text>
+                  <Text style={s.tableName}>{tc.city}</Text>
+                  {tc.isPlayerCity && (
+                    <Text style={s.tableOwner}>
+                      — {players.find(p => p.id === tc.ownerPlayerId)?.name}
+                    </Text>
+                  )}
+                </View>
+              ))}
+            </View>
+
+            <TouchableOpacity style={s.primaryBtn} onPress={() => {
+              setScanMode('qr-card');
+              setShowScanner(true);
+              setScanned(false);
+            }}>
+              <Text style={s.primaryBtnText}>SCAN QR CARD</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        {/* Timer */}
-        {phase === 'view' && svLoaded && (
-          <Animated.View style={[s.timer, { borderColor: timerColor, transform: [{ scale: timerPulse }] }]}>
-            <Text style={[s.timerText, { color: timerColor }]}>{timer}</Text>
-          </Animated.View>
-        )}
+        {/* PHASE: VIEW STREET VIEW */}
+        {phase === 'view' && (
+          <>
+            <WebView
+              key={`${location.lat}-${location.lng}`}
+              source={{ html: buildStreetViewHtml(location.lat, location.lng) }}
+              style={{ flex: 1 }}
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
+              allowsInlineMediaPlayback={true}
+              mediaPlaybackRequiresUserAction={false}
+              mixedContentMode="compatibility"
+              scrollEnabled={true}
+              onError={() => setSvError(true)}
+              onMessage={(e) => {
+                const msg = e.nativeEvent.data;
+                if (msg === 'loaded') setSvLoaded(true);
+                if (msg.startsWith('error')) setSvError(true);
+              }}
+              userAgent="Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+            />
 
-        {/* Top bar */}
-        {phase === 'view' && svLoaded && (
-          <View style={s.topBar}>
-            <Text style={s.topName}>{players[0].name}</Text>
-            <Text style={s.topRound}>Runde {round}/{maxRounds}</Text>
-            <View style={s.topScore}>
-              <Text style={s.topScoreText}>⭐ {scores[1]}</Text>
-            </View>
-          </View>
-        )}
+            {!svLoaded && !svError && (
+              <View style={s.loadingOverlay}>
+                <Text style={s.loadingText}>Loading Street View...</Text>
+              </View>
+            )}
 
-        {/* Skip */}
-        {phase === 'view' && svLoaded && (
-          <TouchableOpacity style={s.skipBtn} onPress={() => {
-            playClickSound();
-            setTimerPaused(true);
-            setPhase('answer');
-            playAnswerphoneBeep();
-          }}>
-            <Text style={s.skipText}>Ich weiß es! →</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* ANSWER OVERLAY */}
-        {phase === 'answer' && (
-          <View style={s.answerOverlay}>
-            <View style={s.answerCard}>
-              <Text style={s.answerTitle}>📍 Deine Antwort</Text>
-              <Text style={s.answerSub}>{players[0].name}, wo bist du?</Text>
-
-              <View style={s.modeTabs}>
-                <TouchableOpacity
-                  style={[s.modeTab, answerMode === 'text' && s.modeTabActive]}
-                  onPress={() => { setAnswerMode('text'); setShowMap(false); }}
-                >
-                  <Text style={s.modeTabText}>⌨️ Tippen</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[s.modeTab, answerMode === 'map' && s.modeTabActive]}
-                  onPress={() => { setAnswerMode('map'); setShowMap(true); }}
-                >
-                  <Text style={s.modeTabText}>🗺️ Karte</Text>
+            {svError && (
+              <View style={s.errorOverlay}>
+                <Text style={s.errorText}>No Street View available</Text>
+                <TouchableOpacity style={s.primaryBtn} onPress={nextTurn}>
+                  <Text style={s.primaryBtnText}>SKIP →</Text>
                 </TouchableOpacity>
               </View>
+            )}
 
-              {answerMode === 'text' && (
-                <View style={s.textRow}>
-                  <TextInput
-                    style={s.textInput}
-                    placeholder="Stadtname..."
-                    placeholderTextColor="#555"
-                    value={textInput}
-                    onChangeText={setTextInput}
-                    autoFocus
-                    returnKeyType="send"
-                    onSubmitEditing={submitTextAnswer}
-                  />
-                  <TouchableOpacity style={s.submitBtn} onPress={submitTextAnswer}>
-                    <Text style={s.submitText}>✓</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              {answerMode === 'map' && !showMap && (
-                <TouchableOpacity style={s.mapHint} onPress={() => setShowMap(true)}>
-                  <Text style={s.mapHintText}>🗺️ Karte öffnen</Text>
+            {svLoaded && (
+              <>
+                <Animated.View style={[s.timer, { borderColor: timerColor, transform: [{ scale: timerPulse }] }]}>
+                  <Text style={[s.timerText, { color: timerColor }]}>{timer}</Text>
+                </Animated.View>
+                <TouchableOpacity style={s.pickBtn} onPress={() => {
+                  playClickSound();
+                  setTimerPaused(true);
+                  setPhase('pick');
+                }}>
+                  <Text style={s.pickBtnText}>I KNOW IT!</Text>
                 </TouchableOpacity>
-              )}
+              </>
+            )}
+          </>
+        )}
 
-              <TouchableOpacity style={s.skipAnswerBtn} onPress={() => resolveAnswer(20000)}>
-                <Text style={s.skipAnswerText}>Überspringen →</Text>
-              </TouchableOpacity>
-            </View>
+        {/* PHASE: PICK CLOSEST CITY */}
+        {phase === 'pick' && (
+          <View style={s.pickScreen}>
+            <Text style={s.pickTitle}>WHICH CITY IS CLOSEST?</Text>
+            <Text style={s.pickSub}>{activePlayer.name}, choose the city nearest to the shown location</Text>
+            <ScrollView style={{ flex: 1, width: '100%' }}>
+              {tableCities.map((tc, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={[s.pickOption, i % 2 === 0 ? s.tableRowEven : s.tableRowOdd]}
+                  onPress={() => pickCity(i)}
+                >
+                  <Text style={s.pickOptionDot}>{tc.isPlayerCity ? '◉' : '◈'}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.pickOptionName}>{tc.city}</Text>
+                    {tc.isPlayerCity && tc.ownerPlayerId !== null && (
+                      <Text style={s.pickOptionOwner}>
+                        {players.find(p => p.id === tc.ownerPlayerId)?.name}
+                      </Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
         )}
 
-        {/* RESULT OVERLAY */}
-        {phase === 'result' && (
+        {/* PHASE: RESULT */}
+        {phase === 'result' && closestCityIdx !== null && (
           <View style={s.resultOverlay}>
             <Animated.View style={[s.resultCard, { transform: [{ scale: resultScale }] }]}>
-              <Text style={s.resultEmoji}>{points >= 3 ? '🎯' : points >= 1 ? '👍' : '😅'}</Text>
-              <Text style={[s.resultTitle, points > 0 ? s.correct : s.wrong]}>
-                {points >= 3 ? 'Perfekt!' : points >= 2 ? 'Gut!' : points >= 1 ? 'Nicht schlecht!' : 'Daneben!'}
+              <Text style={s.resultEmoji}>
+                {winnerId !== null && winnerId === activePlayer.id ? '🎯' : '📍'}
               </Text>
-              <View style={s.resultInfo}>
-                <View style={s.resultRow}>
-                  <Text style={s.resultLabel}>📍 Ort</Text>
-                  <Text style={s.resultValue}>{location.city}</Text>
+              <Text style={s.resultTitle}>
+                {tableCities[closestCityIdx].city} was closest!
+              </Text>
+
+              {tableCities.map((tc, i) => (
+                <View key={i} style={s.resultRow}>
+                  <Text style={s.resultLabel}>
+                    {tc.isPlayerCity ? '◉' : '◈'} {tc.city}
+                  </Text>
+                  <Text style={s.resultValue}>{formatDistance(distances[i] ?? 0)}</Text>
                 </View>
-                <View style={s.resultRow}>
-                  <Text style={s.resultLabel}>📏 Distanz</Text>
-                  <Text style={s.resultValue}>{formatDistance(distance)}</Text>
-                </View>
-                <View style={s.resultRow}>
-                  <Text style={s.resultLabel}>⭐ Punkte</Text>
-                  <Text style={[s.resultValue, s.ptsHl]}>+{points}</Text>
-                </View>
-              </View>
-              <TouchableOpacity style={s.nextBtn} onPress={nextTurn}>
-                <Text style={s.nextBtnText}>
-                  {round >= maxRounds ? '🏆 Ergebnis' : 'Nächste Runde →'}
+              ))}
+
+              {winnerId !== null && (
+                <Text style={s.resultWinner}>
+                  ⭐ {players.find(p => p.id === winnerId)?.name} scores!
+                </Text>
+              )}
+
+              <TouchableOpacity style={s.primaryBtn} onPress={nextTurn}>
+                <Text style={s.primaryBtnText}>
+                  {round >= maxRounds ? 'FINAL RESULTS' : 'NEXT ROUND →'}
                 </Text>
               </TouchableOpacity>
             </Animated.View>
           </View>
         )}
-
-        {/* MAP MODAL */}
-        {showMap && (
-          <View style={s.mapModal}>
-            <View style={s.mapHeader}>
-              <Text style={s.mapTitle}>📍 Auf Karte zeigen</Text>
-              <TouchableOpacity style={s.mapClose} onPress={() => { setShowMap(false); setAnswerMode('text'); }}>
-                <Text style={s.mapCloseText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-            <WebView
-              source={{ html: MAP_HTML }}
-              style={{ flex: 1 }}
-              javaScriptEnabled={true}
-              onMessage={(e) => {
-                try {
-                  const { lat, lng } = JSON.parse(e.nativeEvent.data);
-                  submitMapAnswer(lat, lng);
-                } catch {}
-              }}
-            />
-          </View>
-        )}
       </View>
     );
   }
 
-  // ---------- RESULT ----------
+  // ============================================================
+  // END SCREEN — "The Tactical Cartographer" Design
+  // ============================================================
+  const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+
   return (
     <View style={s.container}>
       <StatusBar hidden />
-      <ScrollView contentContainerStyle={s.resultScreen}>
-        <Text style={s.trophy}>🏆</Text>
-        <Text style={s.resultScreenTitle}>Spiel beendet!</Text>
-        <Text style={s.resultScreenSub}>{maxRounds} Runden gespielt</Text>
-        <View style={s.winnerCard}>
-          <Text style={s.winnerName}>{players[0].name}</Text>
-          <Text style={s.winnerScore}>{scores[1]} ⭐</Text>
-        </View>
-        <TouchableOpacity style={s.againBtn} onPress={() => { startRound(); setScreen('game'); }}>
-          <Text style={s.againText}>🔄 Nochmal spielen</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={s.homeBtn} onPress={() => setScreen('setup')}>
-          <Text style={s.homeText}>🏠 Neues Spiel</Text>
+      <ScrollView contentContainerStyle={s.endScroll}>
+        <Text style={s.endCheck}>✓</Text>
+        <Text style={s.endTitle}>EVALUATION COMPLETE</Text>
+        <Text style={s.endSub}>SESSION DATA READY FOR ANALYSIS</Text>
+
+        {sortedPlayers.map((p, i) => (
+          <View key={p.id} style={[s.endPlayerRow, i % 2 === 0 ? s.tableRowEven : s.tableRowOdd]}>
+            <Text style={s.endRank}>
+              {i === 0 ? '#1' : i === 1 ? '#2' : i === 2 ? '#3' : `#${i + 1}`}
+            </Text>
+            <View style={{ flex: 1 }}>
+              <Text style={s.endPlayerName}>{p.name}</Text>
+              <Text style={s.endPlayerCity}>{p.city}</Text>
+            </View>
+            <Text style={s.endPlayerScore}>{p.score}</Text>
+          </View>
+        ))}
+
+        <TouchableOpacity style={s.primaryBtn} onPress={() => {
+          setPlayers([]);
+          setTableCities([]);
+          setNewPlayerName('');
+          setScreen('setup');
+        }}>
+          <Text style={s.primaryBtnText}>PLAY AGAIN</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
   );
 }
 
+
 // ============================================================
-// STYLES
+// STYLES — "The Tactical Cartographer" Design System
+// No borders. Tonal layering. Space Grotesk only.
 // ============================================================
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0a1a' },
+  container: { flex: 1, backgroundColor: C.bg },
 
-  // Tutorial
+  // ---- CENTER SCREEN (generic) ----
+  centerScreen: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 },
+
+  // ---- TUTORIAL ----
   tutSlide: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40 },
-  tutIcon: { fontSize: 80, marginBottom: 30 },
-  tutTitle: { color: '#fff', fontSize: 32, fontWeight: 'bold', marginBottom: 15, textAlign: 'center' },
-  tutSub: { color: '#aaa', fontSize: 18, textAlign: 'center', lineHeight: 26 },
-  tutDots: { flexDirection: 'row', justifyContent: 'center', marginBottom: 30 },
-  tutDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#333', marginHorizontal: 5 },
-  tutDotActive: { backgroundColor: '#e94560', width: 24 },
-  tutBtnRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 30, paddingBottom: 50 },
-  tutSkip: { paddingVertical: 14, paddingHorizontal: 20 },
-  tutSkipText: { color: '#666', fontSize: 16 },
-  tutNext: { backgroundColor: '#e94560', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 12 },
-  tutNextText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  tutStart: { backgroundColor: '#4CAF50', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 12 },
-  tutStartText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  tutIcon: { fontSize: 80, marginBottom: 32 },
+  tutTitle: { color: C.onSurface, fontSize: 32, fontWeight: '700', marginBottom: 12, textAlign: 'center', letterSpacing: -0.5 },
+  tutSub: { color: 'rgba(225,224,251,0.6)', fontSize: 16, textAlign: 'center', lineHeight: 24 },
+  tutDots: { flexDirection: 'row', justifyContent: 'center', marginBottom: 32, gap: 8 },
+  tutDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.surfaceHighest },
+  tutDotActive: { backgroundColor: C.primary, width: 24 },
+  tutBtnRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 32, paddingBottom: 48 },
 
-  // Setup
-  setupCenter: { flex: 1, justifyContent: 'center', paddingHorizontal: 30 },
-  setupTitle: { color: '#fff', fontSize: 36, fontWeight: 'bold', textAlign: 'center', marginBottom: 5 },
-  setupSub: { color: '#888', fontSize: 16, textAlign: 'center', marginBottom: 35 },
-  setupLabel: { color: '#888', fontSize: 12, marginBottom: 6, fontWeight: '600', letterSpacing: 1 },
-  setupInput: { backgroundColor: '#16213e', color: '#fff', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, borderWidth: 1, borderColor: '#2a2a4a', marginBottom: 25 },
+  // ---- BUTTONS (Design System) ----
+  // Primary: #a6d700 bg, #445a00 text
+  primaryBtn: { backgroundColor: C.primary, paddingVertical: 16, paddingHorizontal: 24, alignItems: 'center' },
+  primaryBtnText: { color: C.onPrimaryContainer, fontSize: 14, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' },
+  // Secondary: #2734c0 bg, #acb3ff text
+  secondaryBtn: { backgroundColor: C.secondaryContainer, paddingVertical: 16, paddingHorizontal: 24, alignItems: 'center' },
+  secondaryBtnText: { color: C.onSecondaryContainer, fontSize: 14, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' },
+  // Tertiary: no bg, green text
+  tertiaryBtn: { paddingVertical: 14, paddingHorizontal: 20 },
+  tertiaryBtnText: { color: C.primary, fontSize: 13, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' },
 
-  // Scan button (no city yet)
-  scanBtn: { backgroundColor: '#16213e', borderRadius: 12, borderWidth: 2, borderColor: '#e94560', borderStyle: 'dashed', paddingVertical: 16, paddingHorizontal: 20, alignItems: 'center', marginBottom: 25 },
-  scanBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  scanBtnHint: { color: '#888', fontSize: 12, marginTop: 4 },
+  // ---- SETUP SCREEN ----
+  setupScroll: { paddingTop: 48, paddingBottom: 80, paddingHorizontal: 24 },
+  setupHeader: {
+    color: C.primary, fontSize: 24, fontWeight: '700', letterSpacing: 3,
+    textTransform: 'uppercase', marginBottom: 32,
+  },
+  setupSection: { marginBottom: 32 },
+  setupTitle: {
+    color: C.onSurface, fontSize: 28, fontWeight: '700', letterSpacing: -0.5,
+    marginBottom: 8,
+  },
+  titleBar: { width: 48, height: 4, backgroundColor: C.primary },
 
-  // City card (city assigned)
-  cityCard: { backgroundColor: '#16213e', borderRadius: 12, borderWidth: 2, borderColor: '#4CAF50', padding: 14, marginBottom: 25, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  cityInfo: { flex: 1 },
-  cityName: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  cityId: { color: '#4CAF50', fontSize: 14, fontWeight: '600', marginTop: 2 },
-  rescanBtn: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 8, backgroundColor: 'rgba(233,69,96,0.15)' },
-  rescanText: { color: '#e94560', fontSize: 13, fontWeight: '600' },
+  // Section labels
+  sectionLabel: { marginBottom: 12, marginTop: 8 },
+  sectionLabelText: {
+    color: C.secondary, fontSize: 10, fontWeight: '700',
+    letterSpacing: 3, textTransform: 'uppercase',
+  },
 
-  // Scanner overlay
-  scanOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  scanFrame: { width: 280, height: 280, borderWidth: 3, borderColor: '#e94560', borderRadius: 16, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)' },
-  scanHint: { color: '#fff', fontSize: 18, fontWeight: '600', textAlign: 'center' },
-  scanHintSub: { color: '#aaa', fontSize: 12, textAlign: 'center', marginTop: 8, paddingHorizontal: 20 },
+  // Player rows
+  playerRow: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: C.surfaceLow, marginBottom: 8,
+    gap: 0,
+  },
+  playerInput: {
+    flex: 1, color: C.onSurface, fontSize: 16, fontWeight: '500',
+    paddingVertical: 16, paddingHorizontal: 16,
+    backgroundColor: C.surfaceLow,
+    borderBottomWidth: 1, borderBottomColor: 'rgba(68,73,52,0.15)',
+  },
+  scanBtn: {
+    backgroundColor: C.secondaryContainer, paddingVertical: 16, paddingHorizontal: 20,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  scanBtnDone: { backgroundColor: C.primary },
+  scanBtnIcon: { color: C.onSecondaryContainer, fontSize: 16, fontWeight: '700' },
+  scanBtnIconDone: { color: C.onPrimaryContainer },
+  removeBtn: {
+    paddingVertical: 16, paddingHorizontal: 12,
+    backgroundColor: C.surfaceLow,
+  },
+  removeBtnText: { color: C.error, fontSize: 14, fontWeight: '700' },
+  cityLabel: {
+    position: 'absolute', right: 80, top: 18,
+    color: C.primary, fontSize: 11, fontWeight: '600', letterSpacing: 1,
+  },
 
-  // Scanner permission
-  scanPermView: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 30 },
-  scanPermText: { color: '#fff', fontSize: 18, marginBottom: 20, textAlign: 'center' },
-  scanPermBtn: { backgroundColor: '#e94560', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 12, marginBottom: 12 },
-  scanPermBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  // Name input row (for adding new players)
+  nameRow: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: C.surfaceLow, marginBottom: 8,
+  },
 
-  // Scanner close button
-  scanCloseBtn: { position: 'absolute', bottom: 60, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.8)', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 20 },
-  scanCloseBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  // Recruit button
+  recruitBtn: {
+    alignItems: 'center', paddingVertical: 16, marginBottom: 32,
+  },
+  recruitBtnText: {
+    color: C.primary, fontSize: 12, fontWeight: '700',
+    letterSpacing: 3, textTransform: 'uppercase',
+  },
 
-  // Difficulty
-  diffRow: { flexDirection: 'row', gap: 10, marginBottom: 30 },
-  diffBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, borderWidth: 2, borderColor: '#333', backgroundColor: '#16213e', alignItems: 'center' },
-  diffBtnActive: { borderColor: '#e94560' },
-  diffIcon: { fontSize: 24, marginBottom: 4 },
-  diffText: { color: '#888', fontSize: 13, fontWeight: '600' },
-  diffTextActive: { color: '#fff' },
+  // Timer & Rounds grid
+  gridRow: { flexDirection: 'row', gap: 24, marginBottom: 48 },
+  gridCol: { flex: 1 },
+  chipRow: { flexDirection: 'row', gap: 8 },
+  chip: {
+    flex: 1, paddingVertical: 12, alignItems: 'center',
+    borderWidth: 1, borderColor: 'rgba(68,73,52,0.3)',
+  },
+  chipActive: { backgroundColor: C.primary, borderColor: C.primary },
+  chipText: { color: 'rgba(225,224,251,0.5)', fontSize: 12, fontWeight: '700', letterSpacing: 2 },
+  chipTextActive: { color: C.onPrimaryContainer },
 
-  // Start button
-  startBtn: { backgroundColor: '#e94560', paddingVertical: 18, borderRadius: 14, alignItems: 'center' },
-  startBtnDisabled: { backgroundColor: '#333' },
-  startBtnText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
+  // Main action button
+  actionSection: { marginTop: 16 },
+  mainBtn: {
+    backgroundColor: C.primary, paddingVertical: 20, alignItems: 'center',
+  },
+  mainBtnDisabled: { backgroundColor: C.surfaceHighest },
+  mainBtnText: {
+    color: C.onPrimaryContainer, fontSize: 15, fontWeight: '700',
+    letterSpacing: 3, textTransform: 'uppercase',
+  },
+  actionHint: {
+    color: 'rgba(225,224,251,0.3)', fontSize: 10, textAlign: 'center',
+    marginTop: 12, letterSpacing: 2, textTransform: 'uppercase', fontWeight: '500',
+  },
 
-  // Game — Street View
-  svWebview: { flex: 1, backgroundColor: '#000' },
-  loadingOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000', zIndex: 5 },
-  loadingText: { color: '#aaa', fontSize: 16 },
-  errorOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1a1a2e', zIndex: 10 },
-  errorEmoji: { fontSize: 60, marginBottom: 15 },
-  errorCity: { color: '#fff', fontSize: 20, fontWeight: 'bold', marginBottom: 20 },
-  retryBtn: { backgroundColor: '#e94560', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 10 },
-  retryText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  // ---- GAME SCREEN ----
+  gameTopBar: {
+    position: 'absolute', top: 0, left: 0, right: 0,
+    flexDirection: 'row', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingTop: 44, paddingBottom: 8,
+    backgroundColor: 'rgba(17,18,37,0.85)', zIndex: 20,
+  },
+  gameActivePlayer: {
+    color: C.primary, fontSize: 14, fontWeight: '700', letterSpacing: 1,
+  },
+  gameRound: {
+    color: C.onSurface, fontSize: 12, fontWeight: '500', letterSpacing: 1,
+    backgroundColor: C.surface, paddingHorizontal: 10, paddingVertical: 4,
+  },
+
+  // Phase screens
+  phaseEmoji: { fontSize: 64, marginBottom: 24 },
+  phaseTitle: { color: C.onSurface, fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 8, letterSpacing: -0.3 },
+  phaseSub: { color: 'rgba(225,224,251,0.5)', fontSize: 14, textAlign: 'center', marginBottom: 32 },
+
+  // Table list
+  tableList: { width: '100%', backgroundColor: C.surface, padding: 16, marginBottom: 32 },
+  tableListTitle: { color: C.secondary, fontSize: 10, fontWeight: '700', letterSpacing: 3, marginBottom: 12 },
+  tableRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 12 },
+  tableRowEven: { backgroundColor: C.surfaceLow },
+  tableRowOdd: { backgroundColor: C.surface },
+  tableDot: { color: C.primary, fontSize: 14, marginRight: 10 },
+  tableName: { color: C.onSurface, fontSize: 15, fontWeight: '600' },
+  tableOwner: { color: 'rgba(225,224,251,0.4)', fontSize: 12, marginLeft: 8 },
 
   // Timer
   timer: {
-    position: 'absolute', top: 15, right: 15,
+    position: 'absolute', top: 80, right: 16,
     width: 52, height: 52, borderRadius: 26,
-    backgroundColor: 'rgba(0,0,0,0.85)', borderWidth: 3,
+    backgroundColor: 'rgba(17,18,37,0.9)', borderWidth: 3,
     justifyContent: 'center', alignItems: 'center', zIndex: 20,
   },
-  timerText: { fontSize: 22, fontWeight: 'bold' },
+  timerText: { fontSize: 22, fontWeight: '700' },
 
-  // Top bar
-  topBar: {
-    position: 'absolute', top: 15, left: 15,
-    flexDirection: 'row', alignItems: 'center', gap: 8, zIndex: 20,
-  },
-  topName: { color: '#e94560', fontSize: 14, fontWeight: 'bold', backgroundColor: 'rgba(0,0,0,0.75)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-  topRound: { color: '#fff', fontSize: 12, backgroundColor: 'rgba(0,0,0,0.75)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-  topScore: { backgroundColor: 'rgba(0,0,0,0.75)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-  topScoreText: { color: '#FFD700', fontSize: 13, fontWeight: 'bold' },
-
-  // Skip
-  skipBtn: {
+  // Pick button
+  pickBtn: {
     position: 'absolute', bottom: 40, alignSelf: 'center',
-    backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 28, paddingVertical: 14,
-    borderRadius: 25, borderWidth: 1.5, borderColor: '#4CAF50', zIndex: 20,
+    backgroundColor: 'rgba(17,18,37,0.9)', paddingHorizontal: 28, paddingVertical: 14,
+    borderWidth: 1.5, borderColor: C.primary, zIndex: 20,
   },
-  skipText: { color: '#4CAF50', fontSize: 17, fontWeight: '600' },
+  pickBtnText: { color: C.primary, fontSize: 16, fontWeight: '700', letterSpacing: 2 },
 
-  // Answer
-  answerOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.92)', zIndex: 30, justifyContent: 'center', paddingHorizontal: 24 },
-  answerCard: { backgroundColor: '#16213e', borderRadius: 20, padding: 24 },
-  answerTitle: { color: '#fff', fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginBottom: 5 },
-  answerSub: { color: '#888', fontSize: 14, textAlign: 'center', marginBottom: 20 },
-  modeTabs: { flexDirection: 'row', gap: 10, marginBottom: 20 },
-  modeTab: { flex: 1, paddingVertical: 12, borderRadius: 10, borderWidth: 2, borderColor: '#333', backgroundColor: '#0f3460', alignItems: 'center' },
-  modeTabActive: { borderColor: '#e94560' },
-  modeTabText: { color: '#888', fontSize: 14, fontWeight: '600' },
-  textRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  textInput: { flex: 1, backgroundColor: '#0f3460', color: '#fff', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, borderWidth: 1, borderColor: '#2a2a4a' },
-  submitBtn: { width: 52, height: 52, borderRadius: 12, backgroundColor: '#4CAF50', justifyContent: 'center', alignItems: 'center' },
-  submitText: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
-  mapHint: { backgroundColor: '#0f3460', paddingVertical: 16, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#2a2a4a', marginBottom: 12 },
-  mapHintText: { color: '#fff', fontSize: 16 },
-  skipAnswerBtn: { paddingVertical: 10, alignItems: 'center' },
-  skipAnswerText: { color: '#666', fontSize: 14 },
+  // Loading / Error overlays
+  loadingOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg, zIndex: 5 },
+  loadingText: { color: 'rgba(225,224,251,0.5)', fontSize: 14, letterSpacing: 1 },
+  errorOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg, zIndex: 10, paddingHorizontal: 32 },
+  errorText: { color: C.error, fontSize: 16, fontWeight: '600', marginBottom: 20 },
+
+  // Pick screen
+  pickScreen: { flex: 1, backgroundColor: C.bg, paddingTop: 60, paddingHorizontal: 20 },
+  pickTitle: { color: C.onSurface, fontSize: 20, fontWeight: '700', textAlign: 'center', marginBottom: 4, letterSpacing: -0.3 },
+  pickSub: { color: 'rgba(225,224,251,0.5)', fontSize: 13, textAlign: 'center', marginBottom: 24 },
+  pickOption: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 16, paddingHorizontal: 16, marginBottom: 4,
+  },
+  pickOptionDot: { color: C.primary, fontSize: 18, marginRight: 14 },
+  pickOptionName: { color: C.onSurface, fontSize: 18, fontWeight: '600' },
+  pickOptionOwner: { color: 'rgba(225,224,251,0.4)', fontSize: 12, marginTop: 2 },
 
   // Result overlay
-  resultOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.92)', zIndex: 40, justifyContent: 'center', paddingHorizontal: 20 },
-  resultCard: { backgroundColor: '#16213e', borderRadius: 20, padding: 24, alignItems: 'center' },
-  resultEmoji: { fontSize: 50, marginBottom: 10 },
-  resultTitle: { fontSize: 28, fontWeight: 'bold', marginBottom: 18, textAlign: 'center' },
-  correct: { color: '#4CAF50' },
-  wrong: { color: '#ff4444' },
-  resultInfo: { width: '100%', marginBottom: 18 },
-  resultRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#2a2a4a' },
-  resultLabel: { color: '#aaa', fontSize: 15 },
-  resultValue: { color: '#fff', fontSize: 15, fontWeight: '600' },
-  ptsHl: { color: '#4CAF50', fontSize: 20, fontWeight: 'bold' },
-  nextBtn: { backgroundColor: '#e94560', paddingVertical: 16, paddingHorizontal: 30, borderRadius: 14, width: '100%', alignItems: 'center' },
-  nextBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  resultOverlay: {
+    ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(17,18,37,0.95)',
+    zIndex: 40, justifyContent: 'center', paddingHorizontal: 20,
+  },
+  resultCard: { backgroundColor: C.surface, padding: 24 },
+  resultEmoji: { fontSize: 48, textAlign: 'center', marginBottom: 12 },
+  resultTitle: { color: C.onSurface, fontSize: 20, fontWeight: '700', textAlign: 'center', marginBottom: 20 },
+  resultRow: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    paddingVertical: 10, paddingHorizontal: 12,
+    backgroundColor: C.surfaceLow, marginBottom: 2,
+  },
+  resultLabel: { color: 'rgba(225,224,251,0.7)', fontSize: 14, fontWeight: '500' },
+  resultValue: { color: C.onSurface, fontSize: 14, fontWeight: '600' },
+  resultWinner: { color: C.primary, fontSize: 16, fontWeight: '700', textAlign: 'center', marginVertical: 16 },
 
-  // Map modal
-  mapModal: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 50, backgroundColor: '#0a0a1a' },
-  mapHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, paddingTop: 40, backgroundColor: '#16213e', borderBottomWidth: 1, borderBottomColor: '#2a2a4a' },
-  mapTitle: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  mapClose: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#e94560', justifyContent: 'center', alignItems: 'center' },
-  mapCloseText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  // ---- END SCREEN — "EVALUATION COMPLETE" ----
+  endScroll: { paddingTop: 60, paddingBottom: 80, paddingHorizontal: 24, alignItems: 'center' },
+  endCheck: {
+    fontSize: 64, color: C.primary, marginBottom: 16,
+    width: 80, height: 80, textAlign: 'center', lineHeight: 80,
+  },
+  endTitle: {
+    color: C.onSurface, fontSize: 28, fontWeight: '700',
+    textAlign: 'center', marginBottom: 4, letterSpacing: -0.5,
+  },
+  endSub: {
+    color: 'rgba(225,224,251,0.4)', fontSize: 11, fontWeight: '700',
+    letterSpacing: 3, textTransform: 'uppercase', textAlign: 'center',
+    marginBottom: 40,
+  },
+  endPlayerRow: {
+    flexDirection: 'row', alignItems: 'center',
+    width: '100%', paddingVertical: 18, paddingHorizontal: 16,
+    marginBottom: 2,
+  },
+  endRank: {
+    color: C.primary, fontSize: 14, fontWeight: '700',
+    width: 36, letterSpacing: 1,
+  },
+  endPlayerName: { color: C.onSurface, fontSize: 18, fontWeight: '700' },
+  endPlayerCity: { color: 'rgba(225,224,251,0.4)', fontSize: 12, marginTop: 2, letterSpacing: 1 },
+  endPlayerScore: { color: C.onSurface, fontSize: 28, fontWeight: '700' },
 
-  // Result screen
-  resultScreen: { padding: 30, alignItems: 'center', paddingTop: 60 },
-  trophy: { fontSize: 80, marginBottom: 15 },
-  resultScreenTitle: { color: '#fff', fontSize: 32, fontWeight: 'bold', marginBottom: 5, textAlign: 'center' },
-  resultScreenSub: { color: '#888', fontSize: 16, marginBottom: 30, textAlign: 'center' },
-  winnerCard: { backgroundColor: 'rgba(255,215,0,0.1)', borderRadius: 20, padding: 25, alignItems: 'center', marginBottom: 25, borderWidth: 2, borderColor: '#FFD700', width: '100%' },
-  winnerName: { color: '#FFD700', fontSize: 26, fontWeight: 'bold', marginBottom: 5 },
-  winnerScore: { color: '#fff', fontSize: 22, fontWeight: '600' },
-  againBtn: { backgroundColor: '#e94560', paddingVertical: 16, borderRadius: 14, width: '100%', alignItems: 'center', marginTop: 10 },
-  againText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  homeBtn: { backgroundColor: '#16213e', paddingVertical: 14, borderRadius: 14, width: '100%', alignItems: 'center', marginTop: 12, borderWidth: 1, borderColor: '#2a2a4a' },
-  homeText: { color: '#aaa', fontSize: 16 },
+  // ---- SCANNER ----
+  permText: { color: C.onSurface, fontSize: 18, marginBottom: 20, textAlign: 'center' },
+  scanOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  scanFrame: { width: 280, height: 280, borderWidth: 3, borderColor: C.primary, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)' },
+  scanTitle: { color: C.onSurface, fontSize: 18, fontWeight: '700', textAlign: 'center', letterSpacing: 2 },
+  scanSub: { color: 'rgba(225,224,251,0.6)', fontSize: 12, textAlign: 'center', marginTop: 8, paddingHorizontal: 20 },
+  scanClose: { position: 'absolute', bottom: 60, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.8)', paddingHorizontal: 24, paddingVertical: 12 },
+  scanCloseText: { color: C.onSurface, fontSize: 14, fontWeight: '700', letterSpacing: 2 },
 });
