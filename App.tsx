@@ -180,58 +180,65 @@ export default function App() {
   // ═══════════════ SCAN HANDLER — 3 MECHANICS ═══════════════
   const handleScan = useCallback(({ data }: { data: string }) => {
     if (scanned) return;
+    console.log('[SCAN]', data, 'cityScanner:', showCityScanner, 'qrScanner:', showQrScanner, 'idx:', scanCityForIdx);
 
-    // MECHANIC A: #Number barcode scan
-    // Parse: "#042" or "042" or "GC042"
-    let id: number | null = null;
-    const numMatch = data.match(/#?(\d+)/);
-    if (numMatch) id = parseInt(numMatch[1], 10);
-
-    if (id !== null && id >= 0 && id < panoramaLocations.length) {
-      const loc = panoramaLocations.find(l => l.id === id);
-      if (loc) {
-        playClickSound(); setScanned(true); Vibration.vibrate(100);
-
-        if (showCityScanner && scanCityForIdx !== null) {
-          // CITY CARD ASSIGNMENT
-          setPlayers(prev => prev.map((p, i) =>
-            i === scanCityForIdx ? { ...p, city: loc.city, cityId: id!, lat: loc.lat, lng: loc.lng } : p
-          ));
-          setShowCityScanner(false); setScanned(false); setScanCityForIdx(null);
-        } else if (showQrScanner) {
-          // GAME QR → Street View
-          onQrScanned(loc);
+    // GAME QR → Street View
+    if (showQrScanner) {
+      const numMatch = data.match(/#?(\d+)/);
+      if (numMatch) {
+        const id = parseInt(numMatch[1], 10);
+        if (id >= 0 && id < panoramaLocations.length) {
+          const loc = panoramaLocations.find(l => l.id === id);
+          if (loc) { playClickSound(); setScanned(true); Vibration.vibrate(100); onQrScanned(loc); return; }
         }
-        return;
       }
-    }
-    // MECHANIC B: Text recognition (OCR) — city name matching
-    const normalized = data.toLowerCase().trim().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
-    const textMatch = panoramaLocations.find(l => l.city.toLowerCase() === normalized);
-    if (textMatch && showCityScanner && scanCityForIdx !== null) {
-      playClickSound(); setScanned(true); Vibration.vibrate(100);
-      setPlayers(prev => prev.map((p, i) =>
-        i === scanCityForIdx ? { ...p, city: textMatch.city, cityId: textMatch.id, lat: textMatch.lat, lng: textMatch.lng } : p
-      ));
-      setShowCityScanner(false); setScanned(false); setScanCityForIdx(null);
+      if (data.startsWith('city:')) {
+        const id = parseInt(data.split(':')[1]);
+        if (id >= 0 && id < panoramaLocations.length) {
+          const loc = panoramaLocations.find(l => l.id === id);
+          if (loc) { playClickSound(); setScanned(true); Vibration.vibrate(100); onQrScanned(loc); return; }
+        }
+      }
       return;
     }
-    // MECHANIC C: Token lookup — "city:ID" format
-    if (data.startsWith('city:')) {
-      const tokenId = parseInt(data.split(':')[1]);
-      if (tokenId) {
-        const tokenLoc = panoramaLocations.find(l => l.id === tokenId);
-        if (tokenLoc && showCityScanner && scanCityForIdx !== null) {
-          playClickSound(); setScanned(true); Vibration.vibrate(100);
-          setPlayers(prev => prev.map((p, i) =>
-            i === scanCityForIdx ? { ...p, city: tokenLoc.city, cityId: tokenId, lat: tokenLoc.lat, lng: tokenLoc.lng } : p
-          ));
-          setShowCityScanner(false); setScanned(false); setScanCityForIdx(null);
-          return;
-        }
+
+    // CITY CARD ASSIGNMENT
+    if (!showCityScanner || scanCityForIdx === null) return;
+
+    const assign = (loc: any, id: number) => {
+      playClickSound(); setScanned(true); Vibration.vibrate(100);
+      setPlayers(prev => prev.map((p, i) =>
+        i === scanCityForIdx ? { ...p, city: loc.city, cityId: id, lat: loc.lat, lng: loc.lng } : p
+      ));
+      setShowCityScanner(false); setScanned(false); setScanCityForIdx(null);
+    };
+
+    // A) Barcode: #042 or 042
+    const numMatch = data.match(/#?(\d+)/);
+    if (numMatch) {
+      const id = parseInt(numMatch[1], 10);
+      if (id >= 0 && id < panoramaLocations.length) {
+        const loc = panoramaLocations.find(l => l.id === id);
+        if (loc) { assign(loc, id); return; }
       }
     }
-    // Nothing matched — allow re-scan
+
+    // B) Text: "Berlin" "Tokyo" etc
+    const normalized = data.toLowerCase().trim().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
+    const textMatch = panoramaLocations.find(l => l.city.toLowerCase() === normalized);
+    if (textMatch) { assign(textMatch, textMatch.id); return; }
+
+    // C) Token: "city:42"
+    if (data.startsWith('city:')) {
+      const id = parseInt(data.split(':')[1]);
+      if (id >= 0 && id < panoramaLocations.length) {
+        const loc = panoramaLocations.find(l => l.id === id);
+        if (loc) { assign(loc, id); return; }
+      }
+    }
+
+    setScanError('Card not recognized — try again');
+    setTimeout(() => setScanError(''), 2000);
   }, [scanned, showCityScanner, scanCityForIdx, showQrScanner, onQrScanned]);
 
   // TUTORIAL
@@ -380,8 +387,8 @@ export default function App() {
             <View key={p.id} style={s.playerRow}>
               <TextInput
                 style={s.playerInput}
-                value={p.name}
-                onChangeText={t => setPlayers(prev => prev.map((pp, idx) => idx === i ? { ...pp, name: t } : pp))}
+                value={p.name.startsWith('Player ') ? '' : p.name}
+                onChangeText={t => setPlayers(prev => prev.map((pp, idx) => idx === i ? { ...pp, name: t.length > 0 ? t : `Player ${idx + 1}` } : pp))}
                 placeholder={`Player ${i + 1}`}
                 placeholderTextColor="rgba(225,224,251,0.3)"
               />
