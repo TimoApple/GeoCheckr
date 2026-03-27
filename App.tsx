@@ -7,15 +7,14 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useFonts } from 'expo-font';
-import { SpaceGrotesk_400Regular, SpaceGrotesk_500Medium, SpaceGrotesk_600SemiBold, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
+
 import { calculateDistance, formatDistance } from './src/utils/distance';
 import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playTimerWarning, playTimerTick, playAnswerphoneBeep } from './src/utils/sounds';
 import { panoramaLocations, PanoramaLocation } from './src/data/panoramaLocations';
 
 const { width, height } = Dimensions.get('window');
 const API_KEY = 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
-const FF = { regular: 'SpaceGrotesk_400Regular', medium: 'SpaceGrotesk_500Medium', semi: 'SpaceGrotesk_600SemiBold', bold: 'SpaceGrotesk_700Bold' };
+const FF = { regular: undefined, medium: undefined, semi: undefined, bold: undefined };
 
 // CI COLORS
 const C = {
@@ -50,7 +49,6 @@ function buildStreetViewHtml(lat: number, lng: number): string {
 }
 
 export default function App() {
-  const [fontsLoaded] = useFonts({ SpaceGrotesk_400Regular, SpaceGrotesk_500Medium, SpaceGrotesk_600SemiBold, SpaceGrotesk_700Bold });
   const [screen, setScreen] = useState<Screen>('loading');
   const [tutorialPage, setTutorialPage] = useState(0);
   const [loadingFade] = useState(new Animated.Value(0));
