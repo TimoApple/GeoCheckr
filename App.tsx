@@ -7,9 +7,9 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { calculateDistance, formatDistance } from './utils/distance';
-import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playTimerWarning, playTimerTick, playAnswerphoneBeep } from './utils/sounds';
-import { panoramaLocations, PanoramaLocation } from './data/panoramaLocations';
+import { calculateDistance, formatDistance } from './src/utils/distance';
+import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playTimerWarning, playTimerTick, playAnswerphoneBeep } from './src/utils/sounds';
+import { panoramaLocations, PanoramaLocation } from './src/data/panoramaLocations';
 
 const { width, height } = Dimensions.get('window');
 const API_KEY = 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
