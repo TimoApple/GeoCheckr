@@ -211,12 +211,12 @@ export default function App() {
   };
 
   // ═══════════════ SCAN HANDLER — 3 MECHANICS ═══════════════
-  // ═══ SCANNER: TEXT INPUT ONLY ═══
+  // ═══ SCANNER: TOKEN (city:ID) ONLY ═══
   const handleScan = useCallback(({ data }: { data: string }) => {
     if (scanned) return;
-    console.log('[TEXT SCAN]', data);
+    console.log('[TOKEN SCAN]', data);
 
-    // Only game QR — city assignment uses text input
+    // GAME QR → Street View
     if (showQrScanner) {
       const m = data.match(/#?(\d+)/);
       if (m) {
@@ -233,8 +233,28 @@ export default function App() {
           if (loc) { playClickSound(); setScanned(true); Vibration.vibrate(100); onQrScanned(loc); return; }
         }
       }
+      return;
     }
-  }, [scanned, showQrScanner, onQrScanned]);
+
+    // CITY CARD: only "city:ID" token
+    if (!showCityScanner || scanCityForIdx === null) return;
+    if (data.startsWith('city:')) {
+      const id = parseInt(data.split(':')[1]);
+      if (id >= 0 && id < panoramaLocations.length) {
+        const loc = panoramaLocations.find(l => l.id === id);
+        if (loc) {
+          playClickSound(); setScanned(true); Vibration.vibrate(100);
+          setPlayers(prev => prev.map((p, i) =>
+            i === scanCityForIdx ? { ...p, city: loc.city, cityId: id, lat: loc.lat, lng: loc.lng } : p
+          ));
+          setShowCityScanner(false); setScanned(false); setScanCityForIdx(null);
+          return;
+        }
+      }
+    }
+    setScanError('Token not recognized — scan city:ID QR code');
+    setTimeout(() => setScanned(false), 1500);
+  }, [scanned, showCityScanner, scanCityForIdx, showQrScanner, onQrScanned]);
 
   // TUTORIAL
   const TUT_PAGES = [
@@ -264,7 +284,7 @@ export default function App() {
           style={{ flex: 1 }}
           facing="back"
           onBarcodeScanned={scanned ? undefined : handleScan}
-          barcodeScannerSettings={{ barcodeTypes: ['qr', 'code128', 'code39', 'ean13', 'ean8'] }}
+          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
         >
           <View style={s.scanOverlay}>
             <View style={{ alignItems: 'center', marginBottom: 40 }}>
@@ -275,7 +295,7 @@ export default function App() {
             </View>
             <View style={s.scanFrame}>
               <Text style={{ color: C.primary, fontSize: 16, fontWeight: '600', textAlign: 'center' }}>
-                {showCityScanner ? 'Hold city card #number or city name in frame' : 'Hold QR card in frame'}
+                {showCityScanner ? 'Hold city:ID QR token in frame' : 'Hold QR card in frame'}
               </Text>
             </View>
             {scanError ? (
