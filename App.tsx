@@ -317,7 +317,7 @@ export default function App() {
       <View style={[s.container, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40 }]}>
         <StatusBar hidden />
         <Animated.View style={{ opacity: loadingFade, alignItems: 'center' }}>
-          <Image source={require('./assets/logo_geocheckr.svg')} style={{ width: 100, height: 100, marginBottom: 24 }} resizeMode="contain" />
+          <Image source={require('./assets/icon.png')} style={{ width: 100, height: 100, marginBottom: 24 }} resizeMode="contain" />
           <Text style={{ color: C.primary, fontSize: 14, fontWeight: '700', letterSpacing: 3, marginBottom: 20 }}>GEOCHECKR</Text>
           <Text style={{ color: 'rgba(225,224,251,0.4)', fontSize: 17, textAlign: 'center', fontStyle: 'italic', lineHeight: 26 }}>"{loadingQuote}"</Text>
         </Animated.View>
