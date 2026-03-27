@@ -67,6 +67,9 @@ export default function App() {
   // City scan
   const [scanCityForIdx, setScanCityForIdx] = useState<number | null>(null);
   const [showCityScanner, setShowCityScanner] = useState(false);
+  const [showTextInput, setShowTextInput] = useState(false);
+  const [textInputValue, setTextInputValue] = useState('');
+  const [textMatchError, setTextMatchError] = useState('');
   const [scanned, setScanned] = useState(false);
   const [scanError, setScanError] = useState('');
 
@@ -132,7 +135,37 @@ export default function App() {
   };
 
   const openCityScan = (idx: number) => {
-    setScanCityForIdx(idx); setShowCityScanner(true); setScanned(false); setScanError('');
+    setScanCityForIdx(idx); setShowTextInput(true); setTextInputValue(''); setTextMatchError('');
+  };
+
+  const submitCityText = () => {
+    if (scanCityForIdx === null) return;
+    const input = textInputValue.trim().toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
+    if (!input) { setTextMatchError('Enter a city name'); return; }
+    // Exact match first
+    const exact = panoramaLocations.find(l => l.city.toLowerCase() === input);
+    if (exact) {
+      playClickSound(); Vibration.vibrate(100);
+      setPlayers(prev => prev.map((p, i) =>
+        i === scanCityForIdx ? { ...p, city: exact.city, cityId: exact.id, lat: exact.lat, lng: exact.lng } : p
+      ));
+      setShowTextInput(false); setScanCityForIdx(null); setTextInputValue('');
+      return;
+    }
+    // Partial match
+    const matches = panoramaLocations.filter(l => l.city.toLowerCase().includes(input));
+    if (matches.length === 1) {
+      const m = matches[0];
+      playClickSound(); Vibration.vibrate(100);
+      setPlayers(prev => prev.map((p, i) =>
+        i === scanCityForIdx ? { ...p, city: m.city, cityId: m.id, lat: m.lat, lng: m.lng } : p
+      ));
+      setShowTextInput(false); setScanCityForIdx(null); setTextInputValue('');
+    } else if (matches.length > 1) {
+      setTextMatchError(`Multiple: ${matches.map(m=>m.city).slice(0,3).join(', ')}`);
+    } else {
+      setTextMatchError('City not found — try again');
+    }
   };
 
   const startGame = () => {
@@ -178,12 +211,12 @@ export default function App() {
   };
 
   // ═══════════════ SCAN HANDLER — 3 MECHANICS ═══════════════
-  // ═══ SCANNER: BARCODE ONLY ═══
+  // ═══ SCANNER: TEXT INPUT ONLY ═══
   const handleScan = useCallback(({ data }: { data: string }) => {
     if (scanned) return;
-    console.log('[BARCODE SCAN]', data);
+    console.log('[TEXT SCAN]', data);
 
-    // GAME QR → Street View
+    // Only game QR — city assignment uses text input
     if (showQrScanner) {
       const m = data.match(/#?(\d+)/);
       if (m) {
@@ -193,29 +226,15 @@ export default function App() {
           if (loc) { playClickSound(); setScanned(true); Vibration.vibrate(100); onQrScanned(loc); return; }
         }
       }
-      return;
-    }
-
-    // CITY CARD: only #number barcode
-    if (!showCityScanner || scanCityForIdx === null) return;
-    const m = data.match(/#?(\d+)/);
-    if (m) {
-      const id = parseInt(m[1], 10);
-      if (id >= 0 && id < panoramaLocations.length) {
-        const loc = panoramaLocations.find(l => l.id === id);
-        if (loc) {
-          playClickSound(); setScanned(true); Vibration.vibrate(100);
-          setPlayers(prev => prev.map((p, i) =>
-            i === scanCityForIdx ? { ...p, city: loc.city, cityId: id, lat: loc.lat, lng: loc.lng } : p
-          ));
-          setShowCityScanner(false); setScanned(false); setScanCityForIdx(null);
-          return;
+      if (data.startsWith('city:')) {
+        const id = parseInt(data.split(':')[1]);
+        if (id >= 0 && id < panoramaLocations.length) {
+          const loc = panoramaLocations.find(l => l.id === id);
+          if (loc) { playClickSound(); setScanned(true); Vibration.vibrate(100); onQrScanned(loc); return; }
         }
       }
     }
-    setScanError('Barcode not recognized — hold #number card in frame');
-    setTimeout(() => setScanned(false), 1500);
-  }, [scanned, showCityScanner, scanCityForIdx, showQrScanner, onQrScanned]);
+  }, [scanned, showQrScanner, onQrScanned]);
 
   // TUTORIAL
   const TUT_PAGES = [
@@ -416,6 +435,42 @@ export default function App() {
             <Text style={s.actionHint}>{allPlayersScanned ? `${players.length} players ready` : 'Scan city cards for all players'}</Text>
           </View>
         </ScrollView>
+
+        {/* TEXT INPUT MODAL */}
+        {showTextInput && (
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', zIndex: 100 }}>
+            <View style={{ backgroundColor: C.surface, padding: 32, borderRadius: 16, width: '85%', maxWidth: 360 }}>
+              <Text style={{ color: C.primary, fontSize: 14, fontWeight: '700', letterSpacing: 2, textAlign: 'center', marginBottom: 8 }}>ENTER CITY NAME</Text>
+              <Text style={{ color: C.onSurface, fontSize: 18, fontWeight: '700', textAlign: 'center', marginBottom: 24 }}>
+                {scanCityForIdx !== null ? players[scanCityForIdx]?.name : ''}
+              </Text>
+              <TextInput
+                style={{ backgroundColor: C.surfaceLow, color: C.onSurface, paddingVertical: 16, paddingHorizontal: 16, borderRadius: 8, fontSize: 18, borderWidth: 1, borderColor: C.surfaceHighest }}
+                value={textInputValue}
+                onChangeText={t => { setTextInputValue(t); setTextMatchError(''); }}
+                placeholder="Berlin, Tokyo, Cairo..."
+                placeholderTextColor="rgba(225,224,251,0.3)"
+                autoFocus
+                returnKeyType="done"
+                onSubmitEditing={submitCityText}
+                autoCapitalize="words"
+              />
+              {textMatchError.length > 0 && (
+                <Text style={{ color: C.error, fontSize: 13, marginTop: 10, textAlign: 'center' }}>{textMatchError}</Text>
+              )}
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 20 }}>
+                <TouchableOpacity style={{ flex: 1, paddingVertical: 14, alignItems: 'center', borderRadius: 8, borderWidth: 1, borderColor: C.surfaceHighest }}
+                  onPress={() => { setShowTextInput(false); setScanCityForIdx(null); }}>
+                  <Text style={{ color: C.onSurface, fontSize: 15, fontWeight: '600' }}>CANCEL</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{ flex: 1, backgroundColor: C.primary, paddingVertical: 14, alignItems: 'center', borderRadius: 8 }}
+                  onPress={submitCityText}>
+                  <Text style={{ color: C.bg, fontSize: 15, fontWeight: '700' }}>ASSIGN</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
       </View>
     );
   }
