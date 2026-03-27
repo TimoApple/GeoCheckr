@@ -7,12 +7,14 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useFonts, SpaceGrotesk_400Regular, SpaceGrotesk_500Medium, SpaceGrotesk_600SemiBold, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
 import { calculateDistance, formatDistance } from './src/utils/distance';
 import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playTimerWarning, playTimerTick, playAnswerphoneBeep } from './src/utils/sounds';
 import { panoramaLocations, PanoramaLocation } from './src/data/panoramaLocations';
 
 const { width, height } = Dimensions.get('window');
 const API_KEY = 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
+const FF = { regular: 'SpaceGrotesk_400Regular', medium: 'SpaceGrotesk_500Medium', semi: 'SpaceGrotesk_600SemiBold', bold: 'SpaceGrotesk_700Bold' };
 
 // CI COLORS
 const C = {
@@ -23,7 +25,8 @@ const C = {
   secondary: '#bdc2ff', secondaryContainer: '#2734c0',
   onSecondaryContainer: '#acb3ff',
   onSurface: '#e1e0fb', outline: '#444934',
-  error: '#ffb4ab', accent: '#e1e0fb',
+  error: '#ffb4ab', accent: '#bdc2ff', green: '#a6d700', blue: '#3340ca',
+  text: '#e5e2e1', muted: '#c6c5d7',
 };
 
 // TYPES
@@ -46,6 +49,7 @@ function buildStreetViewHtml(lat: number, lng: number): string {
 }
 
 export default function App() {
+  const [fontsLoaded] = useFonts({ SpaceGrotesk_400Regular, SpaceGrotesk_500Medium, SpaceGrotesk_600SemiBold, SpaceGrotesk_700Bold });
   const [screen, setScreen] = useState<Screen>('loading');
   const [tutorialPage, setTutorialPage] = useState(0);
   const [loadingFade] = useState(new Animated.Value(0));
@@ -123,7 +127,7 @@ export default function App() {
   const addPlayer = () => {
     const count = players.length + 1;
     setPlayers(prev => [...prev, { id: Date.now(), name: `Player ${count}`, city: '', cityId: -1, lat: 0, lng: 0, score: 0 }]);
-    setNewPlayerName('');
+
     playClickSound();
   };
 
@@ -232,9 +236,10 @@ export default function App() {
 
   // TUTORIAL
   const TUT_PAGES = [
-    { emoji: '🌍', title: 'You Had One Job.', body: 'A Street View drops somewhere on Earth. You\'re holding a City Card. Figure out which city on the table is closest to what you\'re looking at.\n\nSimple? Sure. Easy? Absolutely not.' },
-    { emoji: '🃏', title: 'Flip. Scan. Clock\'s Ticking.', body: 'Grab a card from the deck. Scan the QR code with the app. A Street View loads instantly — and the timer starts whether you\'re ready or not.' },
-    { emoji: '📍', title: 'Name That City.', body: 'Study the Street View. Pick the closest city from the cards on the table. Tap the mic and say it out loud — the app locks in your answer.\n\nThe closer you are, the more points.' },
+    { bg: C.bg, titleColor: C.green, title: 'You Had One Job.', body: 'A Street View drops somewhere on Earth. You\'re holding a City Card. Figure out which city on the table is closest to what you\'re looking at.\n\nSimple? Sure. Easy? Absolutely not.' },
+    { bg: C.blue, titleColor: C.accent, title: 'Flip. Scan. Clock\'s Ticking.', body: 'Grab a card from the deck. Scan the QR code with the app. A Street View loads instantly — and the timer starts whether you\'re ready or not.' },
+    { bg: C.bg, titleColor: C.accent, title: 'Name That City.', body: 'Study the Street View. Pick the closest city from the cards on the table. Tap the mic and say it out loud — the app locks in your answer.\n\nThe closer you are, the more points.' },
+    { bg: '#0a2a0a', titleColor: C.green, title: 'Feeling Dangerous?', body: 'Think someone guessed wrong? Bet a token and name YOUR city.\n\nRight → bonus points.\nWrong → goodbye, token.\n\n→ Let\'s play!' },
   ];
 
   // ═══════════════ SCANNERS ═══════════════
@@ -306,36 +311,53 @@ export default function App() {
 
   // ═══════════════ TUTORIAL ═══════════════
   if (screen === 'tutorial') {
-    const onTutScroll = (e: any) => {
-      const page = Math.round(e.nativeEvent.contentOffset.x / width);
-      setTutorialPage(page);
-      if (page >= TUT_PAGES.length) setScreen('setup');
+    const [tutOpacity] = useState(new Animated.Value(1));
+    const tutScrollRef = useRef<ScrollView>(null);
+    const goToPage = (idx: number) => {
+      if (idx < 0 || idx >= TUT_PAGES.length || idx === tutorialPage) return;
+      tutOpacity.setValue(0);
+      tutScrollRef.current?.scrollTo({ x: idx * width, animated: false });
+      setTutorialPage(idx);
+      Animated.timing(tutOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
     };
     return (
-      <View style={s.container}><StatusBar hidden />
-        <ScrollView ref={scrollRef} horizontal pagingEnabled showsHorizontalScrollIndicator={false} onMomentumScrollEnd={onTutScroll}>
+      <View style={{ flex: 1 }}>
+        <StatusBar hidden />
+        <ScrollView
+          ref={tutScrollRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={(e) => {
+            const newPage = Math.round(e.nativeEvent.contentOffset.x / width);
+            if (newPage !== tutorialPage) {
+              tutOpacity.setValue(0);
+              setTutorialPage(newPage);
+              Animated.timing(tutOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+            }
+          }}
+        >
           {TUT_PAGES.map((p, i) => (
-            <View key={i} style={[s.tutSlide, { width, backgroundColor: i === 1 ? C.secondaryContainer : C.bg }]}>
-              <Text style={s.tutEmoji}>{p.emoji}</Text>
-              <Text style={[s.tutTitle, { color: i === 1 ? C.onSecondaryContainer : C.onSurface }]}>{p.title}</Text>
-              <Text style={[s.tutBody, { color: i === 1 ? 'rgba(172,179,255,0.7)' : 'rgba(225,224,251,0.6)' }]}>{p.body}</Text>
+            <View key={i} style={{ width, height, backgroundColor: p.bg, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 36 }}>
+              <Animated.View style={{ opacity: tutorialPage === i ? tutOpacity : 0.15, alignItems: 'center', paddingHorizontal: 10 }}>
+                <Text style={{ color: p.titleColor, fontSize: 40, fontWeight: '700', fontFamily: FF.bold, textAlign: 'center', marginBottom: 36, lineHeight: 48 }}>{p.title}</Text>
+                <Text style={{ color: i === 3 ? '#c8f040' : C.text, fontSize: 24, fontFamily: FF.regular, textAlign: 'center', lineHeight: 38, opacity: 0.95 }}>{p.body}</Text>
+              </Animated.View>
             </View>
           ))}
         </ScrollView>
-        <View style={s.tutDots}>
-          {TUT_PAGES.map((_, i) => <View key={i} style={[s.tutDot, i === tutorialPage && s.tutDotActive]} />)}
+        <View style={{ position: 'absolute', bottom: 100, width: '100%', flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
+          {TUT_PAGES.map((_, i) => <View key={i} style={{ width: tutorialPage === i ? 28 : 8, height: 8, borderRadius: 4, backgroundColor: tutorialPage === i ? TUT_PAGES[i].titleColor : 'rgba(255,255,255,0.2)', marginHorizontal: 2 }} />)}
         </View>
-        <View style={s.tutBtnRow}>
-          <TouchableOpacity style={s.tertiaryBtn} onPress={() => setScreen('setup')}>
-            <Text style={s.tertiaryBtnText}>SKIP TUTORIAL</Text>
-          </TouchableOpacity>
+        <View style={{ position: 'absolute', bottom: 40, width: '100%', paddingHorizontal: 30, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => setScreen('setup')}><Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14, fontFamily: FF.regular }}>Skip Tutorial</Text></TouchableOpacity>
           {tutorialPage < TUT_PAGES.length - 1 ? (
-            <TouchableOpacity style={s.tertiaryBtn} onPress={() => { scrollRef.current?.scrollTo({ x: (tutorialPage + 1) * width, animated: true }); setTutorialPage(tutorialPage + 1); }}>
-              <Text style={[s.tertiaryBtnText, { color: C.primary }]}>SWIPE →</Text>
+            <TouchableOpacity onPress={() => goToPage(tutorialPage + 1)}>
+              <Text style={{ color: C.green, fontSize: 15, fontWeight: '600', fontFamily: FF.semi }}>Swipe →</Text>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity style={s.primaryBtn} onPress={() => setScreen('setup')}>
-              <Text style={s.primaryBtnText}>LET'S PLAY!</Text>
+            <TouchableOpacity style={{ backgroundColor: C.green, paddingVertical: 14, paddingHorizontal: 28, borderRadius: 9999 }} onPress={() => setScreen('setup')}>
+              <Text style={{ color: C.bg, fontSize: 17, fontWeight: '700', fontFamily: FF.bold }}>Let's play!</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -536,7 +558,7 @@ export default function App() {
             { id: 1, name: 'Player 1', city: '', cityId: -1, lat: 0, lng: 0, score: 0 },
             { id: 2, name: 'Player 2', city: '', cityId: -1, lat: 0, lng: 0, score: 0 },
           ]);
-          setTableCities([]); setNewPlayerName(''); setScreen('setup');
+
         }}>
           <Text style={s.primaryBtnText}>PLAY AGAIN</Text>
         </TouchableOpacity>
