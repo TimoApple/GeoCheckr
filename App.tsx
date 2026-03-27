@@ -92,6 +92,8 @@ export default function App() {
   const timerPulse = useRef(new Animated.Value(1)).current;
   const resultScale = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<ScrollView>(null);
+  const tutScrollRef = useRef<ScrollView>(null);
+  const [tutOpacity] = useState(new Animated.Value(1));
 
   const allPlayersScanned = players.length >= 2 && players.every(p => p.city.length > 0);
 
@@ -312,8 +314,6 @@ export default function App() {
 
   // ═══════════════ TUTORIAL ═══════════════
   if (screen === 'tutorial') {
-    const [tutOpacity] = useState(new Animated.Value(1));
-    const tutScrollRef = useRef<ScrollView>(null);
     const goToPage = (idx: number) => {
       if (idx < 0 || idx >= TUT_PAGES.length || idx === tutorialPage) return;
       tutOpacity.setValue(0);
