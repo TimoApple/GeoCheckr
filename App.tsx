@@ -160,6 +160,17 @@ export default function App() {
     if (timer === 0 && phase === 'view') { playTimerWarning(); Vibration.vibrate(500); setPhase('pick'); }
   }, [timer, phase]);
 
+  // AUTO OCR CAPTURE — every 2 seconds when scanner is open
+  useEffect(() => {
+    if (!showCityScanner || ocrProcessing) return;
+    const interval = setInterval(() => {
+      if (cameraRef.current && !ocrProcessing) {
+        captureAndOcr();
+      }
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [showCityScanner, ocrProcessing]);
+
   // GAME LOGIC
   const getRandomLocation = useCallback(() => {
     const available = panoramaLocations.filter(l => !usedLocations.includes(l.id));
@@ -190,10 +201,19 @@ export default function App() {
         if (id >= 0 && id < panoramaLocations.length) {
           const loc = panoramaLocations.find(l => l.id === id);
           if (loc && scanCityForIdx !== null) {
+            // CARD LOCK: check if already assigned to another player
+            const alreadyAssigned = players.some((p, i) => i !== scanCityForIdx && p.cityId === id);
+            if (alreadyAssigned) {
+              setScanError('Card already assigned!');
+              setTimeout(() => setScanError(''), 2000);
+              setOcrProcessing(false);
+              return;
+            }
             playScanSound(); Vibration.vibrate(100);
             setPlayers(prev => prev.map((p, i) =>
               i === scanCityForIdx ? { ...p, city: loc.city, cityId: id, lat: loc.lat, lng: loc.lng } : p
             ));
+            setUsedLocations(prev => [...prev, id]); // Lock card for game
             setShowCityScanner(false); setScanCityForIdx(null); setOcrProcessing(false);
             return;
           }
@@ -203,10 +223,19 @@ export default function App() {
       // Fuzzy match city name from OCR text
       const match = fuzzyMatchCity(allText);
       if (match && scanCityForIdx !== null) {
+        // CARD LOCK: check if already assigned
+        const alreadyAssigned = players.some((p, i) => i !== scanCityForIdx && p.cityId === match.id);
+        if (alreadyAssigned) {
+          setScanError('Card already assigned!');
+          setTimeout(() => setScanError(''), 2000);
+          setOcrProcessing(false);
+          return;
+        }
         playScanSound(); Vibration.vibrate(100);
         setPlayers(prev => prev.map((p, i) =>
           i === scanCityForIdx ? { ...p, city: match.city, cityId: match.id, lat: match.lat, lng: match.lng } : p
         ));
+        setUsedLocations(prev => [...prev, match.id]); // Lock card for game
         setShowCityScanner(false); setScanCityForIdx(null); setOcrProcessing(false);
         return;
       }
@@ -375,7 +404,7 @@ export default function App() {
               </View>
               <View style={s.scanFrame}>
                 <Text style={{ color: C.primary, fontSize: 16, fontWeight: '600', fontFamily: FF.bold, textAlign: 'center' }}>
-                  {ocrProcessing ? 'Recognizing...' : 'Point at city card'}
+                  {ocrProcessing ? 'Recognizing...' : 'Scanning card...'}
                 </Text>
               </View>
               {scanError ? (
@@ -383,13 +412,6 @@ export default function App() {
                   <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600', fontFamily: FF.bold }}>{scanError}</Text>
                 </View>
               ) : null}
-              <TouchableOpacity
-                style={[s.primaryBtn, { marginTop: 20, width: 200, alignItems: 'center', borderRadius: 8 }]}
-                onPress={captureAndOcr}
-                disabled={ocrProcessing}
-              >
-                <Text style={s.primaryBtnText}>{ocrProcessing ? '...' : 'CAPTURE'}</Text>
-              </TouchableOpacity>
               <TouchableOpacity style={s.scanCloseBtn} onPress={() => { setShowCityScanner(false); setScanCityForIdx(null); setOcrProcessing(false); }}>
                 <Text style={s.scanCloseText}>CANCEL</Text>
               </TouchableOpacity>
@@ -462,6 +484,9 @@ export default function App() {
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           scrollEventThrottle={16}
+          snapToInterval={width}
+          decelerationRate="fast"
+          nestedScrollEnabled
           onScroll={(e) => {
             const newPage = Math.round(e.nativeEvent.contentOffset.x / width);
             if (newPage !== tutorialPage && newPage >= 0 && newPage < TUT_PAGES.length) {
@@ -480,7 +505,7 @@ export default function App() {
             </View>
           ))}
         </ScrollView>
-        <View style={{ position: 'absolute', bottom: 100, width: '100%', flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
+        <View style={{ position: 'absolute', bottom: 100, width: '100%', flexDirection: 'row', justifyContent: 'center', gap: 8 }} pointerEvents="none">
           {TUT_PAGES.map((_, i) => <View key={i} style={{ width: tutorialPage === i ? 28 : 8, height: 8, borderRadius: 4, backgroundColor: tutorialPage === i ? TUT_PAGES[i].titleColor : 'rgba(255,255,255,0.2)', marginHorizontal: 2 }} />)}
         </View>
         <View style={{ position: 'absolute', bottom: 40, width: '100%', paddingHorizontal: 30, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
