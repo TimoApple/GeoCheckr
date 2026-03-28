@@ -219,7 +219,7 @@ export default function App() {
     if (!cameraRef.current || ocrProcessing) return;
     setOcrProcessing(true);
     try {
-      const photo = await cameraRef.current.takePictureAsync({ quality: 0.8, base64: false });
+      const photo = await cameraRef.current.takePicture({ quality: 0.8, base64: false });
       const result = await MlkitOcr.recognizeText(photo.uri);
       const allText = result.text;
       console.log('[OCR]', allText);
