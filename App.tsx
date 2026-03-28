@@ -8,7 +8,6 @@ import {
 import { WebView } from 'react-native-webview';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useFonts, SpaceGrotesk_400Regular, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
-import MlkitOcr from 'rn-mlkit-ocr';
 
 import { calculateDistance, formatDistance } from './src/utils/distance';
 import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playTimerWarning, playTimerTick, playScanSound, playAnswerphoneBeep } from './src/utils/sounds';
@@ -73,10 +72,8 @@ export default function App() {
   const [textInputValue, setTextInputValue] = useState('');
   const [textSuggestions, setTextSuggestions] = useState<PanoramaLocation[]>([]);
   const [textMatchError, setTextMatchError] = useState('');
-  const [ocrProcessing, setOcrProcessing] = useState(false);
   const [scanned, setScanned] = useState(false);
   const [scanError, setScanError] = useState('');
-  const cameraRef = useRef<any>(null);
 
   // Game
   const [tableCities, setTableCities] = useState<TableCity[]>([]);
@@ -173,57 +170,9 @@ export default function App() {
     playClickSound();
   };
 
-  // OCR CAPTURE
-  const captureAndOcr = async () => {
-    if (!cameraRef.current || ocrProcessing) return;
-    setOcrProcessing(true);
-    try {
-      const photo = await cameraRef.current.takePictureAsync({ quality: 0.7, base64: false });
-      const result = await MlkitOcr.recognizeText(photo.uri);
-      const allText = result.text;
-      console.log('[OCR]', allText);
-
-      // Try #number first
-      const numMatch = allText.match(/#?(\d{1,3})/);
-      if (numMatch) {
-        const id = parseInt(numMatch[1], 10);
-        if (id >= 0 && id < panoramaLocations.length) {
-          const loc = panoramaLocations.find(l => l.id === id);
-          if (loc && scanCityForIdx !== null) {
-            playScanSound(); Vibration.vibrate(100);
-            setPlayers(prev => prev.map((p, i) =>
-              i === scanCityForIdx ? { ...p, city: loc.city, cityId: id, lat: loc.lat, lng: loc.lng } : p
-            ));
-            setShowCityScanner(false); setScanCityForIdx(null); setOcrProcessing(false);
-            return;
-          }
-        }
-      }
-
-      // Fuzzy match city name from OCR text
-      const match = fuzzyMatchCity(allText);
-      if (match && scanCityForIdx !== null) {
-        playScanSound(); Vibration.vibrate(100);
-        setPlayers(prev => prev.map((p, i) =>
-          i === scanCityForIdx ? { ...p, city: match.city, cityId: match.id, lat: match.lat, lng: match.lng } : p
-        ));
-        setShowCityScanner(false); setScanCityForIdx(null); setOcrProcessing(false);
-        return;
-      }
-
-      // No match — retry
-      setScanError('Not recognized — try again');
-      setTimeout(() => setScanError(''), 2000);
-    } catch (e) {
-      console.error('[OCR] Error:', e);
-      setScanError('Camera error — try again');
-      setTimeout(() => setScanError(''), 2000);
-    }
-    setOcrProcessing(false);
-  };
 
   const openCityScan = (idx: number) => {
-    setScanCityForIdx(idx); setShowCityScanner(true); setShowTextInput(false); setScanned(false); setOcrProcessing(false); setTextInputValue('');
+    setScanCityForIdx(idx); setShowCityScanner(true); setScanned(false);
   };
 
   const submitCityText = () => {
@@ -363,34 +312,31 @@ export default function App() {
 
     const assignName = showCityScanner && scanCityForIdx !== null ? players[scanCityForIdx]?.name : '';
 
-    // ─── CITY SCANNER: OCR CAMERA ───
+    // ─── CITY SCANNER: BARCODE SCAN ───
     if (showCityScanner) {
+      const assignName = scanCityForIdx !== null ? players[scanCityForIdx]?.name : '';
       return (
         <View style={{ flex: 1, backgroundColor: '#000' }}><StatusBar hidden />
-          <CameraView ref={cameraRef} style={{ flex: 1 }} facing="back">
+          <CameraView
+            style={{ flex: 1 }}
+            facing="back"
+            onBarcodeScanned={scanned ? undefined : handleScan}
+            barcodeScannerSettings={{ barcodeTypes: ['code128', 'code39', 'qr'] }}
+          >
             <View style={s.scanOverlay}>
               <View style={{ alignItems: 'center', marginBottom: 40 }}>
                 <Text style={{ color: C.primary, fontSize: 13, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2, marginBottom: 6 }}>ASSIGN CARD</Text>
                 <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700', fontFamily: FF.bold }}>{assignName}</Text>
               </View>
               <View style={s.scanFrame}>
-                <Text style={{ color: C.primary, fontSize: 16, fontWeight: '600', fontFamily: FF.bold, textAlign: 'center' }}>
-                  {ocrProcessing ? 'Recognizing...' : 'Point at city card'}
-                </Text>
+                <Text style={{ color: C.primary, fontSize: 16, fontWeight: '600', fontFamily: FF.bold, textAlign: 'center' }}>Scan #number or QR code</Text>
               </View>
               {scanError ? (
-                <View style={{ backgroundColor: 'rgba(255,100,100,0.9)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 20, marginTop: 20 }}>
+                <View style={{ backgroundColor: 'rgba(255,100,100,0.9)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 20, marginTop: 30 }}>
                   <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600', fontFamily: FF.bold }}>{scanError}</Text>
                 </View>
               ) : null}
-              <TouchableOpacity
-                style={[s.primaryBtn, { marginTop: 20, width: 200, alignItems: 'center', borderRadius: 8 }]}
-                onPress={captureAndOcr}
-                disabled={ocrProcessing}
-              >
-                <Text style={s.primaryBtnText}>{ocrProcessing ? '...' : 'CAPTURE'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={s.scanCloseBtn} onPress={() => { setShowCityScanner(false); setScanCityForIdx(null); setOcrProcessing(false); }}>
+              <TouchableOpacity style={s.scanCloseBtn} onPress={() => { setShowCityScanner(false); setScanCityForIdx(null); setScanned(false); }}>
                 <Text style={s.scanCloseText}>CANCEL</Text>
               </TouchableOpacity>
             </View>
