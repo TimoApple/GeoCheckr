@@ -8,6 +8,7 @@ import {
 import { WebView } from 'react-native-webview';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useFonts, SpaceGrotesk_400Regular, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
+import MlkitOcr from 'rn-mlkit-ocr';
 
 import { calculateDistance, formatDistance } from './src/utils/distance';
 import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playTimerWarning, playTimerTick, playScanSound, playAnswerphoneBeep } from './src/utils/sounds';
@@ -72,8 +73,10 @@ export default function App() {
   const [textInputValue, setTextInputValue] = useState('');
   const [textSuggestions, setTextSuggestions] = useState<PanoramaLocation[]>([]);
   const [textMatchError, setTextMatchError] = useState('');
+  const [ocrProcessing, setOcrProcessing] = useState(false);
   const [scanned, setScanned] = useState(false);
   const [scanError, setScanError] = useState('');
+  const cameraRef = useRef<any>(null);
 
   // Game
   const [tableCities, setTableCities] = useState<TableCity[]>([]);
@@ -170,8 +173,57 @@ export default function App() {
     playClickSound();
   };
 
+  // OCR CAPTURE
+  const captureAndOcr = async () => {
+    if (!cameraRef.current || ocrProcessing) return;
+    setOcrProcessing(true);
+    try {
+      const photo = await cameraRef.current.takePictureAsync({ quality: 0.7, base64: false });
+      const result = await MlkitOcr.recognizeText(photo.uri);
+      const allText = result.text;
+      console.log('[OCR]', allText);
+
+      // Try #number first
+      const numMatch = allText.match(/#?(\d{1,3})/);
+      if (numMatch) {
+        const id = parseInt(numMatch[1], 10);
+        if (id >= 0 && id < panoramaLocations.length) {
+          const loc = panoramaLocations.find(l => l.id === id);
+          if (loc && scanCityForIdx !== null) {
+            playScanSound(); Vibration.vibrate(100);
+            setPlayers(prev => prev.map((p, i) =>
+              i === scanCityForIdx ? { ...p, city: loc.city, cityId: id, lat: loc.lat, lng: loc.lng } : p
+            ));
+            setShowCityScanner(false); setScanCityForIdx(null); setOcrProcessing(false);
+            return;
+          }
+        }
+      }
+
+      // Fuzzy match city name from OCR text
+      const match = fuzzyMatchCity(allText);
+      if (match && scanCityForIdx !== null) {
+        playScanSound(); Vibration.vibrate(100);
+        setPlayers(prev => prev.map((p, i) =>
+          i === scanCityForIdx ? { ...p, city: match.city, cityId: match.id, lat: match.lat, lng: match.lng } : p
+        ));
+        setShowCityScanner(false); setScanCityForIdx(null); setOcrProcessing(false);
+        return;
+      }
+
+      // No match — retry
+      setScanError('Not recognized — try again');
+      setTimeout(() => setScanError(''), 2000);
+    } catch (e) {
+      console.error('[OCR] Error:', e);
+      setScanError('Camera error — try again');
+      setTimeout(() => setScanError(''), 2000);
+    }
+    setOcrProcessing(false);
+  };
+
   const openCityScan = (idx: number) => {
-    setScanCityForIdx(idx); setShowCityScanner(true); setScanned(false);
+    setScanCityForIdx(idx); setShowCityScanner(true); setShowTextInput(false); setScanned(false); setOcrProcessing(false); setTextInputValue('');
   };
 
   const submitCityText = () => {
@@ -259,45 +311,9 @@ export default function App() {
   // ═══ SCANNER: TEXT INPUT ONLY ═══
   const handleScan = useCallback(({ data }: { data: string }) => {
     if (scanned) return;
-    console.log('[SCAN]', data);
+    console.log('[TEXT SCAN]', data);
 
-    // CITY CARD ASSIGNMENT: #number barcode OR city:ID QR
-    if (showCityScanner && scanCityForIdx !== null) {
-      const m = data.match(/#?(\d+)/);
-      if (m) {
-        const id = parseInt(m[1], 10);
-        if (id >= 0 && id < panoramaLocations.length) {
-          const loc = panoramaLocations.find(l => l.id === id);
-          if (loc) {
-            playScanSound(); setScanned(true); Vibration.vibrate(100);
-            setPlayers(prev => prev.map((p, i) =>
-              i === scanCityForIdx ? { ...p, city: loc.city, cityId: id, lat: loc.lat, lng: loc.lng } : p
-            ));
-            setShowCityScanner(false); setScanCityForIdx(null);
-            return;
-          }
-        }
-      }
-      if (data.startsWith('city:')) {
-        const id = parseInt(data.split(':')[1]);
-        if (id >= 0 && id < panoramaLocations.length) {
-          const loc = panoramaLocations.find(l => l.id === id);
-          if (loc) {
-            playScanSound(); setScanned(true); Vibration.vibrate(100);
-            setPlayers(prev => prev.map((p, i) =>
-              i === scanCityForIdx ? { ...p, city: loc.city, cityId: id, lat: loc.lat, lng: loc.lng } : p
-            ));
-            setShowCityScanner(false); setScanCityForIdx(null);
-            return;
-          }
-        }
-      }
-      setScanError('Not recognized — scan #number or QR');
-      setTimeout(() => setScanned(false), 1500);
-      return;
-    }
-
-    // GAME QR — Street View
+    // Only game QR — city assignment uses text input
     if (showQrScanner) {
       const m = data.match(/#?(\d+)/);
       if (m) {
@@ -321,7 +337,7 @@ export default function App() {
         }
       }
     }
-  }, [scanned, showCityScanner, scanCityForIdx, showQrScanner, onQrScanned, usedLocations]);
+  }, [scanned, showQrScanner, onQrScanned, usedLocations]);
 
   // TUTORIAL
   const TUT_PAGES = [
@@ -347,80 +363,38 @@ export default function App() {
 
     const assignName = showCityScanner && scanCityForIdx !== null ? players[scanCityForIdx]?.name : '';
 
-    // ─── CITY SCANNER: BARCODE SCAN ───
-    if (showCityScanner && !showTextInput) {
-      const assignName = scanCityForIdx !== null ? players[scanCityForIdx]?.name : '';
+    // ─── CITY SCANNER: OCR CAMERA ───
+    if (showCityScanner) {
       return (
         <View style={{ flex: 1, backgroundColor: '#000' }}><StatusBar hidden />
-          <CameraView
-            style={{ flex: 1 }}
-            facing="back"
-            onBarcodeScanned={scanned ? undefined : handleScan}
-            barcodeScannerSettings={{ barcodeTypes: ['code128', 'code39', 'qr'] }}
-          >
+          <CameraView ref={cameraRef} style={{ flex: 1 }} facing="back">
             <View style={s.scanOverlay}>
               <View style={{ alignItems: 'center', marginBottom: 40 }}>
                 <Text style={{ color: C.primary, fontSize: 13, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2, marginBottom: 6 }}>ASSIGN CARD</Text>
                 <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700', fontFamily: FF.bold }}>{assignName}</Text>
               </View>
               <View style={s.scanFrame}>
-                <Text style={{ color: C.primary, fontSize: 16, fontWeight: '600', fontFamily: FF.bold, textAlign: 'center' }}>Scan #number or QR code</Text>
+                <Text style={{ color: C.primary, fontSize: 16, fontWeight: '600', fontFamily: FF.bold, textAlign: 'center' }}>
+                  {ocrProcessing ? 'Recognizing...' : 'Point at city card'}
+                </Text>
               </View>
               {scanError ? (
-                <View style={{ backgroundColor: 'rgba(255,100,100,0.9)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 20, marginTop: 30 }}>
+                <View style={{ backgroundColor: 'rgba(255,100,100,0.9)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 20, marginTop: 20 }}>
                   <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600', fontFamily: FF.bold }}>{scanError}</Text>
                 </View>
               ) : null}
-              <TouchableOpacity style={s.scanCloseBtn} onPress={() => { setShowCityScanner(false); setScanCityForIdx(null); setScanned(false); }}>
-                <Text style={s.scanCloseText}>CLOSE</Text>
+              <TouchableOpacity
+                style={[s.primaryBtn, { marginTop: 20, width: 200, alignItems: 'center', borderRadius: 8 }]}
+                onPress={captureAndOcr}
+                disabled={ocrProcessing}
+              >
+                <Text style={s.primaryBtnText}>{ocrProcessing ? '...' : 'CAPTURE'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={s.scanCloseBtn} onPress={() => { setShowCityScanner(false); setScanCityForIdx(null); setOcrProcessing(false); }}>
+                <Text style={s.scanCloseText}>CANCEL</Text>
               </TouchableOpacity>
             </View>
           </CameraView>
-        </View>
-      );
-    }
-
-    // ─── CITY SCANNER: TEXT INPUT ───
-    if (showCityScanner && showTextInput) {
-      return (
-        <View style={[s.container, { paddingTop: 60, paddingHorizontal: 20 }]}><StatusBar hidden />
-          <Text style={{ color: C.primary, fontSize: 13, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2, marginBottom: 6, textAlign: 'center' }}>ASSIGN CARD</Text>
-          <Text style={{ color: C.onSurface, fontSize: 22, fontWeight: '700', fontFamily: FF.bold, textAlign: 'center', marginBottom: 24 }}>{assignName}</Text>
-
-          <TextInput
-            style={{ backgroundColor: C.surfaceHigh, color: C.onSurface, fontSize: 20, fontFamily: FF.regular, paddingVertical: 16, paddingHorizontal: 20, marginBottom: 8 }}
-            value={textInputValue}
-            onChangeText={onChangeText}
-            placeholder="Type city name..."
-            placeholderTextColor="rgba(225,224,251,0.3)"
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoFocus
-            onSubmitEditing={submitCityText}
-          />
-
-          {textSuggestions.length > 0 && (
-            <View style={{ backgroundColor: C.surface, marginBottom: 16 }}>
-              {textSuggestions.map((loc, i) => (
-                <TouchableOpacity key={loc.id} style={{ paddingVertical: 14, paddingHorizontal: 20, backgroundColor: i % 2 === 0 ? C.surfaceLow : C.surface }} onPress={() => selectSuggestion(loc)}>
-                  <Text style={{ color: C.onSurface, fontSize: 16, fontWeight: '600', fontFamily: FF.bold }}>{loc.city}</Text>
-                  <Text style={{ color: 'rgba(225,224,251,0.4)', fontSize: 12, fontFamily: FF.regular }}>{loc.country}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-
-          <TouchableOpacity style={[s.primaryBtn, { marginTop: 8 }]} onPress={submitCityText}>
-            <Text style={s.primaryBtnText}>CONFIRM</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 16, marginTop: 12 }} onPress={() => setShowTextInput(false)}>
-            <Text style={{ color: C.secondary, fontSize: 14, fontWeight: '600', fontFamily: FF.bold }}>← BACK TO CAMERA</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={s.scanCloseBtn} onPress={() => { setShowCityScanner(false); setShowTextInput(false); setScanCityForIdx(null); setTextInputValue(''); setTextSuggestions([]); }}>
-            <Text style={s.scanCloseText}>CANCEL</Text>
-          </TouchableOpacity>
         </View>
       );
     }
