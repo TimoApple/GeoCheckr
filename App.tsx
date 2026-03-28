@@ -460,24 +460,23 @@ export default function App() {
             <View key={p.id} style={s.playerRow}>
               <TextInput
                 style={s.playerInput}
-                value={p.name.startsWith('Player ') ? '' : p.name}
+                value={p.city.length > 0 ? `${p.name} — ${p.city}` : (p.name.startsWith('Player ') ? '' : p.name)}
                 onChangeText={t => setPlayers(prev => prev.map((pp, idx) => idx === i ? { ...pp, name: t.length > 0 ? t : `Player ${idx + 1}` } : pp))}
                 placeholder={`Player ${i + 1}`}
                 placeholderTextColor="rgba(225,224,251,0.3)"
+                editable={!p.city.length}
               />
               <TouchableOpacity style={[s.hashBtn, p.city.length > 0 && s.hashBtnDone]} onPress={() => openCityScan(i)}>
                 <Text style={[s.hashBtnText, p.city.length > 0 && s.hashBtnTextDone]}>
                   {p.city.length > 0 ? '✓' : '#'}
                 </Text>
               </TouchableOpacity>
-              {p.city.length > 0 && <Text style={s.cityBadge}>{p.city}</Text>}
               {players.length > 2 && (
                 <TouchableOpacity style={s.removeBtn} onPress={() => setPlayers(prev => prev.filter(pp => pp.id !== p.id))}>
                   <Text style={{ color: C.error, fontSize: 14, fontWeight: '700', fontFamily: FF.bold }}>✕</Text>
                 </TouchableOpacity>
               )}
               {players.length <= 2 && <View style={s.removeBtn} />}
-              {p.city.length > 0 && <Text style={s.cityBadge}>{p.city}</Text>}
             </View>
           ))}
 
@@ -530,6 +529,7 @@ export default function App() {
                 onChangeText={t => { setTextInputValue(t); setTextMatchError(''); }}
                 placeholder="Berlin, Tokyo, Cairo..."
                 placeholderTextColor="rgba(225,224,251,0.3)"
+                editable={!p.city.length}
                 autoFocus
                 returnKeyType="done"
                 onSubmitEditing={submitCityText}
