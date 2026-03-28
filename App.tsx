@@ -74,6 +74,9 @@ export default function App() {
   const [textSuggestions, setTextSuggestions] = useState<PanoramaLocation[]>([]);
   const [textMatchError, setTextMatchError] = useState('');
   const [ocrProcessing, setOcrProcessing] = useState(false);
+  const [cardRecognized, setCardRecognized] = useState(false);
+  const [showCodeInput, setShowCodeInput] = useState(false);
+  const [codeInput, setCodeInput] = useState('');
   const [scanned, setScanned] = useState(false);
   const [scanError, setScanError] = useState('');
   const cameraRef = useRef<any>(null);
@@ -160,17 +163,6 @@ export default function App() {
     if (timer === 0 && phase === 'view') { playTimerWarning(); Vibration.vibrate(500); setPhase('pick'); }
   }, [timer, phase]);
 
-  // AUTO OCR CAPTURE — every 2 seconds when scanner is open
-  useEffect(() => {
-    if (!showCityScanner || ocrProcessing) return;
-    const interval = setInterval(() => {
-      if (cameraRef.current && !ocrProcessing) {
-        captureAndOcr();
-      }
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [showCityScanner, ocrProcessing]);
-
   // GAME LOGIC
   const getRandomLocation = useCallback(() => {
     const available = panoramaLocations.filter(l => !usedLocations.includes(l.id));
@@ -210,11 +202,12 @@ export default function App() {
               return;
             }
             playScanSound(); Vibration.vibrate(100);
+            setCardRecognized(true);
             setPlayers(prev => prev.map((p, i) =>
               i === scanCityForIdx ? { ...p, city: loc.city, cityId: id, lat: loc.lat, lng: loc.lng } : p
             ));
             setUsedLocations(prev => [...prev, id]); // Lock card for game
-            setShowCityScanner(false); setScanCityForIdx(null); setOcrProcessing(false);
+            setTimeout(() => { setCardRecognized(false); setShowCityScanner(false); setScanCityForIdx(null); setOcrProcessing(false); }, 800);
             return;
           }
         }
@@ -232,11 +225,12 @@ export default function App() {
           return;
         }
         playScanSound(); Vibration.vibrate(100);
+        setCardRecognized(true);
         setPlayers(prev => prev.map((p, i) =>
           i === scanCityForIdx ? { ...p, city: match.city, cityId: match.id, lat: match.lat, lng: match.lng } : p
         ));
         setUsedLocations(prev => [...prev, match.id]); // Lock card for game
-        setShowCityScanner(false); setScanCityForIdx(null); setOcrProcessing(false);
+        setTimeout(() => { setCardRecognized(false); setShowCityScanner(false); setScanCityForIdx(null); setOcrProcessing(false); }, 800);
         return;
       }
 
@@ -403,17 +397,90 @@ export default function App() {
                 <Text style={{ color: C.primary, fontSize: 13, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2, marginBottom: 6 }}>ASSIGN CARD</Text>
                 <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700', fontFamily: FF.bold }}>{assignName}</Text>
               </View>
-              <View style={s.scanFrame}>
-                <Text style={{ color: C.primary, fontSize: 16, fontWeight: '600', fontFamily: FF.bold, textAlign: 'center' }}>
-                  {ocrProcessing ? 'Recognizing...' : 'Scanning card...'}
-                </Text>
-              </View>
-              {scanError ? (
-                <View style={{ backgroundColor: 'rgba(255,100,100,0.9)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 20, marginTop: 20 }}>
-                  <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600', fontFamily: FF.bold }}>{scanError}</Text>
+              {showCodeInput ? (
+                // ─── ENTER CODE MANUALLY ───
+                <View style={{ alignItems: 'center', width: '100%' }}>
+                  <Text style={{ color: C.text, fontSize: 14, fontFamily: FF.regular, marginBottom: 16 }}>Enter the code from your card</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                    <Text style={{ color: C.primary, fontSize: 28, fontWeight: '700', fontFamily: FF.bold, marginRight: 8 }}>#</Text>
+                    <TextInput
+                      style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 16, fontSize: 28, fontWeight: '700', fontFamily: FF.bold, color: '#fff', width: 120, textAlign: 'center' }}
+                      value={codeInput}
+                      onChangeText={setCodeInput}
+                      placeholder="001"
+                      placeholderTextColor="rgba(255,255,255,0.3)"
+                      keyboardType="numeric"
+                      autoFocus
+                      returnKeyType="done"
+                      onSubmitEditing={() => {
+                        const id = parseInt(codeInput, 10);
+                        if (id >= 0 && id < panoramaLocations.length) {
+                          const loc = panoramaLocations.find(l => l.id === id);
+                          if (loc && scanCityForIdx !== null) {
+                            const alreadyAssigned = players.some((p, i) => i !== scanCityForIdx && p.cityId === id);
+                            if (alreadyAssigned) { setScanError('Card already assigned!'); setTimeout(() => setScanError(''), 2000); return; }
+                            playScanSound(); Vibration.vibrate(100); setCardRecognized(true);
+                            setPlayers(prev => prev.map((p, i) =>
+                              i === scanCityForIdx ? { ...p, city: loc.city, cityId: id, lat: loc.lat, lng: loc.lng } : p
+                            ));
+                            setUsedLocations(prev => [...prev, id]);
+                            setTimeout(() => { setCardRecognized(false); setShowCityScanner(false); setScanCityForIdx(null); setShowCodeInput(false); setCodeInput(''); }, 800);
+                          }
+                        } else { setScanError('Invalid code!'); setTimeout(() => setScanError(''), 2000); }
+                      }}
+                    />
+                  </View>
+                  <TouchableOpacity style={[s.primaryBtn, { borderRadius: 8, marginBottom: 16 }]} onPress={() => {
+                    const id = parseInt(codeInput, 10);
+                    if (id >= 0 && id < panoramaLocations.length) {
+                      const loc = panoramaLocations.find(l => l.id === id);
+                      if (loc && scanCityForIdx !== null) {
+                        const alreadyAssigned = players.some((p, i) => i !== scanCityForIdx && p.cityId === id);
+                        if (alreadyAssigned) { setScanError('Card already assigned!'); setTimeout(() => setScanError(''), 2000); return; }
+                        playScanSound(); Vibration.vibrate(100); setCardRecognized(true);
+                        setPlayers(prev => prev.map((p, i) =>
+                          i === scanCityForIdx ? { ...p, city: loc.city, cityId: id, lat: loc.lat, lng: loc.lng } : p
+                        ));
+                        setUsedLocations(prev => [...prev, id]);
+                        setTimeout(() => { setCardRecognized(false); setShowCityScanner(false); setScanCityForIdx(null); setShowCodeInput(false); setCodeInput(''); }, 800);
+                      }
+                    } else { setScanError('Invalid code!'); setTimeout(() => setScanError(''), 2000); }
+                  }}>
+                    <Text style={s.primaryBtnText}>CONFIRM</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => { setShowCodeInput(false); setCodeInput(''); }}>
+                    <Text style={{ color: C.text, fontSize: 14, fontFamily: FF.regular, opacity: 0.5 }}>← Back to camera</Text>
+                  </TouchableOpacity>
                 </View>
-              ) : null}
-              <TouchableOpacity style={s.scanCloseBtn} onPress={() => { setShowCityScanner(false); setScanCityForIdx(null); setOcrProcessing(false); }}>
+              ) : (
+                // ─── CAMERA VIEW ───
+                <>
+                  <View style={[s.scanFrame, { borderColor: cardRecognized ? '#a6d700' : C.primary }]}>
+                    <Text style={{ color: cardRecognized ? '#a6d700' : C.primary, fontSize: 16, fontWeight: '600', fontFamily: FF.bold, textAlign: 'center' }}>
+                      {ocrProcessing ? 'Recognizing...' : cardRecognized ? '✓ Card recognized!' : 'Point at city card'}
+                    </Text>
+                  </View>
+                  {scanError ? (
+                    <View style={{ backgroundColor: 'rgba(255,100,100,0.9)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 20, marginTop: 20 }}>
+                      <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600', fontFamily: FF.bold }}>{scanError}</Text>
+                    </View>
+                  ) : null}
+                  <TouchableOpacity
+                    style={[s.primaryBtn, { marginTop: 20, width: 200, alignItems: 'center', borderRadius: 8 }]}
+                    onPress={() => { playClickSound(); captureAndOcr(); }}
+                    disabled={ocrProcessing}
+                  >
+                    <Text style={s.primaryBtnText}>{ocrProcessing ? '...' : 'CAPTURE'}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{ marginTop: 16, paddingVertical: 8, paddingHorizontal: 20, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' }}
+                    onPress={() => setShowCodeInput(true)}
+                  >
+                    <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, fontFamily: FF.regular }}>⌨ Enter Code</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+              <TouchableOpacity style={s.scanCloseBtn} onPress={() => { setShowCityScanner(false); setScanCityForIdx(null); setOcrProcessing(false); setCardRecognized(false); setShowCodeInput(false); setCodeInput(''); }}>
                 <Text style={s.scanCloseText}>CANCEL</Text>
               </TouchableOpacity>
             </View>
