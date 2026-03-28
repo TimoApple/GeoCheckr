@@ -34,7 +34,7 @@ const C = {
 // TYPES
 interface Player { id: number; name: string; city: string; cityId: number; lat: number; lng: number; score: number; }
 interface TableCity { city: string; lat: number; lng: number; ownerPlayerId: number | null; isPlayerCity: boolean; }
-type Screen = 'loading' | 'tutorial' | 'setup' | 'scan-city' | 'game' | 'result';
+type Screen = 'loading' | 'tutorial' | 'setup' | 'scan-city' | 'game' | 'result' | 'reshuffle';
 
 // LOADING QUOTES
 const QUOTES = [
@@ -317,7 +317,7 @@ export default function App() {
           const loc = panoramaLocations.find(l => l.id === id);
           if (loc) {
             if (usedLocations.includes(id)) { setScanError('Already scanned!'); setTimeout(() => setScanError(''), 2000); return; }
-            playClickSound(); setScanned(true); Vibration.vibrate(100); onQrScanned(loc); return;
+            playScanSound(); setScanned(true); Vibration.vibrate(100); onQrScanned(loc); return;
           }
         }
       }
@@ -327,7 +327,7 @@ export default function App() {
           const loc = panoramaLocations.find(l => l.id === id);
           if (loc) {
             if (usedLocations.includes(id)) { setScanError('Already scanned!'); setTimeout(() => setScanError(''), 2000); return; }
-            playClickSound(); setScanned(true); Vibration.vibrate(100); onQrScanned(loc); return;
+            playScanSound(); setScanned(true); Vibration.vibrate(100); onQrScanned(loc); return;
           }
         }
       }
@@ -764,15 +764,30 @@ export default function App() {
           </View>
         ))}
         <TouchableOpacity style={[s.primaryBtn, { marginTop: 32, width: '100%' }]} onPress={() => {
-          setPlayers([
-            { id: 1, name: 'Player 1', city: '', cityId: -1, lat: 0, lng: 0, score: 0 },
-            { id: 2, name: 'Player 2', city: '', cityId: -1, lat: 0, lng: 0, score: 0 },
-          ]);
-
+          setPlayers(prev => prev.map(p => ({ ...p, city: '', cityId: -1, lat: 0, lng: 0, score: 0 })));
+          setUsedLocations([]);
+          setRound(1);
+          setScreen('reshuffle');
         }}>
           <Text style={s.primaryBtnText}>PLAY AGAIN</Text>
         </TouchableOpacity>
       </ScrollView>
+    </View>
+  );
+}
+
+// ═══════════════ RESHUFFLE ═══════════════
+if (screen === 'reshuffle') {
+  return (
+    <View style={[s.container, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40 }]}>
+      <StatusBar hidden />
+      <Text style={{ color: C.green, fontSize: 40, fontWeight: '700', fontFamily: FF.bold, textAlign: 'center', marginBottom: 36, lineHeight: 48 }}>Shuffle Up.</Text>
+      <Text style={{ color: C.text, fontSize: 22, fontFamily: FF.regular, textAlign: 'center', lineHeight: 38, marginBottom: 60 }}>
+        Shuffle all the cards now{'\n'}including your personal cards.{'\n'}Each player picks a new card{'\n'}from the stack.
+      </Text>
+      <TouchableOpacity style={[s.primaryBtn, { paddingVertical: 18, paddingHorizontal: 48 }]} onPress={() => setScreen('setup')}>
+        <Text style={[s.primaryBtnText, { fontSize: 18 }]}>GO!</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -808,8 +823,8 @@ const s = StyleSheet.create({
 
   playerRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surfaceLow, marginBottom: 8 },
   playerInput: { flex: 1, color: C.onSurface, fontSize: 16, fontWeight: '500', fontFamily: FF.regular, paddingVertical: 16, paddingHorizontal: 16, backgroundColor: C.surfaceLow, borderBottomWidth: 1, borderBottomColor: 'rgba(68,73,52,0.15)' },
-  hashBtn: { backgroundColor: C.secondaryContainer, paddingVertical: 16, paddingHorizontal: 20, alignItems: 'center', justifyContent: 'center' },
-  hashBtnDone: { backgroundColor: C.primary },
+  hashBtn: { backgroundColor: C.secondaryContainer, paddingVertical: 16, paddingHorizontal: 20, minWidth: 56, alignItems: 'center', justifyContent: 'center' },
+  hashBtnDone: { backgroundColor: C.primary, paddingVertical: 16, paddingHorizontal: 20, minWidth: 56, alignItems: 'center', justifyContent: 'center' },
   hashBtnText: { color: C.onSecondaryContainer, fontSize: 16, fontWeight: '700', fontFamily: FF.bold },
   hashBtnTextDone: { color: C.onPrimaryContainer },
   cityBadge: { color: C.primary, fontSize: 11, fontWeight: '600', fontFamily: FF.bold, letterSpacing: 1, marginLeft: 8 },
