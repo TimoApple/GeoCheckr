@@ -8,10 +8,9 @@ import {
 import { WebView } from 'react-native-webview';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useFonts, SpaceGrotesk_400Regular, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
-import MlkitOcr from 'rn-mlkit-ocr';
 
 import { calculateDistance, formatDistance } from './src/utils/distance';
-import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playTimerWarning, playTimerTick, playAnswerphoneBeep } from './src/utils/sounds';
+import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playTimerWarning, playTimerTick, playScanSound, playAnswerphoneBeep } from './src/utils/sounds';
 import { panoramaLocations, PanoramaLocation } from './src/data/panoramaLocations';
 
 const { width, height } = Dimensions.get('window');
@@ -72,10 +71,8 @@ export default function App() {
   const [showTextInput, setShowTextInput] = useState(false);
   const [textInputValue, setTextInputValue] = useState('');
   const [textSuggestions, setTextSuggestions] = useState<PanoramaLocation[]>([]);
-  const [ocrProcessing, setOcrProcessing] = useState(false);
   const [textMatchError, setTextMatchError] = useState('');
   const [scanned, setScanned] = useState(false);
-  const cameraRef = useRef<any>(null);
   const [scanError, setScanError] = useState('');
 
   // Game
@@ -174,7 +171,7 @@ export default function App() {
   };
 
   const openCityScan = (idx: number) => {
-    setScanCityForIdx(idx); setShowCityScanner(true); setShowTextInput(false); setTextInputValue(''); setTextSuggestions([]); setScanned(false); setOcrProcessing(false);
+    setScanCityForIdx(idx); setShowCityScanner(true); setShowTextInput(true); setTextInputValue(''); setTextSuggestions([]);
   };
 
   const submitCityText = () => {
@@ -215,50 +212,6 @@ export default function App() {
   };
 
   // OCR PHOTO CAPTURE
-  const captureAndOcr = async () => {
-    if (!cameraRef.current || ocrProcessing) return;
-    setOcrProcessing(true);
-    try {
-      const photo = await cameraRef.current.takePicture({ quality: 0.8, base64: false });
-      const result = await MlkitOcr.recognizeText(photo.uri);
-      const allText = result.text;
-      console.log('[OCR]', allText);
-      // Try #number first
-      const numMatch = allText.match(/#?(\d{1,3})/);
-      if (numMatch) {
-        const id = parseInt(numMatch[1], 10);
-        if (id >= 0 && id < panoramaLocations.length) {
-          const loc = panoramaLocations.find(l => l.id === id);
-          if (loc) {
-            playClickSound(); Vibration.vibrate(100);
-            setPlayers(prev => prev.map((p, i) =>
-              i === scanCityForIdx ? { ...p, city: loc.city, cityId: id, lat: loc.lat, lng: loc.lng } : p
-            ));
-            setShowCityScanner(false); setScanCityForIdx(null); setOcrProcessing(false);
-            return;
-          }
-        }
-      }
-      // Fuzzy match city name from OCR text
-      const match = fuzzyMatchCity(allText);
-      if (match) {
-        playClickSound(); Vibration.vibrate(100);
-        setPlayers(prev => prev.map((p, i) =>
-          i === scanCityForIdx ? { ...p, city: match.city, cityId: match.id, lat: match.lat, lng: match.lng } : p
-        ));
-        setShowCityScanner(false); setScanCityForIdx(null); setOcrProcessing(false);
-        return;
-      }
-      // No match — show manual input with OCR text pre-filled
-      setTextInputValue(allText.trim());
-      setShowTextInput(true);
-      onChangeText(allText.trim());
-    } catch (e) {
-      console.error('[OCR] Error:', e);
-      setShowTextInput(true);
-    }
-    setOcrProcessing(false);
-  };
 
   const startGame = () => {
     if (!allPlayersScanned) return;
@@ -399,40 +352,6 @@ export default function App() {
           <TouchableOpacity style={s.scanCloseBtn} onPress={() => { setShowCityScanner(false); setShowTextInput(false); setScanCityForIdx(null); setTextInputValue(''); setTextSuggestions([]); }}>
             <Text style={s.scanCloseText}>CANCEL</Text>
           </TouchableOpacity>
-        </View>
-      );
-    }
-
-    // ─── CITY SCANNER: OCR CAMERA ───
-    if (showCityScanner) {
-      return (
-        <View style={{ flex: 1, backgroundColor: '#000' }}><StatusBar hidden />
-          <CameraView ref={cameraRef} style={{ flex: 1 }} facing="back">
-            <View style={s.scanOverlay}>
-              <View style={{ alignItems: 'center', marginBottom: 40 }}>
-                <Text style={{ color: C.primary, fontSize: 13, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2, marginBottom: 6 }}>ASSIGN CARD</Text>
-                <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700', fontFamily: FF.bold }}>{assignName}</Text>
-              </View>
-              <View style={s.scanFrame}>
-                <Text style={{ color: C.primary, fontSize: 16, fontWeight: '600', fontFamily: FF.bold, textAlign: 'center' }}>
-                  {ocrProcessing ? 'Recognizing...' : 'Point at city card'}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={[s.primaryBtn, { marginTop: 20, width: 200, alignItems: 'center', borderRadius: 8 }]}
-                onPress={captureAndOcr}
-                disabled={ocrProcessing}
-              >
-                <Text style={s.primaryBtnText}>{ocrProcessing ? '...' : 'CAPTURE'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 14, marginTop: 8 }} onPress={() => setShowTextInput(true)}>
-                <Text style={{ color: C.secondary, fontSize: 14, fontWeight: '600', fontFamily: FF.bold }}>TYPE INSTEAD</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={s.scanCloseBtn} onPress={() => { setShowCityScanner(false); setScanCityForIdx(null); setShowTextInput(false); setOcrProcessing(false); }}>
-                <Text style={s.scanCloseText}>CANCEL</Text>
-              </TouchableOpacity>
-            </View>
-          </CameraView>
         </View>
       );
     }
@@ -774,7 +693,6 @@ export default function App() {
       </ScrollView>
     </View>
   );
-}
 
 // ═══════════════ RESHUFFLE ═══════════════
 if (screen === 'reshuffle') {
@@ -791,6 +709,9 @@ if (screen === 'reshuffle') {
     </View>
   );
 }
+
+}
+
 
 // ═══════════════ STYLES ═══════════════
 const s = StyleSheet.create({
