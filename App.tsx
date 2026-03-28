@@ -8,6 +8,7 @@ import {
 import { WebView } from 'react-native-webview';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useFonts, SpaceGrotesk_400Regular, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
+import MlkitOcr from 'rn-mlkit-ocr';
 
 import { calculateDistance, formatDistance } from './src/utils/distance';
 import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playTimerWarning, playTimerTick, playAnswerphoneBeep } from './src/utils/sounds';
@@ -70,8 +71,11 @@ export default function App() {
   const [showCityScanner, setShowCityScanner] = useState(false);
   const [showTextInput, setShowTextInput] = useState(false);
   const [textInputValue, setTextInputValue] = useState('');
+  const [textSuggestions, setTextSuggestions] = useState<PanoramaLocation[]>([]);
+  const [ocrProcessing, setOcrProcessing] = useState(false);
   const [textMatchError, setTextMatchError] = useState('');
   const [scanned, setScanned] = useState(false);
+  const cameraRef = useRef<any>(null);
   const [scanError, setScanError] = useState('');
 
   // Game
@@ -98,6 +102,38 @@ export default function App() {
   const [tutOpacity] = useState(new Animated.Value(1));
 
   const allPlayersScanned = players.length >= 2 && players.every(p => p.city.length > 0);
+
+  // FUZZY MATCH — Levenshtein distance for city name matching
+  const levenshtein = (a: string, b: string): number => {
+    const m = a.length, n = b.length;
+    const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+    for (let i = 0; i <= m; i++) dp[i][0] = i;
+    for (let j = 0; j <= n; j++) dp[0][j] = j;
+    for (let i = 1; i <= m; i++)
+      for (let j = 1; j <= n; j++)
+        dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+    return dp[m][n];
+  };
+
+  const fuzzyMatchCity = (input: string): PanoramaLocation | null => {
+    const norm = input.toLowerCase().trim()
+      .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+    // Exact match first
+    const exact = panoramaLocations.find(l => l.city.toLowerCase() === norm);
+    if (exact) return exact;
+    // Fuzzy match — find best within threshold
+    let best: PanoramaLocation | null = null;
+    let bestDist = Infinity;
+    for (const loc of panoramaLocations) {
+      const cityNorm = loc.city.toLowerCase()
+        .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+      const dist = levenshtein(norm, cityNorm);
+      if (dist < bestDist) { bestDist = dist; best = loc; }
+    }
+    // Max 2 edits for short names, 3 for longer
+    const threshold = norm.length <= 5 ? 1 : norm.length <= 10 ? 2 : 3;
+    return bestDist <= threshold ? best : null;
+  };
 
   // LOADING SCREEN
   useEffect(() => {
@@ -138,37 +174,90 @@ export default function App() {
   };
 
   const openCityScan = (idx: number) => {
-    setScanCityForIdx(idx); setShowTextInput(true); setTextInputValue(''); setTextMatchError('');
+    setScanCityForIdx(idx); setShowCityScanner(true); setShowTextInput(false); setTextInputValue(''); setTextSuggestions([]); setScanned(false); setOcrProcessing(false);
   };
 
   const submitCityText = () => {
     if (scanCityForIdx === null) return;
-    const input = textInputValue.trim().toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
-    if (!input) { setTextMatchError('Enter a city name'); return; }
-    // Exact match first
-    const exact = panoramaLocations.find(l => l.city.toLowerCase() === input);
-    if (exact) {
+    const input = textInputValue.trim();
+    if (!input) { return; }
+    const match = fuzzyMatchCity(input);
+    if (match) {
       playClickSound(); Vibration.vibrate(100);
       setPlayers(prev => prev.map((p, i) =>
-        i === scanCityForIdx ? { ...p, city: exact.city, cityId: exact.id, lat: exact.lat, lng: exact.lng } : p
+        i === scanCityForIdx ? { ...p, city: match.city, cityId: match.id, lat: match.lat, lng: match.lng } : p
       ));
-      setShowTextInput(false); setScanCityForIdx(null); setTextInputValue('');
-      return;
+      setShowTextInput(false); setShowCityScanner(false); setScanCityForIdx(null); setTextInputValue(''); setTextSuggestions([]);
     }
-    // Partial match
-    const matches = panoramaLocations.filter(l => l.city.toLowerCase().includes(input));
-    if (matches.length === 1) {
-      const m = matches[0];
-      playClickSound(); Vibration.vibrate(100);
-      setPlayers(prev => prev.map((p, i) =>
-        i === scanCityForIdx ? { ...p, city: m.city, cityId: m.id, lat: m.lat, lng: m.lng } : p
-      ));
-      setShowTextInput(false); setScanCityForIdx(null); setTextInputValue('');
-    } else if (matches.length > 1) {
-      setTextMatchError(`Multiple: ${matches.map(m=>m.city).slice(0,3).join(', ')}`);
+  };
+
+  const onChangeText = (text: string) => {
+    setTextInputValue(text);
+    if (text.length >= 2) {
+      const norm = text.toLowerCase().trim()
+        .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+      const matches = panoramaLocations
+        .filter(l => l.city.toLowerCase().includes(norm) || levenshtein(norm, l.city.toLowerCase()) <= 2)
+        .slice(0, 5);
+      setTextSuggestions(matches);
     } else {
-      setTextMatchError('City not found — try again');
+      setTextSuggestions([]);
     }
+  };
+
+  const selectSuggestion = (loc: PanoramaLocation) => {
+    if (scanCityForIdx === null) return;
+    playClickSound(); Vibration.vibrate(100);
+    setPlayers(prev => prev.map((p, i) =>
+      i === scanCityForIdx ? { ...p, city: loc.city, cityId: loc.id, lat: loc.lat, lng: loc.lng } : p
+    ));
+    setShowTextInput(false); setShowCityScanner(false); setScanCityForIdx(null); setTextInputValue(''); setTextSuggestions([]);
+  };
+
+  // OCR PHOTO CAPTURE
+  const captureAndOcr = async () => {
+    if (!cameraRef.current || ocrProcessing) return;
+    setOcrProcessing(true);
+    try {
+      const photo = await cameraRef.current.takePictureAsync({ quality: 0.8, base64: false });
+      const result = await MlkitOcr.recognizeText(photo.uri);
+      const allText = result.text;
+      console.log('[OCR]', allText);
+      // Try #number first
+      const numMatch = allText.match(/#?(\d{1,3})/);
+      if (numMatch) {
+        const id = parseInt(numMatch[1], 10);
+        if (id >= 0 && id < panoramaLocations.length) {
+          const loc = panoramaLocations.find(l => l.id === id);
+          if (loc) {
+            playClickSound(); Vibration.vibrate(100);
+            setPlayers(prev => prev.map((p, i) =>
+              i === scanCityForIdx ? { ...p, city: loc.city, cityId: id, lat: loc.lat, lng: loc.lng } : p
+            ));
+            setShowCityScanner(false); setScanCityForIdx(null); setOcrProcessing(false);
+            return;
+          }
+        }
+      }
+      // Fuzzy match city name from OCR text
+      const match = fuzzyMatchCity(allText);
+      if (match) {
+        playClickSound(); Vibration.vibrate(100);
+        setPlayers(prev => prev.map((p, i) =>
+          i === scanCityForIdx ? { ...p, city: match.city, cityId: match.id, lat: match.lat, lng: match.lng } : p
+        ));
+        setShowCityScanner(false); setScanCityForIdx(null); setOcrProcessing(false);
+        return;
+      }
+      // No match — show manual input with OCR text pre-filled
+      setTextInputValue(allText.trim());
+      setShowTextInput(true);
+      onChangeText(allText.trim());
+    } catch (e) {
+      console.error('[OCR] Error:', e);
+      setShowTextInput(true);
+    }
+    setOcrProcessing(false);
   };
 
   const startGame = () => {
@@ -253,40 +342,113 @@ export default function App() {
       return (
         <View style={s.container}><StatusBar hidden />
           <View style={s.centerScreen}>
-            <Text style={{ color: C.onSurface, fontSize: 18, marginBottom: 20, textAlign: 'center' }}>Camera permission required</Text>
+            <Text style={{ color: C.onSurface, fontSize: 18, fontFamily: FF.regular, marginBottom: 20, textAlign: 'center' }}>Camera permission required</Text>
             <TouchableOpacity style={s.primaryBtn} onPress={requestCameraPermission}><Text style={s.primaryBtnText}>GRANT</Text></TouchableOpacity>
-            <TouchableOpacity style={s.tertiaryBtn} onPress={() => { setShowCityScanner(false); setShowQrScanner(false); setScanned(false); }}><Text style={s.tertiaryBtnText}>CANCEL</Text></TouchableOpacity>
+            <TouchableOpacity style={s.tertiaryBtn} onPress={() => { setShowCityScanner(false); setShowQrScanner(false); setScanned(false); setShowTextInput(false); }}><Text style={s.tertiaryBtnText}>CANCEL</Text></TouchableOpacity>
           </View>
         </View>
       );
     }
+
     const assignName = showCityScanner && scanCityForIdx !== null ? players[scanCityForIdx]?.name : '';
+
+    // ─── CITY SCANNER: OCR + MANUAL TEXT INPUT ───
+    if (showCityScanner && showTextInput) {
+      return (
+        <View style={[s.container, { paddingTop: 60, paddingHorizontal: 20 }]}><StatusBar hidden />
+          <Text style={{ color: C.primary, fontSize: 13, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2, marginBottom: 6, textAlign: 'center' }}>ASSIGN CARD</Text>
+          <Text style={{ color: C.onSurface, fontSize: 22, fontWeight: '700', fontFamily: FF.bold, textAlign: 'center', marginBottom: 24 }}>{assignName}</Text>
+
+          <TextInput
+            style={{ backgroundColor: C.surfaceHigh, color: C.onSurface, fontSize: 20, fontFamily: FF.regular, paddingVertical: 16, paddingHorizontal: 20, marginBottom: 8 }}
+            value={textInputValue}
+            onChangeText={onChangeText}
+            placeholder="Type city name..."
+            placeholderTextColor="rgba(225,224,251,0.3)"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoFocus
+            onSubmitEditing={submitCityText}
+          />
+
+          {textSuggestions.length > 0 && (
+            <View style={{ backgroundColor: C.surface, marginBottom: 16 }}>
+              {textSuggestions.map((loc, i) => (
+                <TouchableOpacity key={loc.id} style={{ paddingVertical: 14, paddingHorizontal: 20, backgroundColor: i % 2 === 0 ? C.surfaceLow : C.surface }} onPress={() => selectSuggestion(loc)}>
+                  <Text style={{ color: C.onSurface, fontSize: 16, fontWeight: '600', fontFamily: FF.bold }}>{loc.city}</Text>
+                  <Text style={{ color: 'rgba(225,224,251,0.4)', fontSize: 12, fontFamily: FF.regular }}>{loc.country}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          <TouchableOpacity style={[s.primaryBtn, { marginTop: 8 }]} onPress={submitCityText}>
+            <Text style={s.primaryBtnText}>CONFIRM</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 16, marginTop: 12 }} onPress={() => setShowTextInput(false)}>
+            <Text style={{ color: C.secondary, fontSize: 14, fontWeight: '600', fontFamily: FF.bold }}>← BACK TO CAMERA</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={s.scanCloseBtn} onPress={() => { setShowCityScanner(false); setShowTextInput(false); setScanCityForIdx(null); setTextInputValue(''); setTextSuggestions([]); }}>
+            <Text style={s.scanCloseText}>CANCEL</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    // ─── CITY SCANNER: OCR CAMERA ───
+    if (showCityScanner) {
+      return (
+        <View style={{ flex: 1, backgroundColor: '#000' }}><StatusBar hidden />
+          <CameraView ref={cameraRef} style={{ flex: 1 }} facing="back">
+            <View style={s.scanOverlay}>
+              <View style={{ alignItems: 'center', marginBottom: 40 }}>
+                <Text style={{ color: C.primary, fontSize: 13, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2, marginBottom: 6 }}>ASSIGN CARD</Text>
+                <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700', fontFamily: FF.bold }}>{assignName}</Text>
+              </View>
+              <View style={s.scanFrame}>
+                <Text style={{ color: C.primary, fontSize: 16, fontWeight: '600', fontFamily: FF.bold, textAlign: 'center' }}>
+                  {ocrProcessing ? 'Recognizing...' : 'Point at city card'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={[s.primaryBtn, { marginTop: 20, width: 200, alignItems: 'center', borderRadius: 8 }]}
+                onPress={captureAndOcr}
+                disabled={ocrProcessing}
+              >
+                <Text style={s.primaryBtnText}>{ocrProcessing ? '...' : 'CAPTURE'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 14, marginTop: 8 }} onPress={() => setShowTextInput(true)}>
+                <Text style={{ color: C.secondary, fontSize: 14, fontWeight: '600', fontFamily: FF.bold }}>TYPE INSTEAD</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={s.scanCloseBtn} onPress={() => { setShowCityScanner(false); setScanCityForIdx(null); setShowTextInput(false); setOcrProcessing(false); }}>
+                <Text style={s.scanCloseText}>CANCEL</Text>
+              </TouchableOpacity>
+            </View>
+          </CameraView>
+        </View>
+      );
+    }
+
+    // ─── GAME QR SCANNER ───
     return (
       <View style={{ flex: 1, backgroundColor: '#000' }}><StatusBar hidden />
         <CameraView
           style={{ flex: 1 }}
           facing="back"
           onBarcodeScanned={scanned ? undefined : handleScan}
-          barcodeScannerSettings={{ barcodeTypes: ['qr', 'code128', 'code39', 'ean13', 'ean8'] }}
+          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
         >
           <View style={s.scanOverlay}>
             <View style={{ alignItems: 'center', marginBottom: 40 }}>
-              <Text style={{ color: C.primary, fontSize: 13, fontWeight: '700', letterSpacing: 2, marginBottom: 6 }}>
-                {showCityScanner ? 'ASSIGN CARD' : 'SCAN QR CARD'}
-              </Text>
-              <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>{assignName || 'Player'}</Text>
+              <Text style={{ color: C.primary, fontSize: 13, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2, marginBottom: 6 }}>SCAN QR CARD</Text>
+              <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700', fontFamily: FF.bold }}>Player</Text>
             </View>
             <View style={s.scanFrame}>
-              <Text style={{ color: C.primary, fontSize: 16, fontWeight: '600', textAlign: 'center' }}>
-                {showCityScanner ? 'Hold city card #number or city name in frame' : 'Hold QR card in frame'}
-              </Text>
+              <Text style={{ color: C.primary, fontSize: 16, fontWeight: '600', fontFamily: FF.bold, textAlign: 'center' }}>Hold QR card in frame</Text>
             </View>
-            {scanError ? (
-              <View style={{ backgroundColor: 'rgba(255,100,100,0.9)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 20, marginTop: 30 }}>
-                <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>{scanError}</Text>
-              </View>
-            ) : null}
-            <TouchableOpacity style={s.scanCloseBtn} onPress={() => { setShowCityScanner(false); setShowQrScanner(false); setScanned(false); }}>
+            <TouchableOpacity style={s.scanCloseBtn} onPress={() => { setShowQrScanner(false); setScanned(false); }}>
               <Text style={s.scanCloseText}>CLOSE</Text>
             </TouchableOpacity>
           </View>

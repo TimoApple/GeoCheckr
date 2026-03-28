@@ -51,6 +51,13 @@
       "expo-camera",
       "expo-asset",
       [
+        "rn-mlkit-ocr",
+        {
+          "ocrModels": ["latin"],
+          "ocrUseBundled": true
+        }
+      ],
+      [
         "expo-font",
         {
           "fonts": [
