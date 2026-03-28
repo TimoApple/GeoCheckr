@@ -408,11 +408,7 @@ export default function App() {
           ref={tutScrollRef}
           horizontal
           pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          snapToInterval={width}
-          decelerationRate="fast"
-          nestedScrollEnabled
-          snapToInterval={width}
+          showsHorizontalScrollIndicator={false}          snapToInterval={width}
           decelerationRate="fast"
           nestedScrollEnabled
           scrollEventThrottle={16}
