@@ -171,7 +171,7 @@ export default function App() {
   };
 
   const openCityScan = (idx: number) => {
-    setScanCityForIdx(idx); setShowCityScanner(true); setShowTextInput(true); setTextInputValue(''); setTextSuggestions([]);
+    setScanCityForIdx(idx); setShowCityScanner(true); setScanned(false);
   };
 
   const submitCityText = () => {
@@ -311,7 +311,40 @@ export default function App() {
 
     const assignName = showCityScanner && scanCityForIdx !== null ? players[scanCityForIdx]?.name : '';
 
-    // ─── CITY SCANNER: OCR + MANUAL TEXT INPUT ───
+    // ─── CITY SCANNER: BARCODE SCAN ───
+    if (showCityScanner && !showTextInput) {
+      const assignName = scanCityForIdx !== null ? players[scanCityForIdx]?.name : '';
+      return (
+        <View style={{ flex: 1, backgroundColor: '#000' }}><StatusBar hidden />
+          <CameraView
+            style={{ flex: 1 }}
+            facing="back"
+            onBarcodeScanned={scanned ? undefined : handleScan}
+            barcodeScannerSettings={{ barcodeTypes: ['qr', 'code128'] }}
+          >
+            <View style={s.scanOverlay}>
+              <View style={{ alignItems: 'center', marginBottom: 40 }}>
+                <Text style={{ color: C.primary, fontSize: 13, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2, marginBottom: 6 }}>ASSIGN CARD</Text>
+                <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700', fontFamily: FF.bold }}>{assignName}</Text>
+              </View>
+              <View style={s.scanFrame}>
+                <Text style={{ color: C.primary, fontSize: 16, fontWeight: '600', fontFamily: FF.bold, textAlign: 'center' }}>Scan city:ID QR or #number</Text>
+              </View>
+              {scanError ? (
+                <View style={{ backgroundColor: 'rgba(255,100,100,0.9)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 20, marginTop: 30 }}>
+                  <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600', fontFamily: FF.bold }}>{scanError}</Text>
+                </View>
+              ) : null}
+              <TouchableOpacity style={s.scanCloseBtn} onPress={() => { setShowCityScanner(false); setScanCityForIdx(null); setScanned(false); }}>
+                <Text style={s.scanCloseText}>CLOSE</Text>
+              </TouchableOpacity>
+            </View>
+          </CameraView>
+        </View>
+      );
+    }
+
+    // ─── CITY SCANNER: TEXT INPUT ───
     if (showCityScanner && showTextInput) {
       return (
         <View style={[s.container, { paddingTop: 60, paddingHorizontal: 20 }]}><StatusBar hidden />
