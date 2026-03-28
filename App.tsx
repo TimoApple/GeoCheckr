@@ -10,7 +10,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useFonts, SpaceGrotesk_400Regular, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
 
 import { calculateDistance, formatDistance } from './src/utils/distance';
-import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playTimerWarning, playTimerTick, playAnswerphoneBeep } from './src/utils/sounds';
+import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playTimerWarning, playTimerTick, playScanSound, playAnswerphoneBeep } from './src/utils/sounds';
 import { panoramaLocations, PanoramaLocation } from './src/data/panoramaLocations';
 
 const { width, height } = Dimensions.get('window');
@@ -33,7 +33,7 @@ const C = {
 // TYPES
 interface Player { id: number; name: string; city: string; cityId: number; lat: number; lng: number; score: number; }
 interface TableCity { city: string; lat: number; lng: number; ownerPlayerId: number | null; isPlayerCity: boolean; }
-type Screen = 'loading' | 'tutorial' | 'setup' | 'scan-city' | 'game' | 'result';
+type Screen = 'loading' | 'tutorial' | 'setup' | 'scan-city' | 'game' | 'result' | 'reshuffle';
 
 // LOADING QUOTES
 const QUOTES = [
@@ -68,6 +68,10 @@ export default function App() {
   // City scan
   const [scanCityForIdx, setScanCityForIdx] = useState<number | null>(null);
   const [showCityScanner, setShowCityScanner] = useState(false);
+  const [showTextInput, setShowTextInput] = useState(false);
+  const [textInputValue, setTextInputValue] = useState('');
+  const [textSuggestions, setTextSuggestions] = useState<PanoramaLocation[]>([]);
+  const [textMatchError, setTextMatchError] = useState('');
   const [scanned, setScanned] = useState(false);
   const [scanError, setScanError] = useState('');
 
@@ -95,6 +99,38 @@ export default function App() {
   const [tutOpacity] = useState(new Animated.Value(1));
 
   const allPlayersScanned = players.length >= 2 && players.every(p => p.city.length > 0);
+
+  // FUZZY MATCH — Levenshtein distance for city name matching
+  const levenshtein = (a: string, b: string): number => {
+    const m = a.length, n = b.length;
+    const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+    for (let i = 0; i <= m; i++) dp[i][0] = i;
+    for (let j = 0; j <= n; j++) dp[0][j] = j;
+    for (let i = 1; i <= m; i++)
+      for (let j = 1; j <= n; j++)
+        dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+    return dp[m][n];
+  };
+
+  const fuzzyMatchCity = (input: string): PanoramaLocation | null => {
+    const norm = input.toLowerCase().trim()
+      .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+    // Exact match first
+    const exact = panoramaLocations.find(l => l.city.toLowerCase() === norm);
+    if (exact) return exact;
+    // Fuzzy match — find best within threshold
+    let best: PanoramaLocation | null = null;
+    let bestDist = Infinity;
+    for (const loc of panoramaLocations) {
+      const cityNorm = loc.city.toLowerCase()
+        .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+      const dist = levenshtein(norm, cityNorm);
+      if (dist < bestDist) { bestDist = dist; best = loc; }
+    }
+    // Max 2 edits for short names, 3 for longer
+    const threshold = norm.length <= 5 ? 1 : norm.length <= 10 ? 2 : 3;
+    return bestDist <= threshold ? best : null;
+  };
 
   // LOADING SCREEN
   useEffect(() => {
@@ -135,8 +171,47 @@ export default function App() {
   };
 
   const openCityScan = (idx: number) => {
-    setScanCityForIdx(idx); setShowCityScanner(true); setScanned(false); setScanError('');
+    setScanCityForIdx(idx); setShowCityScanner(true); setShowTextInput(true); setTextInputValue(''); setTextSuggestions([]);
   };
+
+  const submitCityText = () => {
+    if (scanCityForIdx === null) return;
+    const input = textInputValue.trim();
+    if (!input) { return; }
+    const match = fuzzyMatchCity(input);
+    if (match) {
+      playClickSound(); Vibration.vibrate(100);
+      setPlayers(prev => prev.map((p, i) =>
+        i === scanCityForIdx ? { ...p, city: match.city, cityId: match.id, lat: match.lat, lng: match.lng } : p
+      ));
+      setShowTextInput(false); setShowCityScanner(false); setScanCityForIdx(null); setTextInputValue(''); setTextSuggestions([]);
+    }
+  };
+
+  const onChangeText = (text: string) => {
+    setTextInputValue(text);
+    if (text.length >= 2) {
+      const norm = text.toLowerCase().trim()
+        .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+      const matches = panoramaLocations
+        .filter(l => l.city.toLowerCase().includes(norm) || levenshtein(norm, l.city.toLowerCase()) <= 2)
+        .slice(0, 5);
+      setTextSuggestions(matches);
+    } else {
+      setTextSuggestions([]);
+    }
+  };
+
+  const selectSuggestion = (loc: PanoramaLocation) => {
+    if (scanCityForIdx === null) return;
+    playClickSound(); Vibration.vibrate(100);
+    setPlayers(prev => prev.map((p, i) =>
+      i === scanCityForIdx ? { ...p, city: loc.city, cityId: loc.id, lat: loc.lat, lng: loc.lng } : p
+    ));
+    setShowTextInput(false); setShowCityScanner(false); setScanCityForIdx(null); setTextInputValue(''); setTextSuggestions([]);
+  };
+
+  // OCR PHOTO CAPTURE
 
   const startGame = () => {
     if (!allPlayersScanned) return;
@@ -181,44 +256,36 @@ export default function App() {
   };
 
   // ═══════════════ SCAN HANDLER — 3 MECHANICS ═══════════════
-  // ═══ SCANNER: BARCODE ONLY ═══
+  // ═══ SCANNER: TEXT INPUT ONLY ═══
   const handleScan = useCallback(({ data }: { data: string }) => {
     if (scanned) return;
-    console.log('[BARCODE SCAN]', data);
+    console.log('[TEXT SCAN]', data);
 
-    // GAME QR → Street View
+    // Only game QR — city assignment uses text input
     if (showQrScanner) {
       const m = data.match(/#?(\d+)/);
       if (m) {
         const id = parseInt(m[1], 10);
         if (id >= 0 && id < panoramaLocations.length) {
           const loc = panoramaLocations.find(l => l.id === id);
-          if (loc) { playClickSound(); setScanned(true); Vibration.vibrate(100); onQrScanned(loc); return; }
+          if (loc) {
+            if (usedLocations.includes(id)) { setScanError('Already scanned!'); setTimeout(() => setScanError(''), 2000); return; }
+            playScanSound(); setScanned(true); Vibration.vibrate(100); onQrScanned(loc); return;
+          }
         }
       }
-      return;
-    }
-
-    // CITY CARD: only #number barcode
-    if (!showCityScanner || scanCityForIdx === null) return;
-    const m = data.match(/#?(\d+)/);
-    if (m) {
-      const id = parseInt(m[1], 10);
-      if (id >= 0 && id < panoramaLocations.length) {
-        const loc = panoramaLocations.find(l => l.id === id);
-        if (loc) {
-          playClickSound(); setScanned(true); Vibration.vibrate(100);
-          setPlayers(prev => prev.map((p, i) =>
-            i === scanCityForIdx ? { ...p, city: loc.city, cityId: id, lat: loc.lat, lng: loc.lng } : p
-          ));
-          setShowCityScanner(false); setScanned(false); setScanCityForIdx(null);
-          return;
+      if (data.startsWith('city:')) {
+        const id = parseInt(data.split(':')[1]);
+        if (id >= 0 && id < panoramaLocations.length) {
+          const loc = panoramaLocations.find(l => l.id === id);
+          if (loc) {
+            if (usedLocations.includes(id)) { setScanError('Already scanned!'); setTimeout(() => setScanError(''), 2000); return; }
+            playScanSound(); setScanned(true); Vibration.vibrate(100); onQrScanned(loc); return;
+          }
         }
       }
     }
-    setScanError('Barcode not recognized — hold #number card in frame');
-    setTimeout(() => setScanned(false), 1500);
-  }, [scanned, showCityScanner, scanCityForIdx, showQrScanner, onQrScanned]);
+  }, [scanned, showQrScanner, onQrScanned, usedLocations]);
 
   // TUTORIAL
   const TUT_PAGES = [
@@ -234,40 +301,79 @@ export default function App() {
       return (
         <View style={s.container}><StatusBar hidden />
           <View style={s.centerScreen}>
-            <Text style={{ color: C.onSurface, fontSize: 18, marginBottom: 20, textAlign: 'center' }}>Camera permission required</Text>
+            <Text style={{ color: C.onSurface, fontSize: 18, fontFamily: FF.regular, marginBottom: 20, textAlign: 'center' }}>Camera permission required</Text>
             <TouchableOpacity style={s.primaryBtn} onPress={requestCameraPermission}><Text style={s.primaryBtnText}>GRANT</Text></TouchableOpacity>
-            <TouchableOpacity style={s.tertiaryBtn} onPress={() => { setShowCityScanner(false); setShowQrScanner(false); setScanned(false); }}><Text style={s.tertiaryBtnText}>CANCEL</Text></TouchableOpacity>
+            <TouchableOpacity style={s.tertiaryBtn} onPress={() => { setShowCityScanner(false); setShowQrScanner(false); setScanned(false); setShowTextInput(false); }}><Text style={s.tertiaryBtnText}>CANCEL</Text></TouchableOpacity>
           </View>
         </View>
       );
     }
+
     const assignName = showCityScanner && scanCityForIdx !== null ? players[scanCityForIdx]?.name : '';
+
+    // ─── CITY SCANNER: OCR + MANUAL TEXT INPUT ───
+    if (showCityScanner && showTextInput) {
+      return (
+        <View style={[s.container, { paddingTop: 60, paddingHorizontal: 20 }]}><StatusBar hidden />
+          <Text style={{ color: C.primary, fontSize: 13, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2, marginBottom: 6, textAlign: 'center' }}>ASSIGN CARD</Text>
+          <Text style={{ color: C.onSurface, fontSize: 22, fontWeight: '700', fontFamily: FF.bold, textAlign: 'center', marginBottom: 24 }}>{assignName}</Text>
+
+          <TextInput
+            style={{ backgroundColor: C.surfaceHigh, color: C.onSurface, fontSize: 20, fontFamily: FF.regular, paddingVertical: 16, paddingHorizontal: 20, marginBottom: 8 }}
+            value={textInputValue}
+            onChangeText={onChangeText}
+            placeholder="Type city name..."
+            placeholderTextColor="rgba(225,224,251,0.3)"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoFocus
+            onSubmitEditing={submitCityText}
+          />
+
+          {textSuggestions.length > 0 && (
+            <View style={{ backgroundColor: C.surface, marginBottom: 16 }}>
+              {textSuggestions.map((loc, i) => (
+                <TouchableOpacity key={loc.id} style={{ paddingVertical: 14, paddingHorizontal: 20, backgroundColor: i % 2 === 0 ? C.surfaceLow : C.surface }} onPress={() => selectSuggestion(loc)}>
+                  <Text style={{ color: C.onSurface, fontSize: 16, fontWeight: '600', fontFamily: FF.bold }}>{loc.city}</Text>
+                  <Text style={{ color: 'rgba(225,224,251,0.4)', fontSize: 12, fontFamily: FF.regular }}>{loc.country}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          <TouchableOpacity style={[s.primaryBtn, { marginTop: 8 }]} onPress={submitCityText}>
+            <Text style={s.primaryBtnText}>CONFIRM</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 16, marginTop: 12 }} onPress={() => setShowTextInput(false)}>
+            <Text style={{ color: C.secondary, fontSize: 14, fontWeight: '600', fontFamily: FF.bold }}>← BACK TO CAMERA</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={s.scanCloseBtn} onPress={() => { setShowCityScanner(false); setShowTextInput(false); setScanCityForIdx(null); setTextInputValue(''); setTextSuggestions([]); }}>
+            <Text style={s.scanCloseText}>CANCEL</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    // ─── GAME QR SCANNER ───
     return (
       <View style={{ flex: 1, backgroundColor: '#000' }}><StatusBar hidden />
         <CameraView
           style={{ flex: 1 }}
           facing="back"
           onBarcodeScanned={scanned ? undefined : handleScan}
-          barcodeScannerSettings={{ barcodeTypes: ['qr', 'code128', 'code39', 'ean13', 'ean8'] }}
+          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
         >
           <View style={s.scanOverlay}>
             <View style={{ alignItems: 'center', marginBottom: 40 }}>
-              <Text style={{ color: C.primary, fontSize: 13, fontWeight: '700', letterSpacing: 2, marginBottom: 6 }}>
-                {showCityScanner ? 'ASSIGN CARD' : 'SCAN QR CARD'}
-              </Text>
-              <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>{assignName || 'Player'}</Text>
+              <Text style={{ color: C.primary, fontSize: 13, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2, marginBottom: 6 }}>SCAN QR CARD</Text>
+              <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700', fontFamily: FF.bold }}>Player</Text>
             </View>
             <View style={s.scanFrame}>
-              <Text style={{ color: C.primary, fontSize: 16, fontWeight: '600', textAlign: 'center' }}>
-                {showCityScanner ? 'Hold city card #number or city name in frame' : 'Hold QR card in frame'}
-              </Text>
+              <Text style={{ color: C.primary, fontSize: 16, fontWeight: '600', fontFamily: FF.bold, textAlign: 'center' }}>Hold QR card in frame</Text>
             </View>
-            {scanError ? (
-              <View style={{ backgroundColor: 'rgba(255,100,100,0.9)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 20, marginTop: 30 }}>
-                <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>{scanError}</Text>
-              </View>
-            ) : null}
-            <TouchableOpacity style={s.scanCloseBtn} onPress={() => { setShowCityScanner(false); setShowQrScanner(false); setScanned(false); }}>
+            <TouchableOpacity style={s.scanCloseBtn} onPress={() => { setShowQrScanner(false); setScanned(false); }}>
               <Text style={s.scanCloseText}>CLOSE</Text>
             </TouchableOpacity>
           </View>
@@ -312,17 +418,10 @@ export default function App() {
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          onScrollEndDrag={(e) => {
+          scrollEventThrottle={16}
+          onScroll={(e) => {
             const newPage = Math.round(e.nativeEvent.contentOffset.x / width);
-            if (newPage !== tutorialPage) {
-              tutOpacity.setValue(0);
-              setTutorialPage(newPage);
-              Animated.timing(tutOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
-            }
-          }}
-          onMomentumScrollEnd={(e) => {
-            const newPage = Math.round(e.nativeEvent.contentOffset.x / width);
-            if (newPage !== tutorialPage) {
+            if (newPage !== tutorialPage && newPage >= 0 && newPage < TUT_PAGES.length) {
               tutOpacity.setValue(0);
               setTutorialPage(newPage);
               Animated.timing(tutOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
@@ -382,6 +481,7 @@ export default function App() {
                   {p.city.length > 0 ? '✓' : '#'}
                 </Text>
               </TouchableOpacity>
+              {p.city.length > 0 && <Text style={s.cityBadge}>{p.city}</Text>}
               {players.length > 2 && (
                 <TouchableOpacity style={s.removeBtn} onPress={() => setPlayers(prev => prev.filter(pp => pp.id !== p.id))}>
                   <Text style={{ color: C.error, fontSize: 14, fontWeight: '700', fontFamily: FF.bold }}>✕</Text>
@@ -426,6 +526,42 @@ export default function App() {
             <Text style={s.actionHint}>{allPlayersScanned ? `${players.length} players ready` : 'Scan city cards for all players'}</Text>
           </View>
         </ScrollView>
+
+        {/* TEXT INPUT MODAL */}
+        {showTextInput && (
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', zIndex: 100 }}>
+            <View style={{ backgroundColor: C.surface, padding: 32, borderRadius: 16, width: '85%', maxWidth: 360 }}>
+              <Text style={{ color: C.primary, fontSize: 14, fontWeight: '700', letterSpacing: 2, textAlign: 'center', marginBottom: 8 }}>ENTER CITY NAME</Text>
+              <Text style={{ color: C.onSurface, fontSize: 18, fontWeight: '700', textAlign: 'center', marginBottom: 24 }}>
+                {scanCityForIdx !== null ? players[scanCityForIdx]?.name : ''}
+              </Text>
+              <TextInput
+                style={{ backgroundColor: C.surfaceLow, color: C.onSurface, paddingVertical: 16, paddingHorizontal: 16, borderRadius: 8, fontSize: 18, borderWidth: 1, borderColor: C.surfaceHighest }}
+                value={textInputValue}
+                onChangeText={t => { setTextInputValue(t); setTextMatchError(''); }}
+                placeholder="Berlin, Tokyo, Cairo..."
+                placeholderTextColor="rgba(225,224,251,0.3)"
+                autoFocus
+                returnKeyType="done"
+                onSubmitEditing={submitCityText}
+                autoCapitalize="words"
+              />
+              {textMatchError.length > 0 && (
+                <Text style={{ color: C.error, fontSize: 13, marginTop: 10, textAlign: 'center' }}>{textMatchError}</Text>
+              )}
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 20 }}>
+                <TouchableOpacity style={{ flex: 1, paddingVertical: 14, alignItems: 'center', borderRadius: 8, borderWidth: 1, borderColor: C.surfaceHighest }}
+                  onPress={() => { setShowTextInput(false); setScanCityForIdx(null); }}>
+                  <Text style={{ color: C.onSurface, fontSize: 15, fontWeight: '600' }}>CANCEL</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{ flex: 1, backgroundColor: C.primary, paddingVertical: 14, alignItems: 'center', borderRadius: 8 }}
+                  onPress={submitCityText}>
+                  <Text style={{ color: C.bg, fontSize: 15, fontWeight: '700' }}>ASSIGN</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
       </View>
     );
   }
@@ -547,18 +683,35 @@ export default function App() {
           </View>
         ))}
         <TouchableOpacity style={[s.primaryBtn, { marginTop: 32, width: '100%' }]} onPress={() => {
-          setPlayers([
-            { id: 1, name: 'Player 1', city: '', cityId: -1, lat: 0, lng: 0, score: 0 },
-            { id: 2, name: 'Player 2', city: '', cityId: -1, lat: 0, lng: 0, score: 0 },
-          ]);
-
+          setPlayers(prev => prev.map(p => ({ ...p, city: '', cityId: -1, lat: 0, lng: 0, score: 0 })));
+          setUsedLocations([]);
+          setRound(1);
+          setScreen('reshuffle');
         }}>
           <Text style={s.primaryBtnText}>PLAY AGAIN</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
   );
+
+// ═══════════════ RESHUFFLE ═══════════════
+if (screen === 'reshuffle') {
+  return (
+    <View style={[s.container, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40 }]}>
+      <StatusBar hidden />
+      <Text style={{ color: C.green, fontSize: 40, fontWeight: '700', fontFamily: FF.bold, textAlign: 'center', marginBottom: 36, lineHeight: 48 }}>Shuffle Up.</Text>
+      <Text style={{ color: C.text, fontSize: 22, fontFamily: FF.regular, textAlign: 'center', lineHeight: 38, marginBottom: 60 }}>
+        Shuffle all the cards now{'\n'}including your personal cards.{'\n'}Each player picks a new card{'\n'}from the stack.
+      </Text>
+      <TouchableOpacity style={[s.primaryBtn, { paddingVertical: 18, paddingHorizontal: 48 }]} onPress={() => setScreen('setup')}>
+        <Text style={[s.primaryBtnText, { fontSize: 18 }]}>GO!</Text>
+      </TouchableOpacity>
+    </View>
+  );
 }
+
+}
+
 
 // ═══════════════ STYLES ═══════════════
 const s = StyleSheet.create({
@@ -591,11 +744,11 @@ const s = StyleSheet.create({
 
   playerRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surfaceLow, marginBottom: 8 },
   playerInput: { flex: 1, color: C.onSurface, fontSize: 16, fontWeight: '500', fontFamily: FF.regular, paddingVertical: 16, paddingHorizontal: 16, backgroundColor: C.surfaceLow, borderBottomWidth: 1, borderBottomColor: 'rgba(68,73,52,0.15)' },
-  hashBtn: { backgroundColor: C.secondaryContainer, paddingVertical: 16, paddingHorizontal: 20, alignItems: 'center', justifyContent: 'center' },
-  hashBtnDone: { backgroundColor: C.primary },
+  hashBtn: { backgroundColor: C.secondaryContainer, paddingVertical: 16, paddingHorizontal: 20, minWidth: 56, alignItems: 'center', justifyContent: 'center' },
+  hashBtnDone: { backgroundColor: C.primary, paddingVertical: 16, paddingHorizontal: 20, minWidth: 56, alignItems: 'center', justifyContent: 'center' },
   hashBtnText: { color: C.onSecondaryContainer, fontSize: 16, fontWeight: '700', fontFamily: FF.bold },
   hashBtnTextDone: { color: C.onPrimaryContainer },
-  cityBadge: { color: C.primary, fontSize: 11, fontWeight: '600', letterSpacing: 1, marginLeft: 8,  },
+  cityBadge: { color: C.primary, fontSize: 11, fontWeight: '600', fontFamily: FF.bold, letterSpacing: 1, marginLeft: 8 },
   removeBtn: { paddingVertical: 16, paddingHorizontal: 12 },
   nameRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surfaceLow, marginBottom: 8 },
   recruitBtn: { alignItems: 'center', paddingVertical: 16, marginBottom: 32 },
