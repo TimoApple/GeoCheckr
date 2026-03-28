@@ -670,7 +670,7 @@ const s = StyleSheet.create({
   hashBtnDone: { backgroundColor: C.primary },
   hashBtnText: { color: C.onSecondaryContainer, fontSize: 16, fontWeight: '700', fontFamily: FF.bold },
   hashBtnTextDone: { color: C.onPrimaryContainer },
-  cityBadge: { color: C.primary, fontSize: 11, fontWeight: '600', letterSpacing: 1, marginLeft: 8, position: 'absolute', right: 70, top: 18 },
+  cityBadge: { color: C.primary, fontSize: 11, fontWeight: '600', letterSpacing: 1, marginLeft: 8,  },
   removeBtn: { paddingVertical: 16, paddingHorizontal: 12 },
   nameRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surfaceLow, marginBottom: 8 },
   recruitBtn: { alignItems: 'center', paddingVertical: 16, marginBottom: 32 },
