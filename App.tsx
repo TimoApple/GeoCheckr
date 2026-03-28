@@ -315,18 +315,24 @@ export default function App() {
         const id = parseInt(m[1], 10);
         if (id >= 0 && id < panoramaLocations.length) {
           const loc = panoramaLocations.find(l => l.id === id);
-          if (loc) { playClickSound(); setScanned(true); Vibration.vibrate(100); onQrScanned(loc); return; }
+          if (loc) {
+            if (usedLocations.includes(id)) { setScanError('Already scanned!'); setTimeout(() => setScanError(''), 2000); return; }
+            playClickSound(); setScanned(true); Vibration.vibrate(100); onQrScanned(loc); return;
+          }
         }
       }
       if (data.startsWith('city:')) {
         const id = parseInt(data.split(':')[1]);
         if (id >= 0 && id < panoramaLocations.length) {
           const loc = panoramaLocations.find(l => l.id === id);
-          if (loc) { playClickSound(); setScanned(true); Vibration.vibrate(100); onQrScanned(loc); return; }
+          if (loc) {
+            if (usedLocations.includes(id)) { setScanError('Already scanned!'); setTimeout(() => setScanError(''), 2000); return; }
+            playClickSound(); setScanned(true); Vibration.vibrate(100); onQrScanned(loc); return;
+          }
         }
       }
     }
-  }, [scanned, showQrScanner, onQrScanned]);
+  }, [scanned, showQrScanner, onQrScanned, usedLocations]);
 
   // TUTORIAL
   const TUT_PAGES = [
@@ -493,17 +499,10 @@ export default function App() {
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          onScrollEndDrag={(e) => {
+          scrollEventThrottle={16}
+          onScroll={(e) => {
             const newPage = Math.round(e.nativeEvent.contentOffset.x / width);
-            if (newPage !== tutorialPage) {
-              tutOpacity.setValue(0);
-              setTutorialPage(newPage);
-              Animated.timing(tutOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
-            }
-          }}
-          onMomentumScrollEnd={(e) => {
-            const newPage = Math.round(e.nativeEvent.contentOffset.x / width);
-            if (newPage !== tutorialPage) {
+            if (newPage !== tutorialPage && newPage >= 0 && newPage < TUT_PAGES.length) {
               tutOpacity.setValue(0);
               setTutorialPage(newPage);
               Animated.timing(tutOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
@@ -563,6 +562,7 @@ export default function App() {
                   {p.city.length > 0 ? '✓' : '#'}
                 </Text>
               </TouchableOpacity>
+              {p.city.length > 0 && <Text style={s.cityBadge}>{p.city}</Text>}
               {players.length > 2 && (
                 <TouchableOpacity style={s.removeBtn} onPress={() => setPlayers(prev => prev.filter(pp => pp.id !== p.id))}>
                   <Text style={{ color: C.error, fontSize: 14, fontWeight: '700', fontFamily: FF.bold }}>✕</Text>
@@ -812,7 +812,7 @@ const s = StyleSheet.create({
   hashBtnDone: { backgroundColor: C.primary },
   hashBtnText: { color: C.onSecondaryContainer, fontSize: 16, fontWeight: '700', fontFamily: FF.bold },
   hashBtnTextDone: { color: C.onPrimaryContainer },
-  cityBadge: { color: C.primary, fontSize: 11, fontWeight: '600', letterSpacing: 1, marginLeft: 8, position: 'absolute', right: 70, top: 18 },
+  cityBadge: { color: C.primary, fontSize: 11, fontWeight: '600', fontFamily: FF.bold, letterSpacing: 1, marginLeft: 8 },
   removeBtn: { paddingVertical: 16, paddingHorizontal: 12 },
   nameRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surfaceLow, marginBottom: 8 },
   recruitBtn: { alignItems: 'center', paddingVertical: 16, marginBottom: 32 },
