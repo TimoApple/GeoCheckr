@@ -138,7 +138,7 @@ export default function App() {
   };
 
   const openCityScan = (idx: number) => {
-    setScanCityForIdx(idx); setShowTextInput(true); setTextInputValue(''); setTextMatchError('');
+    setScanCityForIdx(idx); setShowCityScanner(true); setScanned(false);
   };
 
   const submitCityText = () => {
@@ -239,8 +239,27 @@ export default function App() {
       return;
     }
 
-    // CITY CARD: only "city:ID" token
+    // CITY CARD: "city:ID" token OR #number
     if (!showCityScanner || scanCityForIdx === null) return;
+
+    // A) #number
+    const numMatch = data.match(/#?(\d+)/);
+    if (numMatch) {
+      const id = parseInt(numMatch[1], 10);
+      if (id >= 0 && id < panoramaLocations.length) {
+        const loc = panoramaLocations.find(l => l.id === id);
+        if (loc) {
+          playClickSound(); setScanned(true); Vibration.vibrate(100);
+          setPlayers(prev => prev.map((p, i) =>
+            i === scanCityForIdx ? { ...p, city: loc.city, cityId: id, lat: loc.lat, lng: loc.lng } : p
+          ));
+          setShowCityScanner(false); setScanned(false); setScanCityForIdx(null);
+          return;
+        }
+      }
+    }
+
+    // B) city:ID token
     if (data.startsWith('city:')) {
       const id = parseInt(data.split(':')[1]);
       if (id >= 0 && id < panoramaLocations.length) {
@@ -255,7 +274,8 @@ export default function App() {
         }
       }
     }
-    setScanError('Token not recognized — scan city:ID QR code');
+
+    setScanError('Not recognized — scan #number or city:ID');
     setTimeout(() => setScanned(false), 1500);
   }, [scanned, showCityScanner, scanCityForIdx, showQrScanner, onQrScanned]);
 
