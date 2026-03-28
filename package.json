@@ -18,7 +18,6 @@
     "expo": "^54.0.33",
     "expo-asset": "~12.0.12",
     "expo-camera": "~17.0.10",
-    "expo-dev-client": "~6.0.20",
     "expo-speech-recognition": "~1.0.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
