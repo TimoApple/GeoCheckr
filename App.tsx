@@ -73,6 +73,9 @@ export default function App() {
   const [textSuggestions, setTextSuggestions] = useState<PanoramaLocation[]>([]);
   const [textMatchError, setTextMatchError] = useState('');
   const [scanned, setScanned] = useState(false);
+  const [cardRecognized, setCardRecognized] = useState(false);
+  const [showCodeInput, setShowCodeInput] = useState(false);
+  const [codeInput, setCodeInput] = useState('');
   const [scanError, setScanError] = useState('');
 
   // Game
@@ -431,7 +434,7 @@ export default function App() {
             </View>
           ))}
         </ScrollView>
-        <View style={{ position: 'absolute', bottom: 100, width: '100%', flexDirection: 'row', justifyContent: 'center', gap: 8 }} pointerEvents="none" pointerEvents="none">
+        <View style={{ position: 'absolute', bottom: 100, width: '100%', flexDirection: 'row', justifyContent: 'center', gap: 8 }} pointerEvents="none">
           {TUT_PAGES.slice(0, 4).map((_, i) => <View key={i} style={{ width: tutorialPage === i ? 28 : 8, height: 8, borderRadius: 4, backgroundColor: tutorialPage === i ? TUT_PAGES[i].titleColor : 'rgba(255,255,255,0.2)', marginHorizontal: 2 }} />)}
         </View>
         <View style={{ position: 'absolute', bottom: 40, width: '100%', paddingHorizontal: 30, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
