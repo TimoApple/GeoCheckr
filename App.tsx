@@ -73,6 +73,9 @@ export default function App() {
   const [textSuggestions, setTextSuggestions] = useState<PanoramaLocation[]>([]);
   const [textMatchError, setTextMatchError] = useState('');
   const [scanned, setScanned] = useState(false);
+  const [cardRecognized, setCardRecognized] = useState(false);
+  const [showCodeInput, setShowCodeInput] = useState(false);
+  const [codeInput, setCodeInput] = useState('');
   const [scanError, setScanError] = useState('');
 
   // Game
