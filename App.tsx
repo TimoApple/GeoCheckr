@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useFonts, SpaceGrotesk_400Regular, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
 
 import { calculateDistance, formatDistance } from './src/utils/distance';
 import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playTimerWarning, playTimerTick, playAnswerphoneBeep } from './src/utils/sounds';
@@ -14,7 +15,7 @@ import { panoramaLocations, PanoramaLocation } from './src/data/panoramaLocation
 
 const { width, height } = Dimensions.get('window');
 const API_KEY = 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
-const FF = { regular: undefined, medium: undefined, semi: undefined, bold: undefined };
+const FF = { regular: 'SpaceGrotesk_400Regular', bold: 'SpaceGrotesk_700Bold' };
 
 // CI COLORS
 const C = {
@@ -49,6 +50,7 @@ function buildStreetViewHtml(lat: number, lng: number): string {
 }
 
 export default function App() {
+  const [fontsLoaded] = useFonts({ SpaceGrotesk_400Regular, SpaceGrotesk_700Bold });
   const [screen, setScreen] = useState<Screen>('loading');
   const [tutorialPage, setTutorialPage] = useState(0);
   const [loadingFade] = useState(new Animated.Value(0));
@@ -310,6 +312,14 @@ export default function App() {
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
+          onScrollEndDrag={(e) => {
+            const newPage = Math.round(e.nativeEvent.contentOffset.x / width);
+            if (newPage !== tutorialPage) {
+              tutOpacity.setValue(0);
+              setTutorialPage(newPage);
+              Animated.timing(tutOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+            }
+          }}
           onMomentumScrollEnd={(e) => {
             const newPage = Math.round(e.nativeEvent.contentOffset.x / width);
             if (newPage !== tutorialPage) {
@@ -335,7 +345,7 @@ export default function App() {
           <TouchableOpacity onPress={() => setScreen('setup')}><Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14, fontFamily: FF.regular }}>Skip Tutorial</Text></TouchableOpacity>
           {tutorialPage < TUT_PAGES.length - 1 ? (
             <TouchableOpacity onPress={() => goToPage(tutorialPage + 1)}>
-              <Text style={{ color: C.green, fontSize: 15, fontWeight: '600', fontFamily: FF.semi }}>Swipe →</Text>
+              <Text style={{ color: C.green, fontSize: 15, fontWeight: '600', fontFamily: FF.bold }}>Swipe →</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity style={{ backgroundColor: C.green, paddingVertical: 14, paddingHorizontal: 28, borderRadius: 9999 }} onPress={() => setScreen('setup')}>
@@ -372,12 +382,13 @@ export default function App() {
                   {p.city.length > 0 ? '✓' : '#'}
                 </Text>
               </TouchableOpacity>
-              {p.city.length > 0 && <Text style={s.cityBadge}>{p.city}</Text>}
               {players.length > 2 && (
                 <TouchableOpacity style={s.removeBtn} onPress={() => setPlayers(prev => prev.filter(pp => pp.id !== p.id))}>
-                  <Text style={{ color: C.error, fontSize: 14, fontWeight: '700' }}>✕</Text>
+                  <Text style={{ color: C.error, fontSize: 14, fontWeight: '700', fontFamily: FF.bold }}>✕</Text>
                 </TouchableOpacity>
               )}
+              {players.length <= 2 && <View style={s.removeBtn} />}
+              {p.city.length > 0 && <Text style={s.cityBadge}>{p.city}</Text>}
             </View>
           ))}
 
@@ -566,48 +577,48 @@ const s = StyleSheet.create({
 
   // Buttons
   primaryBtn: { backgroundColor: C.primary, paddingVertical: 16, paddingHorizontal: 24, alignItems: 'center' },
-  primaryBtnText: { color: C.onPrimaryContainer, fontSize: 14, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' },
+  primaryBtnText: { color: C.onPrimaryContainer, fontSize: 14, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2, textTransform: 'uppercase' },
   tertiaryBtn: { paddingVertical: 14, paddingHorizontal: 20 },
-  tertiaryBtnText: { color: 'rgba(225,224,251,0.35)', fontSize: 13, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' },
+  tertiaryBtnText: { color: 'rgba(225,224,251,0.35)', fontSize: 13, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2, textTransform: 'uppercase' },
 
   // Setup
   setupScroll: { paddingTop: 48, paddingBottom: 80, paddingHorizontal: 24 },
-  setupHeader: { color: C.primary, fontSize: 24, fontWeight: '700', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 32 },
-  setupTitle: { color: C.onSurface, fontSize: 28, fontWeight: '700', marginBottom: 8 },
+  setupHeader: { color: C.primary, fontSize: 24, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 32 },
+  setupTitle: { color: C.onSurface, fontSize: 28, fontWeight: '700', fontFamily: FF.bold, marginBottom: 8 },
   titleBar: { width: 48, height: 4, backgroundColor: C.primary, marginBottom: 32 },
   sectionLabel: { marginBottom: 12, marginTop: 8 },
-  sectionLabelText: { color: C.secondary, fontSize: 10, fontWeight: '700', letterSpacing: 3, textTransform: 'uppercase' },
+  sectionLabelText: { color: C.secondary, fontSize: 10, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 3, textTransform: 'uppercase' },
 
   playerRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surfaceLow, marginBottom: 8 },
-  playerInput: { flex: 1, color: C.onSurface, fontSize: 16, fontWeight: '500', paddingVertical: 16, paddingHorizontal: 16, backgroundColor: C.surfaceLow, borderBottomWidth: 1, borderBottomColor: 'rgba(68,73,52,0.15)' },
+  playerInput: { flex: 1, color: C.onSurface, fontSize: 16, fontWeight: '500', fontFamily: FF.regular, paddingVertical: 16, paddingHorizontal: 16, backgroundColor: C.surfaceLow, borderBottomWidth: 1, borderBottomColor: 'rgba(68,73,52,0.15)' },
   hashBtn: { backgroundColor: C.secondaryContainer, paddingVertical: 16, paddingHorizontal: 20, alignItems: 'center', justifyContent: 'center' },
   hashBtnDone: { backgroundColor: C.primary },
-  hashBtnText: { color: C.onSecondaryContainer, fontSize: 16, fontWeight: '700' },
+  hashBtnText: { color: C.onSecondaryContainer, fontSize: 16, fontWeight: '700', fontFamily: FF.bold },
   hashBtnTextDone: { color: C.onPrimaryContainer },
   cityBadge: { color: C.primary, fontSize: 11, fontWeight: '600', letterSpacing: 1, marginLeft: 8, position: 'absolute', right: 70, top: 18 },
   removeBtn: { paddingVertical: 16, paddingHorizontal: 12 },
   nameRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surfaceLow, marginBottom: 8 },
   recruitBtn: { alignItems: 'center', paddingVertical: 16, marginBottom: 32 },
-  recruitBtnText: { color: C.primary, fontSize: 12, fontWeight: '700', letterSpacing: 3, textTransform: 'uppercase' },
+  recruitBtnText: { color: C.primary, fontSize: 12, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 3, textTransform: 'uppercase' },
 
   gridRow: { flexDirection: 'row', gap: 24, marginBottom: 48 },
   gridCol: { flex: 1 },
   chipRow: { flexDirection: 'row', gap: 8 },
   chip: { flex: 1, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(68,73,52,0.3)' },
   chipActive: { backgroundColor: C.primary, borderColor: C.primary },
-  chipText: { color: 'rgba(225,224,251,0.5)', fontSize: 12, fontWeight: '700', letterSpacing: 2 },
+  chipText: { color: 'rgba(225,224,251,0.5)', fontSize: 12, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2 },
   chipTextActive: { color: C.onPrimaryContainer },
 
   mainBtn: { backgroundColor: C.primary, paddingVertical: 20, alignItems: 'center' },
   mainBtnDisabled: { backgroundColor: C.surfaceHighest },
-  mainBtnText: { color: C.onPrimaryContainer, fontSize: 15, fontWeight: '700', letterSpacing: 3, textTransform: 'uppercase' },
-  actionHint: { color: 'rgba(225,224,251,0.3)', fontSize: 10, textAlign: 'center', marginTop: 12, letterSpacing: 2, textTransform: 'uppercase' },
+  mainBtnText: { color: C.onPrimaryContainer, fontSize: 15, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 3, textTransform: 'uppercase' },
+  actionHint: { color: 'rgba(225,224,251,0.3)', fontSize: 10, fontFamily: FF.regular, textAlign: 'center', marginTop: 12, letterSpacing: 2, textTransform: 'uppercase' },
 
   // Scanner
   scanOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
   scanFrame: { width: 260, height: 260, borderWidth: 3, borderColor: C.primary, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)', marginBottom: 20 },
   scanCloseBtn: { position: 'absolute', bottom: 60, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.8)', paddingHorizontal: 24, paddingVertical: 12 },
-  scanCloseText: { color: C.onSurface, fontSize: 14, fontWeight: '700', letterSpacing: 2 },
+  scanCloseText: { color: C.onSurface, fontSize: 14, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2 },
 
   // Game
   gameTopBar: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 44, paddingBottom: 8, backgroundColor: 'rgba(17,18,37,0.85)', zIndex: 20 },
@@ -615,9 +626,9 @@ const s = StyleSheet.create({
   tableRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 12 },
 
   timer: { position: 'absolute', top: 80, right: 16, width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(17,18,37,0.9)', borderWidth: 3, justifyContent: 'center', alignItems: 'center', zIndex: 20 },
-  timerText: { fontSize: 22, fontWeight: '700' },
+  timerText: { fontSize: 22, fontWeight: '700', fontFamily: FF.bold },
   pickBtn: { position: 'absolute', bottom: 40, alignSelf: 'center', backgroundColor: 'rgba(17,18,37,0.9)', paddingHorizontal: 28, paddingVertical: 14, borderWidth: 1.5, borderColor: C.primary, zIndex: 20 },
-  pickBtnText: { color: C.primary, fontSize: 16, fontWeight: '700', letterSpacing: 2 },
+  pickBtnText: { color: C.primary, fontSize: 16, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2 },
 
   loadingOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg, zIndex: 5 },
   errorOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg, zIndex: 10, paddingHorizontal: 32 },
