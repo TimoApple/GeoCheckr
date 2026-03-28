@@ -557,7 +557,6 @@ export default function App() {
                 </TouchableOpacity>
               )}
               {players.length <= 2 && <View style={s.removeBtn} />}
-              {p.city.length > 0 && <Text style={s.cityBadge}>{p.city}</Text>}
             </View>
           ))}
 
