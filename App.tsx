@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useFonts, SpaceGrotesk_400Regular, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
 
 import { calculateDistance, formatDistance } from './src/utils/distance';
 import { playClickSound, playSuccessSound, playErrorSound, playPerfectSound, playTimerWarning, playTimerTick, playAnswerphoneBeep } from './src/utils/sounds';
@@ -14,7 +15,7 @@ import { panoramaLocations, PanoramaLocation } from './src/data/panoramaLocation
 
 const { width, height } = Dimensions.get('window');
 const API_KEY = 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
-const FF = { regular: undefined, medium: undefined, semi: undefined, bold: undefined };
+const FF = { regular: 'SpaceGrotesk_400Regular', bold: 'SpaceGrotesk_700Bold' };
 
 // CI COLORS
 const C = {
@@ -49,6 +50,7 @@ function buildStreetViewHtml(lat: number, lng: number): string {
 }
 
 export default function App() {
+  const [fontsLoaded] = useFonts({ SpaceGrotesk_400Regular, SpaceGrotesk_700Bold });
   const [screen, setScreen] = useState<Screen>('loading');
   const [tutorialPage, setTutorialPage] = useState(0);
   const [loadingFade] = useState(new Animated.Value(0));
@@ -334,6 +336,14 @@ export default function App() {
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
+          onScrollEndDrag={(e) => {
+            const newPage = Math.round(e.nativeEvent.contentOffset.x / width);
+            if (newPage !== tutorialPage) {
+              tutOpacity.setValue(0);
+              setTutorialPage(newPage);
+              Animated.timing(tutOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+            }
+          }}
           onMomentumScrollEnd={(e) => {
             const newPage = Math.round(e.nativeEvent.contentOffset.x / width);
             if (newPage !== tutorialPage) {
@@ -359,7 +369,7 @@ export default function App() {
           <TouchableOpacity onPress={() => setScreen('setup')}><Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14, fontFamily: FF.regular }}>Skip Tutorial</Text></TouchableOpacity>
           {tutorialPage < TUT_PAGES.length - 1 ? (
             <TouchableOpacity onPress={() => goToPage(tutorialPage + 1)}>
-              <Text style={{ color: C.green, fontSize: 15, fontWeight: '600', fontFamily: FF.semi }}>Swipe →</Text>
+              <Text style={{ color: C.green, fontSize: 15, fontWeight: '600', fontFamily: FF.bold }}>Swipe →</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity style={{ backgroundColor: C.green, paddingVertical: 14, paddingHorizontal: 28, borderRadius: 9999 }} onPress={() => setScreen('setup')}>
