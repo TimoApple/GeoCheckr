@@ -293,7 +293,8 @@ export default function App() {
     { bg: C.bg, titleColor: C.green, title: 'You Had One Job.', body: 'A Street View drops somewhere on Earth. You\'re holding a City Card. Figure out which city on the table is closest to what you\'re looking at.\n\nSimple? Sure. Easy? Absolutely not.' },
     { bg: C.blue, titleColor: C.accent, title: 'Flip. Scan. Clock\'s Ticking.', body: 'Grab a card from the deck. Scan the QR code with the app. A Street View loads instantly — and the timer starts whether you\'re ready or not.' },
     { bg: C.bg, titleColor: C.accent, title: 'Name That City.', body: 'Study the Street View. Pick the closest city from the cards on the table. Tap the mic and say it out loud — the app locks in your answer.\n\nThe closer you are, the more points.' },
-    { bg: '#0a2a0a', titleColor: C.green, title: 'Feeling Dangerous?', body: 'Think someone guessed wrong? Bet a token and name YOUR city.\n\nRight → bonus points.\nWrong → goodbye, token.\n\n→ Let\'s play!' },
+    { bg: '#0a2a0a', titleColor: C.green, title: 'Feeling Dangerous?', body: 'Think someone guessed wrong? Bet a token and name YOUR city.\n\nRight → bonus points.\nWrong → goodbye, token.\n\n→ Swipe to play!' },
+    { bg: C.green, titleColor: '#000', title: '', body: '' },
   ];
 
   // ═══════════════ SCANNERS ═══════════════
@@ -393,7 +394,8 @@ export default function App() {
   // ═══════════════ TUTORIAL ═══════════════
   if (screen === 'tutorial') {
     const goToPage = (idx: number) => {
-      if (idx < 0 || idx >= TUT_PAGES.length || idx === tutorialPage) return;
+      if (idx < 0 || idx === tutorialPage) return;
+      if (idx >= TUT_PAGES.length - 1) { setScreen('setup'); return; }
       tutOpacity.setValue(0);
       tutScrollRef.current?.scrollTo({ x: idx * width, animated: false });
       setTutorialPage(idx);
@@ -406,13 +408,13 @@ export default function App() {
           ref={tutScrollRef}
           horizontal
           pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          snapToInterval={width}
+          showsHorizontalScrollIndicator={false}          snapToInterval={width}
           decelerationRate="fast"
           nestedScrollEnabled
           scrollEventThrottle={16}
           onScroll={(e) => {
             const newPage = Math.round(e.nativeEvent.contentOffset.x / width);
+            if (newPage >= TUT_PAGES.length) { setScreen('setup'); return; }
             if (newPage !== tutorialPage && newPage >= 0 && newPage < TUT_PAGES.length) {
               tutOpacity.setValue(0);
               setTutorialPage(newPage);
@@ -429,12 +431,12 @@ export default function App() {
             </View>
           ))}
         </ScrollView>
-        <View style={{ position: 'absolute', bottom: 100, width: '100%', flexDirection: 'row', justifyContent: 'center', gap: 8 }} pointerEvents="none">
-          {TUT_PAGES.map((_, i) => <View key={i} style={{ width: tutorialPage === i ? 28 : 8, height: 8, borderRadius: 4, backgroundColor: tutorialPage === i ? TUT_PAGES[i].titleColor : 'rgba(255,255,255,0.2)', marginHorizontal: 2 }} />)}
+        <View style={{ position: 'absolute', bottom: 100, width: '100%', flexDirection: 'row', justifyContent: 'center', gap: 8 }} pointerEvents="none" pointerEvents="none">
+          {TUT_PAGES.slice(0, 4).map((_, i) => <View key={i} style={{ width: tutorialPage === i ? 28 : 8, height: 8, borderRadius: 4, backgroundColor: tutorialPage === i ? TUT_PAGES[i].titleColor : 'rgba(255,255,255,0.2)', marginHorizontal: 2 }} />)}
         </View>
         <View style={{ position: 'absolute', bottom: 40, width: '100%', paddingHorizontal: 30, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <TouchableOpacity onPress={() => setScreen('setup')}><Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14, fontFamily: FF.regular }}>Skip Tutorial</Text></TouchableOpacity>
-          {tutorialPage < TUT_PAGES.length - 1 ? (
+          {tutorialPage < 3 ? (
             <TouchableOpacity onPress={() => goToPage(tutorialPage + 1)}>
               <Text style={{ color: C.green, fontSize: 15, fontWeight: '600', fontFamily: FF.bold }}>Swipe →</Text>
             </TouchableOpacity>
