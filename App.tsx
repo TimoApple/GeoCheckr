@@ -391,7 +391,26 @@ export default function App() {
     if (showCityScanner) {
       return (
         <View style={{ flex: 1, backgroundColor: '#000' }}><StatusBar hidden />
-          <CameraView ref={cameraRef} style={{ flex: 1 }} facing="back">
+          <CameraView ref={cameraRef} style={{ flex: 1 }} facing="back"
+            onBarcodeScanned={scanned || ocrProcessing ? undefined : ({ data }: { data: string }) => {
+              const m = data.match(/#?(\d+)/);
+              const id = m ? parseInt(m[1], 10) : (data.startsWith('city:') ? parseInt(data.split(':')[1]) : -1);
+              if (id >= 0 && id < panoramaLocations.length && scanCityForIdx !== null) {
+                const loc = panoramaLocations.find(l => l.id === id);
+                if (loc) {
+                  const alreadyAssigned = players.some((p, i) => i !== scanCityForIdx && p.cityId === id);
+                  if (alreadyAssigned) { setScanError('Card already assigned!'); setTimeout(() => setScanError(''), 2000); return; }
+                  playScanSound(); Vibration.vibrate(100); setCardRecognized(true);
+                  setPlayers(prev => prev.map((p, i) =>
+                    i === scanCityForIdx ? { ...p, city: loc.city, cityId: id, lat: loc.lat, lng: loc.lng } : p
+                  ));
+                  setUsedLocations(prev => [...prev, id]);
+                  setTimeout(() => { setCardRecognized(false); setShowCityScanner(false); setScanCityForIdx(null); setOcrProcessing(false); }, 800);
+                }
+              }
+            }}
+            barcodeScannerSettings={{ barcodeTypes: ['qr', 'code128'] }}
+          >
             <View style={s.scanOverlay}>
               <View style={{ alignItems: 'center', marginBottom: 40 }}>
                 <Text style={{ color: C.primary, fontSize: 13, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2, marginBottom: 6 }}>ASSIGN CARD</Text>
@@ -617,10 +636,14 @@ export default function App() {
             <View key={p.id} style={s.playerRow}>
               <TextInput
                 style={s.playerInput}
-                value={p.name.startsWith('Player ') ? '' : p.name}
-                onChangeText={t => setPlayers(prev => prev.map((pp, idx) => idx === i ? { ...pp, name: t.length > 0 ? t : `Player ${idx + 1}` } : pp))}
+                value={p.city.length > 0 ? `${p.name} — ${p.city}` : (p.name.startsWith('Player ') ? '' : p.name)}
+                onChangeText={t => {
+                  const cleanName = t.includes(' — ') ? t.split(' — ')[0] : t;
+                  setPlayers(prev => prev.map((pp, idx) => idx === i ? { ...pp, name: cleanName.length > 0 ? cleanName : `Player ${idx + 1}` } : pp));
+                }}
                 placeholder={`Player ${i + 1}`}
                 placeholderTextColor="rgba(225,224,251,0.3)"
+                editable={p.city.length === 0}
               />
               <TouchableOpacity style={[s.hashBtn, p.city.length > 0 && s.hashBtnDone]} onPress={() => openCityScan(i)}>
                 <Text style={[s.hashBtnText, p.city.length > 0 && s.hashBtnTextDone]}>
@@ -810,15 +833,70 @@ export default function App() {
 
   // ═══════════════ END SCREEN ═══════════════
   const sorted = [...players].sort((a, b) => b.score - a.score);
+  const isTie = sorted.length >= 2 && sorted[0].score === sorted[1].score;
+  const winner = sorted[0];
+
+  // Tie-breaker: auto-continue
+  if (isTie) {
+    return (
+      <View style={[s.container, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40 }]}>
+        <StatusBar hidden />
+        <Text style={{ color: C.green, fontSize: 40, fontWeight: '700', fontFamily: FF.bold, textAlign: 'center', marginBottom: 20 }}>Dead Heat!</Text>
+        <Text style={{ color: C.text, fontSize: 22, fontFamily: FF.regular, textAlign: 'center', lineHeight: 38, marginBottom: 40 }}>
+          It's a tie! 🎯{'\n'}Adding one more round...
+        </Text>
+        <TouchableOpacity style={[s.primaryBtn, { paddingVertical: 18, paddingHorizontal: 48 }]} onPress={() => {
+          setMaxRounds(prev => prev + 1);
+          setPhase('scan-qr');
+          setScreen('game');
+          getRandomLocation();
+        }}>
+          <Text style={[s.primaryBtnText, { fontSize: 18 }]}>CONTINUE</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Winner stats
+  const winnerStats = {
+    name: winner.name,
+    score: winner.score,
+    city: winner.city,
+    roundsWon: players.filter(p => p.id === winner.id).length,
+  };
+
   return (
     <View style={s.container}><StatusBar hidden />
       <ScrollView contentContainerStyle={s.endScroll}>
-        <Text style={{ fontSize: 64, color: C.primary, marginBottom: 16 }}>✓</Text>
-        <Text style={{ color: C.onSurface, fontSize: 28, fontWeight: '700', textAlign: 'center', marginBottom: 4 }}>EVALUATION COMPLETE</Text>
-        <Text style={{ color: 'rgba(225,224,251,0.4)', fontSize: 11, fontWeight: '700', letterSpacing: 3, textTransform: 'uppercase', textAlign: 'center', marginBottom: 40 }}>SESSION DATA READY FOR ANALYSIS</Text>
+        <Text style={{ fontSize: 80, color: C.green, marginBottom: 20 }}>🏆</Text>
+        <Text style={{ color: C.green, fontSize: 32, fontWeight: '700', fontFamily: FF.bold, textAlign: 'center', marginBottom: 8 }}>{winner.name} knows his planet!</Text>
+        <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 14, fontFamily: FF.regular, textAlign: 'center', marginBottom: 40 }}>
+          {winner.city.length > 0 ? `Represents: ${winner.city}` : ''}
+        </Text>
+        {/* Stats */}
+        <View style={{ width: '100%', backgroundColor: C.surfaceLow, borderRadius: 12, padding: 20, marginBottom: 24 }}>
+          <Text style={{ color: 'rgba(225,224,251,0.4)', fontSize: 11, fontWeight: '700', letterSpacing: 3, marginBottom: 16, textAlign: 'center' }}>SESSION STATS</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ color: C.green, fontSize: 36, fontWeight: '700', fontFamily: FF.bold }}>{winner.score}</Text>
+              <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 12, fontFamily: FF.regular }}>Points</Text>
+            </View>
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ color: C.green, fontSize: 36, fontWeight: '700', fontFamily: FF.bold }}>{maxRounds}</Text>
+              <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 12, fontFamily: FF.regular }}>Rounds</Text>
+            </View>
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ color: C.green, fontSize: 36, fontWeight: '700', fontFamily: FF.bold }}>{players.length}</Text>
+              <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 12, fontFamily: FF.regular }}>Players</Text>
+            </View>
+          </View>
+        </View>
+        {/* Leaderboard */}
         {sorted.map((p, i) => (
           <View key={p.id} style={[s.endRow, i % 2 === 0 ? { backgroundColor: C.surfaceLow } : { backgroundColor: C.surface }]}>
-            <Text style={{ color: C.primary, fontSize: 14, fontWeight: '700', width: 36 }}>#{i + 1}</Text>
+            <Text style={{ color: i === 0 ? C.green : C.primary, fontSize: 14, fontWeight: '700', width: 40 }}>
+              {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
+            </Text>
             <View style={{ flex: 1 }}>
               <Text style={{ color: C.onSurface, fontSize: 18, fontWeight: '700' }}>{p.name}</Text>
               <Text style={{ color: 'rgba(225,224,251,0.4)', fontSize: 12, marginTop: 2 }}>{p.city}</Text>
@@ -830,6 +908,7 @@ export default function App() {
           setPlayers(prev => prev.map(p => ({ ...p, city: '', cityId: -1, lat: 0, lng: 0, score: 0 })));
           setUsedLocations([]);
           setRound(1);
+          setMaxRounds(maxRounds); // keep current rounds
           setScreen('reshuffle');
         }}>
           <Text style={s.primaryBtnText}>PLAY AGAIN</Text>
