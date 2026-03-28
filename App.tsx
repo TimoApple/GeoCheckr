@@ -259,9 +259,45 @@ export default function App() {
   // ═══ SCANNER: TEXT INPUT ONLY ═══
   const handleScan = useCallback(({ data }: { data: string }) => {
     if (scanned) return;
-    console.log('[TEXT SCAN]', data);
+    console.log('[SCAN]', data);
 
-    // Only game QR — city assignment uses text input
+    // CITY CARD ASSIGNMENT: #number barcode OR city:ID QR
+    if (showCityScanner && scanCityForIdx !== null) {
+      const m = data.match(/#?(\d+)/);
+      if (m) {
+        const id = parseInt(m[1], 10);
+        if (id >= 0 && id < panoramaLocations.length) {
+          const loc = panoramaLocations.find(l => l.id === id);
+          if (loc) {
+            playScanSound(); setScanned(true); Vibration.vibrate(100);
+            setPlayers(prev => prev.map((p, i) =>
+              i === scanCityForIdx ? { ...p, city: loc.city, cityId: id, lat: loc.lat, lng: loc.lng } : p
+            ));
+            setShowCityScanner(false); setScanCityForIdx(null);
+            return;
+          }
+        }
+      }
+      if (data.startsWith('city:')) {
+        const id = parseInt(data.split(':')[1]);
+        if (id >= 0 && id < panoramaLocations.length) {
+          const loc = panoramaLocations.find(l => l.id === id);
+          if (loc) {
+            playScanSound(); setScanned(true); Vibration.vibrate(100);
+            setPlayers(prev => prev.map((p, i) =>
+              i === scanCityForIdx ? { ...p, city: loc.city, cityId: id, lat: loc.lat, lng: loc.lng } : p
+            ));
+            setShowCityScanner(false); setScanCityForIdx(null);
+            return;
+          }
+        }
+      }
+      setScanError('Not recognized — scan #number or QR');
+      setTimeout(() => setScanned(false), 1500);
+      return;
+    }
+
+    // GAME QR — Street View
     if (showQrScanner) {
       const m = data.match(/#?(\d+)/);
       if (m) {
@@ -285,7 +321,7 @@ export default function App() {
         }
       }
     }
-  }, [scanned, showQrScanner, onQrScanned, usedLocations]);
+  }, [scanned, showCityScanner, scanCityForIdx, showQrScanner, onQrScanned, usedLocations]);
 
   // TUTORIAL
   const TUT_PAGES = [
