@@ -524,14 +524,12 @@ export default function App() {
                   {p.city.length > 0 ? '✓' : '#'}
                 </Text>
               </TouchableOpacity>
-              {p.city.length > 0 && <Text style={s.cityBadge}>{p.city}</Text>}
               {players.length > 2 && (
                 <TouchableOpacity style={s.removeBtn} onPress={() => setPlayers(prev => prev.filter(pp => pp.id !== p.id))}>
                   <Text style={{ color: C.error, fontSize: 14, fontWeight: '700', fontFamily: FF.bold }}>✕</Text>
                 </TouchableOpacity>
               )}
               {players.length <= 2 && <View style={s.removeBtn} />}
-              {p.city.length > 0 && <Text style={s.cityBadge}>{p.city}</Text>}
             </View>
           ))}
 
