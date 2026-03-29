@@ -565,13 +565,23 @@ export default function App() {
 
           {players.map((p, i) => (
             <View key={p.id} style={s.playerRow}>
-              <TextInput
-                style={s.playerInput}
-                value={p.name}
-                onChangeText={(text) => setPlayers(prev => prev.map((pp, idx) => idx === i ? { ...pp, name: text } : pp))}
-                placeholder="Player name..."
-                placeholderTextColor="rgba(225,224,251,0.3)"
-              />
+              <View style={s.playerInputWrapper}>
+                <TextInput
+                  style={s.playerInput}
+                  value={p.name}
+                  onChangeText={(text) => setPlayers(prev => prev.map((pp, idx) => idx === i ? { ...pp, name: text } : pp))}
+                  placeholder="Player name..."
+                  placeholderTextColor="rgba(225,224,251,0.3)"
+                />
+                {players.length > 1 && (
+                  <TouchableOpacity
+                    style={s.clearBtn}
+                    onPress={() => removePlayer(p.id)}
+                  >
+                    <Text style={s.clearBtnText}>✕</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
               <TouchableOpacity
                 style={[s.scanBtn, p.city.length > 0 && s.scanBtnDone]}
                 onPress={() => openScannerForPlayer(i)}
@@ -579,13 +589,6 @@ export default function App() {
                 <Text style={[s.scanBtnIcon, p.city.length > 0 && s.scanBtnIconDone]}>
                   {p.city.length > 0 ? '✓' : '#'}
                 </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[s.removeBtn, players.length <= 1 && s.removeBtnDisabled]}
-                onPress={() => players.length > 1 && removePlayer(p.id)}
-                disabled={players.length <= 1}
-              >
-                <Text style={[s.removeBtnText, players.length <= 1 && s.removeBtnTextDisabled]}>✕</Text>
               </TouchableOpacity>
               {p.city.length > 0 && (
                 <Text style={s.cityLabel}>{p.city}</Text>
@@ -972,12 +975,23 @@ const s = StyleSheet.create({
     backgroundColor: C.surfaceLow, marginBottom: 8,
     gap: 0,
   },
+  playerInputWrapper: {
+    flex: 1, flexDirection: 'row', alignItems: 'center',
+    backgroundColor: C.surfaceLow, position: 'relative',
+  },
   playerInput: {
     flex: 1, color: C.onSurface, fontSize: 16, fontWeight: '500',
     paddingVertical: 16, paddingHorizontal: 16,
+    paddingRight: 36,
     backgroundColor: C.surfaceLow,
     borderBottomWidth: 1, borderBottomColor: 'rgba(68,73,52,0.15)',
   },
+  clearBtn: {
+    position: 'absolute', right: 8, top: 0, bottom: 0,
+    justifyContent: 'center', alignItems: 'center',
+    width: 28, height: '100%',
+  },
+  clearBtnText: { color: C.outline, fontSize: 14, fontWeight: '600' },
   scanBtn: {
     backgroundColor: C.secondaryContainer, paddingVertical: 16, paddingHorizontal: 20,
     alignItems: 'center', justifyContent: 'center',
