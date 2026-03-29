@@ -13,7 +13,7 @@
 
       .st1, .st2 {
         fill: none;
-        stroke: #0a0b1f;
+        stroke: #c6ff00;
         stroke-miterlimit: 10;
       }
 
