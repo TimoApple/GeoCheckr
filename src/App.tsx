@@ -112,6 +112,7 @@ function init(){
 export default function App() {
   const [screen, setScreen] = useState<Screen>('tutorial');
   const [tutorialPage, setTutorialPage] = useState(0);
+  const [tutorialSwiping, setTutorialSwiping] = useState(false);
 
   // Setup state
   const [players, setPlayers] = useState<Player[]>([]);
@@ -284,7 +285,7 @@ export default function App() {
   };
 
   // ============================================================
-  // SCAN HANDLER — BLOCK QR IN SETUP, ALLOW #NUMBERS
+  // SCAN HANDLER — BLOCK QR IN SETUP, ALLOW #NUMBERS, BLOCK DUPLICATES
   // ============================================================
   const handleScan = ({ data }: { data: string }) => {
     if (scanned) return;
@@ -305,7 +306,20 @@ export default function App() {
     if (id !== null && id >= 0 && id < panoramaLocations.length) {
       const loc = panoramaLocations.find(l => l.id === id);
       if (loc) {
+        // CHECK DUPLICATE: Is this city already assigned to a player or on the table?
+        const alreadyAssigned = players.some(p => p.cityId === id);
+        const alreadyOnTable = tableCities.some(tc => {
+          const tableLoc = panoramaLocations.find(l => l.city === tc.city);
+          return tableLoc && tableLoc.id === id;
+        });
+
         if (scanMode === 'player-city' && scanningForPlayerIdx !== null) {
+          if (alreadyAssigned) {
+            // BLOCK: City card already assigned to another player
+            Vibration.vibrate(500);
+            setScanned(false);
+            return;
+          }
           // ASSIGN CITY TO PLAYER
           setPlayers(prev => prev.map((p, i) =>
             i === scanningForPlayerIdx
@@ -318,6 +332,12 @@ export default function App() {
           Vibration.vibrate(100);
           return;
         } else if (scanMode === 'qr-card') {
+          if (alreadyOnTable || alreadyAssigned) {
+            // BLOCK: This QR belongs to a city already in play — skip it
+            Vibration.vibrate(500);
+            setScanned(false);
+            return;
+          }
           // GAME: QR card → Street View
           onQrScanned(loc);
           return;
@@ -338,11 +358,15 @@ export default function App() {
   ];
 
   const onTutorialScroll = (e: any) => {
-    const page = Math.round(e.nativeEvent.contentOffset.x / width);
+    const offsetX = e.nativeEvent.contentOffset.x;
+    const page = Math.round(offsetX / width);
     setTutorialPage(page);
-    // Auto-advance to setup on last slide swipe
-    if (page >= TUTORIAL_SLIDES.length) {
-      setScreen('setup');
+    // Auto-advance to setup when swiping right on last slide
+    if (page >= TUTORIAL_SLIDES.length - 1 && offsetX > (TUTORIAL_SLIDES.length - 1) * width + 20) {
+      if (!tutorialSwiping) {
+        setTutorialSwiping(true);
+        setScreen('setup');
+      }
     }
   };
 
@@ -385,7 +409,7 @@ export default function App() {
               </Text>
               <Text style={s.scanSub}>
                 {scanMode === 'player-city'
-                  ? 'Hold the #number side of the city card in frame'
+                  ? 'Point camera at the city card'
                   : 'Hold the QR card in frame to load Street View'}
               </Text>
             </View>
@@ -411,6 +435,10 @@ export default function App() {
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           onMomentumScrollEnd={onTutorialScroll}
+          onScrollEndDrag={onTutorialScroll}
+          scrollEventThrottle={16}
+          overScrollMode="always"
+          bounces={true}
         >
           {TUTORIAL_SLIDES.map((sl, i) => (
             <View key={i} style={[s.tutSlide, { width }]}>
@@ -485,11 +513,13 @@ export default function App() {
                   {p.city.length > 0 ? '✓' : '#'}
                 </Text>
               </TouchableOpacity>
-              {players.length > 1 && (
-                <TouchableOpacity style={s.removeBtn} onPress={() => removePlayer(p.id)}>
-                  <Text style={s.removeBtnText}>✕</Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity
+                style={[s.removeBtn, players.length <= 1 && s.removeBtnDisabled]}
+                onPress={() => players.length > 1 && removePlayer(p.id)}
+                disabled={players.length <= 1}
+              >
+                <Text style={[s.removeBtnText, players.length <= 1 && s.removeBtnTextDisabled]}>✕</Text>
+              </TouchableOpacity>
               {p.city.length > 0 && (
                 <Text style={s.cityLabel}>{p.city}</Text>
               )}
@@ -871,6 +901,8 @@ const s = StyleSheet.create({
     backgroundColor: C.surfaceLow,
   },
   removeBtnText: { color: C.error, fontSize: 14, fontWeight: '700' },
+  removeBtnDisabled: { opacity: 0.2 },
+  removeBtnTextDisabled: { color: C.outline },
   cityLabel: {
     position: 'absolute', right: 80, top: 18,
     color: C.primary, fontSize: 11, fontWeight: '600', letterSpacing: 1,
@@ -1030,8 +1062,8 @@ const s = StyleSheet.create({
 
   // ---- SCANNER ----
   permText: { color: C.onSurface, fontSize: 18, marginBottom: 20, textAlign: 'center' },
-  scanOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  scanFrame: { width: 280, height: 280, borderWidth: 3, borderColor: C.primary, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)' },
+  scanOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 100 },
+  scanFrame: { width: 280, height: 200, borderWidth: 2, borderColor: C.primary, justifyContent: 'center', alignItems: 'center', backgroundColor: 'transparent' },
   scanTitle: { color: C.onSurface, fontSize: 18, fontWeight: '700', textAlign: 'center', letterSpacing: 2 },
   scanSub: { color: 'rgba(225,224,251,0.6)', fontSize: 12, textAlign: 'center', marginTop: 8, paddingHorizontal: 20 },
   scanClose: { position: 'absolute', bottom: 60, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.8)', paddingHorizontal: 24, paddingVertical: 12 },
