@@ -118,6 +118,8 @@ export default function App() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [newPlayerName, setNewPlayerName] = useState('');
   const [showScanner, setShowScanner] = useState(false);
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [manualCode, setManualCode] = useState('');
   const [scanMode, setScanMode] = useState<ScanMode>('player-city');
   const [scanned, setScanned] = useState(false);
   const [scanningForPlayerIdx, setScanningForPlayerIdx] = useState<number | null>(null);
@@ -140,6 +142,7 @@ export default function App() {
   const [closestCityIdx, setClosestCityIdx] = useState<number | null>(null);
   const [distances, setDistances] = useState<number[]>([]);
   const [winnerId, setWinnerId] = useState<number | null>(null);
+  const [tieBreak, setTieBreak] = useState(false);
 
   const timerPulse = useRef(new Animated.Value(1)).current;
   const resultScale = useRef(new Animated.Value(0)).current;
@@ -278,7 +281,23 @@ export default function App() {
 
   const nextTurn = () => {
     playClickSound();
-    if (round >= maxRounds) { setScreen('result'); return; }
+    if (round >= maxRounds) {
+      // Check for tie — only start Tie Break if scores are actually tied
+      const maxScore = Math.max(...players.map(p => p.score));
+      const tiedPlayers = players.filter(p => p.score === maxScore);
+      if (tiedPlayers.length > 1 && !tieBreak) {
+        // TIE BREAK — continue until one player leads
+        setTieBreak(true);
+        setMaxRounds(maxRounds + 1);
+        setActivePlayerIdx(prev => (prev + 1) % players.length);
+        setRound(r => r + 1);
+        startRound();
+        return;
+      }
+      // No tie or tie break already active — show results
+      setScreen('result');
+      return;
+    }
     setActivePlayerIdx(prev => (prev + 1) % players.length);
     setRound(r => r + 1);
     startRound();
@@ -399,7 +418,7 @@ export default function App() {
           facing="back"
           onBarcodeScanned={scanned ? undefined : ({ data }) => handleScan({ data })}
           barcodeScannerSettings={{
-            barcodeTypes: ['code128', 'code39', 'ean13', 'ean8'],
+            barcodeTypes: ['code128', 'code39', 'ean13', 'ean8', 'qr'],
           }}
         >
           <View style={s.scanOverlay}>
@@ -409,15 +428,63 @@ export default function App() {
               </Text>
               <Text style={s.scanSub}>
                 {scanMode === 'player-city'
-                  ? 'Point camera at the city card'
+                  ? 'Barcode, QR code, or enter number manually'
                   : 'Hold the QR card in frame to load Street View'}
               </Text>
             </View>
+            {/* Enter Code Backup */}
+            <TouchableOpacity
+              style={s.enterCodeBtn}
+              onPress={() => setShowManualInput(true)}
+            >
+              <Text style={s.enterCodeBtnText}>ENTER CODE</Text>
+            </TouchableOpacity>
             <TouchableOpacity style={s.scanClose} onPress={() => { setShowScanner(false); setScanned(false); }}>
               <Text style={s.scanCloseText}>CLOSE</Text>
             </TouchableOpacity>
           </View>
         </CameraView>
+      </View>
+    );
+  }
+
+  // ============================================================
+  // MANUAL CODE INPUT — Backup when camera fails
+  // ============================================================
+  if (showManualInput) {
+    const submitManualCode = () => {
+      const trimmed = manualCode.trim();
+      if (!trimmed) return;
+      handleScan({ data: trimmed });
+      setShowManualInput(false);
+      setManualCode('');
+    };
+    return (
+      <View style={s.container}>
+        <StatusBar hidden />
+        <View style={s.centerScreen}>
+          <Text style={[s.phaseTitle, { marginBottom: 8 }]}>ENTER CODE</Text>
+          <Text style={[s.phaseSub, { marginBottom: 32 }]}>
+            Type the number from your city card (e.g. 42 or #42)
+          </Text>
+          <TextInput
+            style={[s.playerInput, { width: '100%', maxWidth: 300, textAlign: 'center', fontSize: 24, marginBottom: 24 }]}
+            value={manualCode}
+            onChangeText={setManualCode}
+            placeholder="#042"
+            placeholderTextColor="rgba(225,224,251,0.3)"
+            keyboardType="number-pad"
+            autoFocus
+            onSubmitEditing={submitManualCode}
+            returnKeyType="done"
+          />
+          <TouchableOpacity style={[s.primaryBtn, { width: '100%', maxWidth: 300 }]} onPress={submitManualCode}>
+            <Text style={s.primaryBtnText}>CONFIRM</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.tertiaryBtn} onPress={() => { setShowManualInput(false); setManualCode(''); }}>
+            <Text style={s.tertiaryBtnText}>CANCEL</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -787,9 +854,17 @@ export default function App() {
   }
 
   // ============================================================
-  // END SCREEN — "The Tactical Cartographer" Design
+  // END SCREEN — Win / Loss / Tie
   // ============================================================
   const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+  const maxScore = sortedPlayers.length > 0 ? sortedPlayers[0].score : 0;
+  const minScore = sortedPlayers.length > 0 ? sortedPlayers[sortedPlayers.length - 1].score : 0;
+
+  const getPlayerResult = (score: number, rank: number) => {
+    if (score === maxScore) return { label: 'GEWONNEN', color: C.primary };
+    if (score === minScore) return { label: 'VERLOREN', color: C.error };
+    return { label: 'UNENTSCHIEDEN', color: C.secondary };
+  };
 
   return (
     <View style={s.container}>
@@ -799,23 +874,37 @@ export default function App() {
         <Text style={s.endTitle}>EVALUATION COMPLETE</Text>
         <Text style={s.endSub}>SESSION DATA READY FOR ANALYSIS</Text>
 
-        {sortedPlayers.map((p, i) => (
-          <View key={p.id} style={[s.endPlayerRow, i % 2 === 0 ? s.tableRowEven : s.tableRowOdd]}>
-            <Text style={s.endRank}>
-              {i === 0 ? '#1' : i === 1 ? '#2' : i === 2 ? '#3' : `#${i + 1}`}
-            </Text>
-            <View style={{ flex: 1 }}>
-              <Text style={s.endPlayerName}>{p.name}</Text>
-              <Text style={s.endPlayerCity}>{p.city}</Text>
+        {sortedPlayers.map((p, i) => {
+          const result = getPlayerResult(p.score, i);
+          return (
+            <View key={p.id} style={[s.endPlayerRow, i % 2 === 0 ? s.tableRowEven : s.tableRowOdd]}>
+              <Text style={s.endRank}>
+                {i === 0 ? '#1' : i === 1 ? '#2' : i === 2 ? '#3' : `#${i + 1}`}
+              </Text>
+              <View style={{ flex: 1 }}>
+                <Text style={s.endPlayerName}>{p.name}</Text>
+                <Text style={s.endPlayerCity}>{p.city}</Text>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={s.endPlayerScore}>{p.score}</Text>
+                <Text style={[s.endResultLabel, { color: result.color }]}>{result.label}</Text>
+              </View>
             </View>
-            <Text style={s.endPlayerScore}>{p.score}</Text>
-          </View>
-        ))}
+          );
+        })}
 
         <TouchableOpacity style={s.primaryBtn} onPress={() => {
-          setPlayers([]);
+          // Play Again: keep names, reset cities
+          setPlayers(prev => prev.map(p => ({
+            ...p,
+            city: '',
+            cityId: -1,
+            lat: 0,
+            lng: 0,
+            score: 0,
+          })));
           setTableCities([]);
-          setNewPlayerName('');
+          setTieBreak(false);
           setScreen('setup');
         }}>
           <Text style={s.primaryBtnText}>PLAY AGAIN</Text>
@@ -1059,6 +1148,7 @@ const s = StyleSheet.create({
   endPlayerName: { color: C.onSurface, fontSize: 18, fontWeight: '700' },
   endPlayerCity: { color: 'rgba(225,224,251,0.4)', fontSize: 12, marginTop: 2, letterSpacing: 1 },
   endPlayerScore: { color: C.onSurface, fontSize: 28, fontWeight: '700' },
+  endResultLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase', marginTop: 2 },
 
   // ---- SCANNER ----
   permText: { color: C.onSurface, fontSize: 18, marginBottom: 20, textAlign: 'center' },
