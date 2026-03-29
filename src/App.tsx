@@ -128,6 +128,7 @@ export default function App() {
   const [timerSetting, setTimerSetting] = useState(15);
   const [roundsSetting, setRoundsSetting] = useState(10);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const cameraRef = useRef<CameraView>(null);
 
   // Game state
   const [tableCities, setTableCities] = useState<TableCity[]>([]);
@@ -418,10 +419,6 @@ export default function App() {
         <CameraView
           style={{ flex: 1 }}
           facing="back"
-          onBarcodeScanned={scanned ? undefined : ({ data }) => handleScan({ data })}
-          barcodeScannerSettings={{
-            barcodeTypes: ['code128', 'code39', 'ean13', 'ean8', 'qr'],
-          }}
         >
           <View style={s.scanOverlay}>
             <View style={s.scanFrame}>
@@ -429,19 +426,48 @@ export default function App() {
                 {scanMode === 'player-city' ? 'SCAN CITY CARD' : 'SCAN QR CARD'}
               </Text>
               <Text style={s.scanSub}>
-                {scanMode === 'player-city'
-                  ? 'Hold barcode or QR in frame'
-                  : 'Hold the QR card in frame to load Street View'}
+                Point camera at the card, then press CAPTURE
               </Text>
             </View>
-            {/* Enter Code Backup */}
-            <TouchableOpacity
-              style={s.enterCodeBtn}
-              onPress={() => setShowManualInput(true)}
-            >
-              <Text style={s.enterCodeBtnText}>ENTER CODE</Text>
+            {/* Manual Capture Button */}
+            <TouchableOpacity style={s.captureBtn} onPress={() => {
+              playClickSound();
+              // Try barcode scan manually
+              if (cameraRef.current) {
+                cameraRef.current.pausePreview();
+                setTimeout(() => cameraRef.current?.resumePreview(), 1500);
+              }
+              Vibration.vibrate(50);
+            }}>
+              <Text style={s.captureBtnText}>📸 CAPTURE</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={s.scanClose} onPress={() => { setShowScanner(false); setScanned(false); setCardDetected(false); setDetectedData(''); }}>
+            {/* Enter Code Below */}
+            <View style={s.codeInputRow}>
+              <TextInput
+                style={s.codeInput}
+                value={manualCode}
+                onChangeText={setManualCode}
+                placeholder="or enter #number..."
+                placeholderTextColor="rgba(225,224,251,0.3)"
+                keyboardType="number-pad"
+                returnKeyType="done"
+                onSubmitEditing={() => {
+                  if (manualCode.trim()) {
+                    handleScan({ data: manualCode.trim() });
+                    setManualCode('');
+                  }
+                }}
+              />
+              <TouchableOpacity style={s.codeGoBtn} onPress={() => {
+                if (manualCode.trim()) {
+                  handleScan({ data: manualCode.trim() });
+                  setManualCode('');
+                }
+              }}>
+                <Text style={s.codeGoBtnText}>GO</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity style={s.scanClose} onPress={() => { setShowScanner(false); setScanned(false); }}>
               <Text style={s.scanCloseText}>CLOSE</Text>
             </TouchableOpacity>
           </View>
@@ -1177,6 +1203,24 @@ const s = StyleSheet.create({
   scanFrameDetected: { borderColor: '#00ff88', borderWidth: 3, backgroundColor: 'rgba(0,255,136,0.08)' },
   scanTitle: { color: C.onSurface, fontSize: 18, fontWeight: '700', textAlign: 'center', letterSpacing: 2 },
   scanSub: { color: 'rgba(225,224,251,0.6)', fontSize: 12, textAlign: 'center', marginTop: 8, paddingHorizontal: 20 },
-  scanClose: { position: 'absolute', bottom: 60, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.8)', paddingHorizontal: 24, paddingVertical: 12 },
+  scanClose: { position: 'absolute', bottom: 16, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.8)', paddingHorizontal: 24, paddingVertical: 12 },
   scanCloseText: { color: C.onSurface, fontSize: 14, fontWeight: '700', letterSpacing: 2 },
+  captureBtn: {
+    backgroundColor: C.primary, paddingHorizontal: 32, paddingVertical: 14,
+    marginTop: 16,
+  },
+  captureBtnText: { color: C.onPrimaryContainer, fontSize: 15, fontWeight: '700', letterSpacing: 2 },
+  codeInputRow: {
+    flexDirection: 'row', alignItems: 'center', marginTop: 16,
+    width: 280, gap: 8,
+  },
+  codeInput: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', color: C.onSurface,
+    paddingVertical: 12, paddingHorizontal: 16, fontSize: 16,
+    borderWidth: 1, borderColor: 'rgba(68,73,52,0.3)',
+  },
+  codeGoBtn: {
+    backgroundColor: C.secondaryContainer, paddingVertical: 12, paddingHorizontal: 20,
+  },
+  codeGoBtnText: { color: C.onSecondaryContainer, fontSize: 14, fontWeight: '700' },
 });
