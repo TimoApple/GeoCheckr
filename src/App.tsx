@@ -120,6 +120,8 @@ export default function App() {
   const [showScanner, setShowScanner] = useState(false);
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualCode, setManualCode] = useState('');
+  const [cardDetected, setCardDetected] = useState(false);
+  const [detectedData, setDetectedData] = useState('');
   const [scanMode, setScanMode] = useState<ScanMode>('player-city');
   const [scanned, setScanned] = useState(false);
   const [scanningForPlayerIdx, setScanningForPlayerIdx] = useState<number | null>(null);
@@ -416,22 +418,41 @@ export default function App() {
         <CameraView
           style={{ flex: 1 }}
           facing="back"
-          onBarcodeScanned={scanned ? undefined : ({ data }) => handleScan({ data })}
+          onBarcodeScanned={scanned ? undefined : ({ data }) => {
+            if (!cardDetected) {
+              setCardDetected(true);
+              setDetectedData(data);
+              playClickSound();
+              Vibration.vibrate(50);
+            }
+          }}
           barcodeScannerSettings={{
             barcodeTypes: ['code128', 'code39', 'ean13', 'ean8', 'qr'],
           }}
         >
           <View style={s.scanOverlay}>
-            <View style={s.scanFrame}>
+            <View style={[s.scanFrame, cardDetected && s.scanFrameDetected]}>
               <Text style={s.scanTitle}>
-                {scanMode === 'player-city' ? 'SCAN CITY CARD' : 'SCAN QR CARD'}
+                {cardDetected ? 'CARD DETECTED!' : (scanMode === 'player-city' ? 'SCAN CITY CARD' : 'SCAN QR CARD')}
               </Text>
               <Text style={s.scanSub}>
-                {scanMode === 'player-city'
-                  ? 'Barcode, QR code, or enter number manually'
-                  : 'Hold the QR card in frame to load Street View'}
+                {cardDetected
+                  ? 'Press CAPTURE to confirm'
+                  : scanMode === 'player-city'
+                    ? 'Point at barcode, QR, or enter code'
+                    : 'Hold the QR card in frame'}
               </Text>
             </View>
+            {cardDetected && (
+              <TouchableOpacity style={s.captureBtn} onPress={() => {
+                playSuccessSound();
+                handleScan({ data: detectedData });
+                setCardDetected(false);
+                setDetectedData('');
+              }}>
+                <Text style={s.captureBtnText}>📸 CAPTURE</Text>
+              </TouchableOpacity>
+            )}
             {/* Enter Code Backup */}
             <TouchableOpacity
               style={s.enterCodeBtn}
@@ -439,7 +460,7 @@ export default function App() {
             >
               <Text style={s.enterCodeBtnText}>ENTER CODE</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={s.scanClose} onPress={() => { setShowScanner(false); setScanned(false); }}>
+            <TouchableOpacity style={s.scanClose} onPress={() => { setShowScanner(false); setScanned(false); setCardDetected(false); setDetectedData(''); }}>
               <Text style={s.scanCloseText}>CLOSE</Text>
             </TouchableOpacity>
           </View>
@@ -573,7 +594,7 @@ export default function App() {
                   placeholder="Player name..."
                   placeholderTextColor="rgba(225,224,251,0.3)"
                 />
-                {players.length > 1 && (
+                {p.name.length > 0 && players.length > 1 && (
                   <TouchableOpacity
                     style={s.clearBtn}
                     onPress={() => removePlayer(p.id)}
@@ -582,6 +603,9 @@ export default function App() {
                   </TouchableOpacity>
                 )}
               </View>
+              {p.city.length > 0 && (
+                <Text style={s.cityLabelInRow}>{p.city}</Text>
+              )}
               <TouchableOpacity
                 style={[s.scanBtn, p.city.length > 0 && s.scanBtnDone]}
                 onPress={() => openScannerForPlayer(i)}
@@ -590,9 +614,6 @@ export default function App() {
                   {p.city.length > 0 ? '✓' : '#'}
                 </Text>
               </TouchableOpacity>
-              {p.city.length > 0 && (
-                <Text style={s.cityLabel}>{p.city}</Text>
-              )}
             </View>
           ))}
 
@@ -1010,6 +1031,10 @@ const s = StyleSheet.create({
     position: 'absolute', right: 80, top: 18,
     color: C.primary, fontSize: 11, fontWeight: '600', letterSpacing: 1,
   },
+  cityLabelInRow: {
+    color: C.primary, fontSize: 12, fontWeight: '600', letterSpacing: 1,
+    paddingHorizontal: 8, flexShrink: 1,
+  },
 
   // Name input row (for adding new players)
   nameRow: {
@@ -1168,6 +1193,7 @@ const s = StyleSheet.create({
   permText: { color: C.onSurface, fontSize: 18, marginBottom: 20, textAlign: 'center' },
   scanOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 100 },
   scanFrame: { width: 280, height: 200, borderWidth: 2, borderColor: C.primary, justifyContent: 'center', alignItems: 'center', backgroundColor: 'transparent' },
+  scanFrameDetected: { borderColor: '#00ff88', borderWidth: 3, backgroundColor: 'rgba(0,255,136,0.08)' },
   scanTitle: { color: C.onSurface, fontSize: 18, fontWeight: '700', textAlign: 'center', letterSpacing: 2 },
   scanSub: { color: 'rgba(225,224,251,0.6)', fontSize: 12, textAlign: 'center', marginTop: 8, paddingHorizontal: 20 },
   scanClose: { position: 'absolute', bottom: 60, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.8)', paddingHorizontal: 24, paddingVertical: 12 },
