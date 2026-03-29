@@ -418,41 +418,22 @@ export default function App() {
         <CameraView
           style={{ flex: 1 }}
           facing="back"
-          onBarcodeScanned={scanned ? undefined : ({ data }) => {
-            if (!cardDetected) {
-              setCardDetected(true);
-              setDetectedData(data);
-              playClickSound();
-              Vibration.vibrate(50);
-            }
-          }}
+          onBarcodeScanned={scanned ? undefined : ({ data }) => handleScan({ data })}
           barcodeScannerSettings={{
             barcodeTypes: ['code128', 'code39', 'ean13', 'ean8', 'qr'],
           }}
         >
           <View style={s.scanOverlay}>
-            <View style={[s.scanFrame, cardDetected && s.scanFrameDetected]}>
+            <View style={s.scanFrame}>
               <Text style={s.scanTitle}>
-                {cardDetected ? 'CARD DETECTED!' : (scanMode === 'player-city' ? 'SCAN CITY CARD' : 'SCAN QR CARD')}
+                {scanMode === 'player-city' ? 'SCAN CITY CARD' : 'SCAN QR CARD'}
               </Text>
               <Text style={s.scanSub}>
-                {cardDetected
-                  ? 'Press CAPTURE to confirm'
-                  : scanMode === 'player-city'
-                    ? 'Point at barcode, QR, or enter code'
-                    : 'Hold the QR card in frame'}
+                {scanMode === 'player-city'
+                  ? 'Hold barcode or QR in frame'
+                  : 'Hold the QR card in frame to load Street View'}
               </Text>
             </View>
-            {cardDetected && (
-              <TouchableOpacity style={s.captureBtn} onPress={() => {
-                playSuccessSound();
-                handleScan({ data: detectedData });
-                setCardDetected(false);
-                setDetectedData('');
-              }}>
-                <Text style={s.captureBtnText}>📸 CAPTURE</Text>
-              </TouchableOpacity>
-            )}
             {/* Enter Code Backup */}
             <TouchableOpacity
               style={s.enterCodeBtn}
