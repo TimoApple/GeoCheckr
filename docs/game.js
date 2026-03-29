@@ -408,7 +408,7 @@ function renderAnswer(el) {
             <div style="width:28px;height:28px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:${PLAYER_COLORS[i]};flex-shrink:0;border:1px solid ${PLAYER_COLORS[i]}33;">${i+1}</div>
             <span style="flex:1;font-size:15px;font-weight:600;color:var(--text);">${p.name}</span>
             ${i === cp ? '<span class="label_sm" style="color:var(--green);margin:0;">DRAN</span>' : ''}
-            <span class="score-sm" style="font-size:14px;color:var(--text-muted);">${state.scores[i]}</span>
+            <span style="font-size:20px;font-weight:700;color:var(--text);margin-left:auto;min-width:28px;text-align:right;">${state.scores[i]}</span>
           </button>
         `).join('')}
       </div>
@@ -460,11 +460,11 @@ function renderScore(el) {
       <div style="width:100%;max-width:380px;">
         ${sorted.map((p, i) => `
           <div style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-4) 0;">
-            <span style="font-size:${i===0?'20':'16'}px;width:28px;text-align:center;">
+            <span style="font-size:${i===0?'20':'16'}px;width:28px;text-align:right;">
               ${i < 3 ? medals[i] : '<span style="color:var(--outline);font-size:13px;">#'+(i+1)+'</span>'}
             </span>
             <span style="flex:1;font-size:15px;font-weight:600;color:var(--text);">${p.name}</span>
-            <span class="score-sm">${p.score}</span>
+            <span class="score-sm" style="min-width:28px;text-align:right;">${p.score}</span>
           </div>
           <div class="progress-bar" style="margin-bottom:var(--sp-3);">
             <div class="fill" style="width:${(p.score/maxScore)*100}%;"></div>
