@@ -464,16 +464,17 @@ export default function App() {
 
   // ═══════════════ LOADING ═══════════════
   if (screen === 'loading') {
+    const logoSize = Math.min(width * 0.65, 320);
     return (
       <View style={[s.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#F1E8E1' }]}>
         <StatusBar hidden />
         <Animated.View style={{ opacity: loadingFade, alignItems: 'center' }}>
-          <Image source={require('./assets/logo-startscreen.png')} style={{ width: 280, height: 280, marginBottom: 48 }} resizeMode="contain" />
-          <Text style={{ color: '#262523', fontSize: 32, fontFamily: FF.regular, letterSpacing: 8, marginBottom: 8 }}>GEOCHECKR</Text>
-          <Text style={{ color: '#262523', fontSize: 11, fontFamily: FF.regular, letterSpacing: 4, marginBottom: 12, opacity: 0.6 }}>STREET VIEW EDITION</Text>
-          <View style={{ width: 120, height: 2, backgroundColor: '#262523', opacity: 0.3, marginTop: 8 }} />
+          <Image source={require('./assets/logo-startscreen.png')} style={{ width: logoSize, height: logoSize, marginBottom: logoSize * 0.15 }} resizeMode="contain" />
+          <Text style={{ color: '#262523', fontSize: width * 0.07, fontFamily: FF.regular, letterSpacing: width * 0.02, marginBottom: 4 }}>GEOCHECKR</Text>
+          <Text style={{ color: '#262523', fontSize: width * 0.025, fontFamily: FF.regular, letterSpacing: width * 0.01, marginBottom: 12, opacity: 0.6 }}>STREET VIEW EDITION</Text>
+          <View style={{ width: width * 0.3, height: 2, backgroundColor: '#262523', opacity: 0.3 }} />
         </Animated.View>
-        <Text style={{ color: '#262523', fontSize: 12, fontFamily: FF.regular, fontStyle: 'italic', opacity: 0.4, position: 'absolute', bottom: 60, textAlign: 'center', maxWidth: 300 }}>{loadingQuote}</Text>
+        <Text style={{ color: '#262523', fontSize: 12, fontFamily: FF.regular, fontStyle: 'italic', opacity: 0.4, position: 'absolute', bottom: 60, textAlign: 'center', maxWidth: width * 0.75 }}>{loadingQuote}</Text>
       </View>
     );
   }
