@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "GeoCheckr",
-    "slug": "geocheckr",
+    "name": "Geo Checker D",
+    "slug": "geo-checker-d",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,7 +16,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.geocheckr.app"
+      "bundleIdentifier": "com.geocheckr.app.de"
     },
     "android": {
       "adaptiveIcon": {
@@ -25,7 +25,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png",
         "backgroundColor": "#111225"
       },
-      "package": "com.geocheckr.app",
+      "package": "com.geocheckr.app.de",
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI"

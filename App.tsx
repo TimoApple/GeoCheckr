@@ -48,7 +48,7 @@ const QUOTES = [
 
 // STREET VIEW HTML
 function buildStreetViewHtml(lat: number, lng: number): string {
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><style>*{margin:0;padding:0;box-sizing:border-box}html,body,#pano{width:100%;height:100%;overflow:hidden;background:#000}#status{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#888;font-family:sans-serif;text-align:center;font-size:14px;z-index:999}#status .spinner{width:32px;height:32px;border:3px solid #333;border-top-color:#a6d700;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}@keyframes spin{to{transform:rotate(360deg)}}</style></head><body><div id="pano"></div><div id="status"><div class="spinner"></div>Loading Street View...</div><script>function init(){var sv=new google.maps.StreetViewService();sv.getPanorama({location:{lat:${lat},lng:${lng}},radius:50000,preference:google.maps.StreetViewPreference.NEAREST,source:google.maps.StreetViewSource.OUTDOOR},function(data,st){if(st===google.maps.StreetViewStatus.OK){new google.maps.StreetViewPanorama(document.getElementById('pano'),{pano:data.location.pano,pov:{heading:Math.random()*360,pitch:0},zoom:0,addressControl:false,linksControl:true,panControl:true,zoomControl:true,fullscreenControl:false,motionTracking:false,motionTrackingControl:false,enableCloseButton:false,clickToGo:true,scrollwheel:true,disableDefaultUI:false});document.getElementById('status').style.display='none';window.ReactNativeWebView&&window.ReactNativeWebView.postMessage('loaded')}else{document.getElementById('status').innerHTML='No Street View';window.ReactNativeWebView&&window.ReactNativeWebView.postMessage('error')}})}</script><script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init&libraries=streetView"></script></body></html>`;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><style>*{margin:0;padding:0;box-sizing:border-box}html,body,#pano{width:100%;height:100%;overflow:hidden;background:#000}#status{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#888;font-family:sans-serif;text-align:center;font-size:14px;z-index:999}#status .spinner{width:32px;height:32px;border:3px solid #333;border-top-color:#a6d700;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}@keyframes spin{to{transform:rotate(360deg)}}</style></head><body><div id="pano"></div><div id="status"><div class="spinner"></div>Loading Street View...</div><script>function init(){var sv=new google.maps.StreetViewService();sv.getPanorama({location:{lat:${lat},lng:${lng}},radius:50000,preference:google.maps.StreetViewPreference.NEAREST,source:google.maps.StreetViewSource.OUTDOOR},function(data,st){if(st===google.maps.StreetViewStatus.OK){new google.maps.StreetViewPanorama(document.getElementById('pano'),{pano:data.location.pano,pov:{heading:Math.random()*360,pitch:0},zoom:0,addressControl:false,linksControl:true,panControl:true,zoomControl:true,fullscreenControl:false,motionTracking:false,motionTrackingControl:false,enableCloseButton:false,clickToGo:true,scrollwheel:true,disableDefaultUI:false});document.getElementById('status').style.display='none';window.ReactNativeWebView&&window.ReactNativeWebView.postMessage('loaded')}else{document.getElementById('status').innerHTML='Kein Street View';window.ReactNativeWebView&&window.ReactNativeWebView.postMessage('error')}})}</script><script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init&libraries=streetView"></script></body></html>`;
 }
 
 export default function App() {
@@ -153,7 +153,7 @@ export default function App() {
       // Check if city already taken
       const takenBy = players.find(p => p.city.toLowerCase() === loc.city.toLowerCase() && players.indexOf(p) !== scanCityForIdx);
       if (takenBy) {
-        setScanError(`This card is already claimed by ${takenBy.name}`);
+        setScanError(`Diese Karte ist bereits vergeben von ${takenBy.name}`);
         setTimeout(() => setScanError(''), 2500);
         return;
       }
@@ -176,7 +176,7 @@ export default function App() {
     const normalized = code.toLowerCase().trim().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
     const textMatch = panoramaLocations.find(l => l.city.toLowerCase() === normalized);
     if (textMatch) { assign(textMatch, textMatch.id); return; }
-    setScanError('Not recognized — check code or city name');
+    setScanError('Nicht erkannt — Code oder Stadtnamen prüfen');
     setTimeout(() => setScanError(''), 2000);
   }, [manualCode, scanCityForIdx, players]);
 
@@ -267,7 +267,7 @@ export default function App() {
       if (matched) {
         const takenBy = players.find(p => p.city.toLowerCase() === matched.city.toLowerCase() && players.indexOf(p) !== scanCityForIdx);
         if (takenBy) {
-          setScanError(`This card is already claimed by ${takenBy.name}`);
+          setScanError(`Diese Karte ist bereits vergeben von ${takenBy.name}`);
           setScanned(true);
           setTimeout(() => { setScanError(''); setScanned(false); }, 2500);
           return;
@@ -278,11 +278,11 @@ export default function App() {
         ));
         setShowCityScanner(false); setScanned(false); setScanCityForIdx(null);
       } else {
-        setScanError('City not recognized — try again or enter code');
+        setScanError('Stadt nicht erkannt — nochmal versuchen oder Code eingeben');
         setTimeout(() => setScanError(''), 2500);
       }
     } catch (e) {
-      setScanError('Capture failed — try again');
+      setScanError('Aufnahme fehlgeschlagen — nochmal versuchen');
       setTimeout(() => setScanError(''), 2000);
     }
   }, [scanned, scanCityForIdx, players]);
@@ -319,7 +319,7 @@ export default function App() {
       // Check if city already taken by another player
       const takenBy = players.find(p => p.city.toLowerCase() === loc.city.toLowerCase() && players.indexOf(p) !== scanCityForIdx);
       if (takenBy) {
-        setScanError(`This card is already claimed by ${takenBy.name}`);
+        setScanError(`Diese Karte ist bereits vergeben von ${takenBy.name}`);
         setScanned(true);
         setTimeout(() => { setScanError(''); setScanned(false); }, 2500);
         return;
@@ -361,10 +361,10 @@ export default function App() {
 
   // TUTORIAL
   const TUT_PAGES = [
-    { bg: C.bg, titleColor: C.green, title: 'You Had One Job.', body: 'A Street View drops somewhere on Earth. You\'re holding a City Card. Figure out which city on the table is closest to what you\'re looking at.\n\nSimple? Sure. Easy? Absolutely not.' },
-    { bg: C.blue, titleColor: C.accent, title: 'Flip. Scan. Clock\'s Ticking.', body: 'Grab a card from the deck. Scan the QR code with the app. A Street View loads instantly — and the timer starts whether you\'re ready or not.' },
-    { bg: C.bg, titleColor: C.accent, title: 'Name That City.', body: 'Study the Street View. Pick the closest city from the cards on the table. Tap the mic and say it out loud — the app locks in your answer.\n\nThe closer you are, the more points.' },
-    { bg: '#0a2a0a', titleColor: C.green, title: 'Feeling Dangerous?', body: 'Think someone guessed wrong? Bet a token and name YOUR city.\n\nRight → bonus points.\nWrong → goodbye, token.\n\n→ Let\'s play!' },
+    { bg: C.bg, titleColor: C.green, title: 'Du hattest EINE Aufgabe.', body: 'Ein Street View irgendwo auf der Erde. Du hast eine Stadtkarte. Finde heraus, welche Stadt auf dem Tisch dem ist, was du siehst.\n\nEinfach? Klar. Leicht? Absolut nicht.' },
+    { bg: C.blue, titleColor: C.accent, title: 'Drehen. Scannen. Zeit läuft.', body: 'Nimm eine Karte vom Stapel. Scanne den QR-Code mit der App. Ein Street View lädt sofort — und der Timer startet, ob du bereit bist oder nicht.' },
+    { bg: C.bg, titleColor: C.accent, title: 'Nenne die Stadt.', body: 'Studiere das Street View. Wähle die nächste Stadt von den Karten auf dem Tisch. Tippe auf das Mikro und sage es laut — die App speichert deine Antwort.\n\nJe näher dran, desto mehr Punkte.' },
+    { bg: '#0a2a0a', titleColor: C.green, title: 'Bist du mutig?', body: 'Du denkst jemand hat falsch geraten? Setze einen Token und nenne DEINE Stadt.\n\nRichtig → Bonuspunkte.\nFalsch → tschüss, Token.\n\n→ Auf geht\'s!' },
   ];
 
   // ═══════════════ SCANNERS ═══════════════
@@ -373,9 +373,9 @@ export default function App() {
       return (
         <View style={s.container}><StatusBar hidden />
           <View style={s.centerScreen}>
-            <Text style={{ color: C.onSurface, fontSize: 18, marginBottom: 20, textAlign: 'center' }}>Camera permission required</Text>
-            <TouchableOpacity style={s.primaryBtn} onPress={requestCameraPermission}><Text style={s.primaryBtnText}>GRANT</Text></TouchableOpacity>
-            <TouchableOpacity style={s.tertiaryBtn} onPress={() => { setShowCityScanner(false); setShowQrScanner(false); setScanned(false); }}><Text style={s.tertiaryBtnText}>CANCEL</Text></TouchableOpacity>
+            <Text style={{ color: C.onSurface, fontSize: 18, marginBottom: 20, textAlign: 'center' }}>Kamera-Berechtigung erforderlich</Text>
+            <TouchableOpacity style={s.primaryBtn} onPress={requestCameraPermission}><Text style={s.primaryBtnText}>ZUGRIFF</Text></TouchableOpacity>
+            <TouchableOpacity style={s.tertiaryBtn} onPress={() => { setShowCityScanner(false); setShowQrScanner(false); setScanned(false); }}><Text style={s.tertiaryBtnText}>ABBRECHEN</Text></TouchableOpacity>
           </View>
         </View>
       );
@@ -393,13 +393,13 @@ export default function App() {
           <View style={s.scanOverlay}>
             <View style={{ alignItems: 'center', marginBottom: 20 }}>
               <Text style={{ color: C.primary, fontSize: 13, fontWeight: '700', letterSpacing: 2, marginBottom: 6 }}>
-                {showCityScanner ? 'ASSIGN CARD' : 'SCAN QR CARD'}
+                {showCityScanner ? 'KARTE ZUWEISEN' : 'QR-KARTE SCANNEN'}
               </Text>
               <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>{assignName || 'Player'}</Text>
             </View>
             <View style={s.scanFrame}>
               <Text style={{ color: C.primary, fontSize: 16, fontWeight: '600', textAlign: 'center' }}>
-                {showCityScanner ? 'Hold city card in frame' : 'Hold QR card in frame'}
+                {showCityScanner ? 'Stadtkarte in den Rahmen halten' : 'QR-Karte in den Rahmen halten'}
               </Text>
             </View>
 
@@ -411,14 +411,14 @@ export default function App() {
 
             {showCityScanner && (
               <View style={{ width: '100%', paddingHorizontal: 20, marginTop: 16 }}>
-                <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 11, fontWeight: '700', letterSpacing: 2, textAlign: 'center', marginBottom: 10, textTransform: 'uppercase' }}>Or enter code manually</Text>
+                <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 11, fontWeight: '700', letterSpacing: 2, textAlign: 'center', marginBottom: 10, textTransform: 'uppercase' }}>Oder Code manuell eingeben</Text>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   <View style={{ flex: 1, backgroundColor: 'rgba(25,26,45,0.9)', borderWidth: 1, borderColor: 'rgba(68,73,52,0.4)', borderRadius: 0 }}>
                     <TextInput
                       style={{ color: '#fff', fontSize: 16, fontFamily: FF.bold, paddingVertical: 12, paddingHorizontal: 16 }}
                       value={manualCode}
                       onChangeText={setManualCode}
-                      placeholder="#042 or Berlin"
+                      placeholder="#042 oder Berlin"
                       placeholderTextColor="rgba(225,224,251,0.3)"
                       autoCapitalize="none"
                       autoCorrect={false}
@@ -515,12 +515,12 @@ export default function App() {
           {TUT_PAGES.map((_, i) => <View key={i} style={{ width: tutorialPage === i ? 28 : 8, height: 8, borderRadius: 4, backgroundColor: tutorialPage === i ? TUT_PAGES[i].titleColor : 'rgba(255,255,255,0.2)', marginHorizontal: 2 }} />)}
         </View>
         <View style={{ position: 'absolute', bottom: 40, width: '100%', paddingHorizontal: 30, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <TouchableOpacity onPress={() => setScreen('setup')}><Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14, fontFamily: FF.regular }}>Skip Tutorial</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => setScreen('setup')}><Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14, fontFamily: FF.regular }}>Tutorial überspringen</Text></TouchableOpacity>
           {tutorialPage < TUT_PAGES.length - 1 ? (
             <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, fontFamily: FF.regular }}>Swipe →</Text>
           ) : (
             <TouchableOpacity style={{ backgroundColor: C.green, paddingVertical: 14, paddingHorizontal: 28, borderRadius: 9999 }} onPress={() => setScreen('setup')}>
-              <Text style={{ color: C.bg, fontSize: 17, fontWeight: '700', fontFamily: FF.bold }}>Let's play!</Text>
+              <Text style={{ color: C.bg, fontSize: 17, fontWeight: '700', fontFamily: FF.bold }}>Auf geht's!</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -534,11 +534,11 @@ export default function App() {
       <KeyboardAvoidingView style={s.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <StatusBar hidden />
         <ScrollView contentContainerStyle={s.setupScroll} keyboardShouldPersistTaps="handled">
-          <Text style={s.setupHeader}>GEOCHECKR</Text>
-          <Text style={s.setupTitle}>SETUP SESSION</Text>
+          <Text style={s.setupHeader}>GEO CHECKER D</Text>
+          <Text style={s.setupTitle}>SESSION EINRICHTEN</Text>
           <View style={s.titleBar} />
 
-          <View style={s.sectionLabel}><Text style={s.sectionLabelText}>PLAYER MANAGEMENT</Text></View>
+          <View style={s.sectionLabel}><Text style={s.sectionLabelText}>SPIELER</Text></View>
 
           {players.map((p, i) => (
             <View key={p.id} style={s.playerRow}>
@@ -566,12 +566,12 @@ export default function App() {
           ))}
 
           <TouchableOpacity style={s.recruitBtn} onPress={addPlayer}>
-            <Text style={s.recruitBtnText}>+ RECRUIT</Text>
+            <Text style={s.recruitBtnText}>+ NEUER SPIELER</Text>
           </TouchableOpacity>
 
           <View style={s.gridRow}>
             <View style={s.gridCol}>
-              <View style={s.sectionLabel}><Text style={s.sectionLabelText}>TIMER</Text></View>
+              <View style={s.sectionLabel}><Text style={s.sectionLabelText}>ZEIT</Text></View>
               <View style={s.chipRow}>
                 {[5, 15, 30].map(t => (
                   <TouchableOpacity key={t} style={[s.chip, timerSetting === t && s.chipActive]} onPress={() => setTimerSetting(t)}>
@@ -581,7 +581,7 @@ export default function App() {
               </View>
             </View>
             <View style={s.gridCol}>
-              <View style={s.sectionLabel}><Text style={s.sectionLabelText}>ROUNDS</Text></View>
+              <View style={s.sectionLabel}><Text style={s.sectionLabelText}>RUNDEN</Text></View>
               <View style={s.chipRow}>
                 {[5, 10, 15].map(r => (
                   <TouchableOpacity key={r} style={[s.chip, roundsSetting === r && s.chipActive]} onPress={() => setRoundsSetting(r)}>
@@ -594,7 +594,7 @@ export default function App() {
 
           <View style={{ marginTop: 32 }}>
             <TouchableOpacity style={[s.mainBtn, !allPlayersScanned && s.mainBtnDisabled]} disabled={!allPlayersScanned} onPress={startGame}>
-              <Text style={s.mainBtnText}>{allPlayersScanned ? 'ALL SET, LET\'S GO!' : 'SCAN ALL CARDS FIRST'}</Text>
+              <Text style={s.mainBtnText}>{allPlayersScanned ? 'ALLE BEREIT, LOS GEHT\'S!' : 'ERST ALLE KARTEN SCANNEN'}</Text>
             </TouchableOpacity>
             <Text style={s.actionHint}>{allPlayersScanned ? `${players.length} players ready` : 'Scan city cards for all players'}</Text>
           </View>
@@ -616,10 +616,10 @@ export default function App() {
             <Text style={{ color: C.onSurface, fontSize: 12, backgroundColor: C.surface, paddingHorizontal: 10, paddingVertical: 4 }}>R{round}/{maxRounds}</Text>
           </View>
           <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32, paddingTop: 60, paddingBottom: 40 }}>
-            <Text style={{ color: C.onSurface, fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 8 }}>{activePlayer.name}, draw a QR card!</Text>
-            <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 14, textAlign: 'center', marginBottom: 32 }}>Scan the QR card to reveal the location</Text>
+            <Text style={{ color: C.onSurface, fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 8 }}>{activePlayer.name}, zieh eine QR-Karte!</Text>
+            <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 14, textAlign: 'center', marginBottom: 32 }}>QR-Karte scannen, um den Ort zu enthüllen</Text>
             <View style={[s.tableList, { maxHeight: height * 0.35 }]}>
-              <Text style={{ color: C.secondary, fontSize: 10, fontWeight: '700', letterSpacing: 3, marginBottom: 12 }}>CITIES ON TABLE</Text>
+              <Text style={{ color: C.secondary, fontSize: 10, fontWeight: '700', letterSpacing: 3, marginBottom: 12 }}>STÄDTE AUF DEM TISCH</Text>
               <ScrollView nestedScrollEnabled style={{ maxHeight: height * 0.28 }}>
                 {tableCities.map((tc, i) => (
                   <View key={i} style={[s.tableRow, i % 2 === 0 ? { backgroundColor: C.surfaceLow } : { backgroundColor: C.surface }]}>
@@ -631,7 +631,7 @@ export default function App() {
               </ScrollView>
             </View>
             <TouchableOpacity style={[s.primaryBtn, { marginTop: 24 }]} onPress={() => { setShowQrScanner(true); setScanned(false); }}>
-              <Text style={s.primaryBtnText}>SCAN QR CARD</Text>
+              <Text style={s.primaryBtnText}>QR-KARTE SCANNEN</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -654,7 +654,7 @@ export default function App() {
               onMessage={(e) => { const msg = e.nativeEvent.data; if (msg === 'loaded') setSvLoaded(true); if (msg.startsWith('error')) setSvError(true); }}
               userAgent="Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36" />
             {!svLoaded && !svError && <View style={s.loadingOverlay}><Text style={{ color: 'rgba(225,224,251,0.5)' }}>Loading Street View...</Text></View>}
-            {svError && <View style={s.errorOverlay}><Text style={{ color: C.error, fontSize: 16, marginBottom: 20 }}>No Street View</Text><TouchableOpacity style={s.primaryBtn} onPress={nextTurn}><Text style={s.primaryBtnText}>SKIP</Text></TouchableOpacity></View>}
+            {svError && <View style={s.errorOverlay}><Text style={{ color: C.error, fontSize: 16, marginBottom: 20 }}>Kein Street View</Text><TouchableOpacity style={s.primaryBtn} onPress={nextTurn}><Text style={s.primaryBtnText}>ÜBERSPRINGEN</Text></TouchableOpacity></View>}
             {svLoaded && <>
               <Animated.View style={[s.timer, { borderColor: timerColor, transform: [{ scale: timerPulse }] }]}><Text style={[s.timerText, { color: timerColor }]}>{timer}</Text></Animated.View>
               <TouchableOpacity style={s.pickBtn} onPress={() => { playClickSound(); setTimerPaused(true); setPhase('pick'); }}><Text style={s.pickBtnText}>I KNOW IT!</Text></TouchableOpacity>
@@ -665,10 +665,10 @@ export default function App() {
         {phase === 'pick' && (
           <View style={s.pickScreen}>
             <Text style={{ color: C.onSurface, fontSize: 20, fontWeight: '700', textAlign: 'center', marginBottom: 4 }}>
-              {challengerId !== null ? 'CHALLENGER PICKS' : 'WHICH CITY IS CLOSEST?'}
+              {challengerId !== null ? 'CHALLENGER WÄHLT' : 'WELCHE STADT IST AM NÄCHSTEN?'}
             </Text>
             <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 13, textAlign: 'center', marginBottom: 24 }}>
-              {challengerId !== null ? `${players.find(p => p.id === challengerId)?.name}, choose your city` : `${activePlayer.name}, choose the city nearest to the shown location`}
+              {challengerId !== null ? `${players.find(p => p.id === challengerId)?.name}, wähle deine Stadt` : `${activePlayer.name}, wähle die nächste Stadt zum gezeigten Ort`}
             </Text>
             <ScrollView style={{ flex: 1, width: '100%' }}>
               {tableCities.map((tc, i) => (
@@ -698,11 +698,11 @@ export default function App() {
         {phase === 'challenge' && activePickIdx !== null && (
           <View style={s.pickScreen}>
             <Text style={{ color: C.accent, fontSize: 20, fontWeight: '700', textAlign: 'center', marginBottom: 4 }}>CHALLENGE?</Text>
-            <Text style={{ color: C.onSurface, fontSize: 16, textAlign: 'center', marginBottom: 6 }}>{activePlayer.name} picked:</Text>
+            <Text style={{ color: C.onSurface, fontSize: 16, textAlign: 'center', marginBottom: 6 }}>{activePlayer.name} wählte:</Text>
             <View style={{ backgroundColor: C.surface, paddingVertical: 14, paddingHorizontal: 20, marginBottom: 24, width: '100%', alignItems: 'center' }}>
               <Text style={{ color: C.primary, fontSize: 22, fontWeight: '700' }}>{tableCities[activePickIdx].city}</Text>
             </View>
-            <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 13, textAlign: 'center', marginBottom: 16 }}>Does any player want to challenge?</Text>
+            <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 13, textAlign: 'center', marginBottom: 16 }}>Möchte ein Spieler challengen?</Text>
             <ScrollView style={{ flex: 1, width: '100%' }}>
               {players.filter(p => p.id !== activePlayer.id).map(p => (
                 <TouchableOpacity key={p.id} style={[s.pickOption, { backgroundColor: C.surfaceLow }]} onPress={() => { playClickSound(); setChallengerId(p.id); }}>
@@ -710,17 +710,17 @@ export default function App() {
                   <View style={{ flex: 1 }}>
                     <Text style={{ color: C.onSurface, fontSize: 18, fontWeight: '600' }}>{p.name}</Text>
                   </View>
-                  {challengerId === p.id && <Text style={{ color: C.green, fontSize: 14, fontWeight: '700' }}>CHALLENGING</Text>}
+                  {challengerId === p.id && <Text style={{ color: C.green, fontSize: 14, fontWeight: '700' }}>CHALLENGT</Text>}
                 </TouchableOpacity>
               ))}
             </ScrollView>
             {challengerId !== null ? (
               <TouchableOpacity style={[s.primaryBtn, { marginTop: 16, width: '100%' }]} onPress={() => { playClickSound(); setPhase('pick'); }}>
-                <Text style={s.primaryBtnText}>CHALLENGER PICKS CITY</Text>
+                <Text style={s.primaryBtnText}>CHALLENGER WÄHLT STADT</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity style={[s.primaryBtn, { marginTop: 16, width: '100%', backgroundColor: C.surfaceHigh }]} onPress={() => resolveRound()}>
-                <Text style={[s.primaryBtnText, { color: C.onSurface }]}>NO CHALLENGE</Text>
+                <Text style={[s.primaryBtnText, { color: C.onSurface }]}>KEIN CHALLENGE</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -732,7 +732,7 @@ export default function App() {
               <Text style={{ fontSize: 48, textAlign: 'center', marginBottom: 12 }}>{winnerId !== null && winnerId === activePlayer.id ? '🎯' : '📍'}</Text>
               <Text style={{ color: C.primary, fontSize: 26, fontWeight: '700', textAlign: 'center', marginBottom: 4 }}>{location.city}</Text>
               <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 14, textAlign: 'center', marginBottom: 6 }}>({location.country})</Text>
-              <Text style={{ color: C.onSurface, fontSize: 17, fontWeight: '600', textAlign: 'center', marginBottom: 20 }}>lies closest to {tableCities[closestCityIdx].city}</Text>
+              <Text style={{ color: C.onSurface, fontSize: 17, fontWeight: '600', textAlign: 'center', marginBottom: 20 }}>liegt am nächsten an {tableCities[closestCityIdx].city}</Text>
               {tableCities.map((tc, i) => (
                 <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 12, backgroundColor: C.surfaceLow, marginBottom: 2 }}>
                   <Text style={{ color: 'rgba(225,224,251,0.7)', fontSize: 14 }}>{tc.isPlayerCity ? '◉' : '◈'} {tc.city}</Text>
@@ -741,7 +741,7 @@ export default function App() {
               ))}
               {winnerId !== null && <Text style={{ color: C.primary, fontSize: 16, fontWeight: '700', textAlign: 'center', marginVertical: 16 }}>⭐ {players.find(pp => pp.id === winnerId)?.name} scores!</Text>}
               <TouchableOpacity style={s.primaryBtn} onPress={nextTurn}>
-                <Text style={s.primaryBtnText}>{round >= maxRounds ? 'FINAL RESULTS' : 'NEXT ROUND →'}</Text>
+                <Text style={s.primaryBtnText}>{round >= maxRounds ? 'ENDERGEBNIS' : 'NÄCHSTE RUNDE →'}</Text>
               </TouchableOpacity>
             </Animated.View>
           </View>
@@ -756,8 +756,8 @@ export default function App() {
     <View style={s.container}><StatusBar hidden />
       <ScrollView contentContainerStyle={s.endScroll}>
         <Text style={{ fontSize: 64, color: C.primary, marginBottom: 16 }}>✓</Text>
-        <Text style={{ color: C.onSurface, fontSize: 28, fontWeight: '700', textAlign: 'center', marginBottom: 4 }}>EVALUATION COMPLETE</Text>
-        <Text style={{ color: 'rgba(225,224,251,0.4)', fontSize: 11, fontWeight: '700', letterSpacing: 3, textTransform: 'uppercase', textAlign: 'center', marginBottom: 40 }}>SESSION DATA READY FOR ANALYSIS</Text>
+        <Text style={{ color: C.onSurface, fontSize: 28, fontWeight: '700', textAlign: 'center', marginBottom: 4 }}>AUSWERTUNG ABGESCHLOSSEN</Text>
+        <Text style={{ color: 'rgba(225,224,251,0.4)', fontSize: 11, fontWeight: '700', letterSpacing: 3, textTransform: 'uppercase', textAlign: 'center', marginBottom: 40 }}>SESSION-DATEN BEREIT</Text>
         {sorted.map((p, i) => (
           <View key={p.id} style={[s.endRow, i % 2 === 0 ? { backgroundColor: C.surfaceLow } : { backgroundColor: C.surface }]}>
             <Text style={{ color: C.primary, fontSize: 14, fontWeight: '700', width: 36 }}>#{i + 1}</Text>
@@ -772,7 +772,7 @@ export default function App() {
           setPlayers(prev => prev.map(p => ({ ...p, city: '', cityId: -1, lat: 0, lng: 0, score: 0 })));
           setScreen('setup');
         }}>
-          <Text style={s.primaryBtnText}>PLAY AGAIN</Text>
+          <Text style={s.primaryBtnText}>NOCHMAL SPIELEN</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
