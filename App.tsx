@@ -369,7 +369,7 @@ export default function App() {
 
             {showCityScanner && (
               <TouchableOpacity style={{ backgroundColor: C.green, width: 72, height: 72, borderRadius: 36, borderWidth: 4, borderColor: '#fff', justifyContent: 'center', alignItems: 'center', marginTop: 20, alignSelf: 'center' }} onPress={captureAndRecognize}>
-                <Text style={{ color: C.bg, fontSize: 26, fontWeight: '700', fontFamily: FF.bold }}>📷</Text>
+                <Text style={{ color: C.bg, fontSize: 26, fontWeight: '700', fontFamily: FF.bold }}>◉</Text>
               </TouchableOpacity>
             )}
 
@@ -580,7 +580,6 @@ export default function App() {
             <Text style={{ color: C.onSurface, fontSize: 12, backgroundColor: C.surface, paddingHorizontal: 10, paddingVertical: 4 }}>R{round}/{maxRounds}</Text>
           </View>
           <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32, paddingTop: 60, paddingBottom: 40 }}>
-            <Text style={{ fontSize: 64, marginBottom: 24 }}>📷</Text>
             <Text style={{ color: C.onSurface, fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 8 }}>{activePlayer.name}, draw a QR card!</Text>
             <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 14, textAlign: 'center', marginBottom: 32 }}>Scan the QR card to reveal the location</Text>
             <View style={[s.tableList, { maxHeight: height * 0.35 }]}>
