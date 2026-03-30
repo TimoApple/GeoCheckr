@@ -730,7 +730,9 @@ export default function App() {
           <View style={s.resultOverlay}>
             <Animated.View style={[s.resultCard, { transform: [{ scale: resultScale }] }]}>
               <Text style={{ fontSize: 48, textAlign: 'center', marginBottom: 12 }}>{winnerId !== null && winnerId === activePlayer.id ? '🎯' : '📍'}</Text>
-              <Text style={{ color: C.onSurface, fontSize: 20, fontWeight: '700', textAlign: 'center', marginBottom: 20 }}>{tableCities[closestCityIdx].city} was closest!</Text>
+              <Text style={{ color: C.primary, fontSize: 26, fontWeight: '700', textAlign: 'center', marginBottom: 4 }}>{location.city}</Text>
+              <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 14, textAlign: 'center', marginBottom: 6 }}>({location.country})</Text>
+              <Text style={{ color: C.onSurface, fontSize: 17, fontWeight: '600', textAlign: 'center', marginBottom: 20 }}>lies closest to {tableCities[closestCityIdx].city}</Text>
               {tableCities.map((tc, i) => (
                 <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 12, backgroundColor: C.surfaceLow, marginBottom: 2 }}>
                   <Text style={{ color: 'rgba(225,224,251,0.7)', fontSize: 14 }}>{tc.isPlayerCity ? '◉' : '◈'} {tc.city}</Text>
