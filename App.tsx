@@ -63,7 +63,7 @@ const QUOTES = [
 
 // STREET VIEW HTML
 function buildStreetViewHtml(lat: number, lng: number): string {
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><style>*{margin:0;padding:0;box-sizing:border-box}html,body,#pano{width:100%;height:100%;overflow:hidden;background:#000}#status{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#888;font-family:sans-serif;text-align:center;font-size:14px;z-index:999}#status .spinner{width:32px;height:32px;border:3px solid #333;border-top-color:#a6d700;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}@keyframes spin{to{transform:rotate(360deg)}}</style></head><body><div id="pano"></div><div id="status"><div class="spinner"></div>Loading Street View...</div><script>function init(){var sv=new google.maps.StreetViewService();sv.getPanorama({location:{lat:${lat},lng:${lng}},radius:50000,preference:google.maps.StreetViewPreference.NEAREST,source:google.maps.StreetViewSource.OUTDOOR},function(data,st){if(st===google.maps.StreetViewStatus.OK){new google.maps.StreetViewPanorama(document.getElementById('pano'),{pano:data.location.pano,pov:{heading:Math.random()*360,pitch:0},zoom:0,addressControl:false,linksControl:true,panControl:true,zoomControl:true,fullscreenControl:false,motionTracking:false,motionTrackingControl:false,enableCloseButton:false,clickToGo:true,scrollwheel:true,disableDefaultUI:false});document.getElementById('status').style.display='none';window.ReactNativeWebView&&window.ReactNativeWebView.postMessage('loaded')}else{document.getElementById('status').innerHTML='Kein Street View';window.ReactNativeWebView&&window.ReactNativeWebView.postMessage('error')}})}</script><script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init&libraries=streetView"></script></body></html>`;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><style>*{margin:0;padding:0;box-sizing:border-box}html,body,#pano{width:100%;height:100%;overflow:hidden;background:#000}#status{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#888;font-family:sans-serif;text-align:center;font-size:14px;z-index:999}#status .spinner{width:32px;height:32px;border:3px solid #333;border-top-color:#F2A344;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}@keyframes spin{to{transform:rotate(360deg)}}</style></head><body><div id="pano"></div><div id="status"><div class="spinner"></div>Loading Street View...</div><script>function init(){var sv=new google.maps.StreetViewService();sv.getPanorama({location:{lat:${lat},lng:${lng}},radius:50000,preference:google.maps.StreetViewPreference.NEAREST,source:google.maps.StreetViewSource.OUTDOOR},function(data,st){if(st===google.maps.StreetViewStatus.OK){new google.maps.StreetViewPanorama(document.getElementById('pano'),{pano:data.location.pano,pov:{heading:Math.random()*360,pitch:0},zoom:0,addressControl:false,linksControl:true,panControl:true,zoomControl:true,fullscreenControl:false,motionTracking:false,motionTrackingControl:false,enableCloseButton:false,clickToGo:true,scrollwheel:true,disableDefaultUI:false});document.getElementById('status').style.display='none';window.ReactNativeWebView&&window.ReactNativeWebView.postMessage('loaded')}else{document.getElementById('status').innerHTML='Kein Street View';window.ReactNativeWebView&&window.ReactNativeWebView.postMessage('error')}})}</script><script async defer src="https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=init&libraries=streetView"></script></body></html>`;
 }
 
 export default function App() {
@@ -379,7 +379,7 @@ export default function App() {
     { bg: C.bg, titleColor: C.green, title: 'Eine Aufgabe. Nur eine.', body: 'Irgendwo auf der Erde öffnet sich ein Street View. Du hältst eine City Card. Finde heraus, welche Stadt auf dem Tisch am nächsten dran ist.\n\nSimpel? Klar. Einfach? Auf keinen Fall.' },
     { bg: C.blue, titleColor: C.accent, title: 'Karte. Scan. Los.', body: 'Schnapp dir eine Karte. Scan den QR-Code. Ein Street View lädt sofort — und der Timer läuft, ob du bereit bist oder nicht.' },
     { bg: C.bg, titleColor: C.accent, title: 'Stadt gesucht.', body: 'Schau dir den Street View an. Welche City Card liegt am nächsten dran? Tipp aufs Mikro und sag sie laut — die App speichert deine Antwort.\n\nJe näher du liegst, desto mehr Punkte. Je überzeugter du klingst, desto besser fühlst du dich. Ergebnisse können variieren.' },
-    { bg: '#0a2a0a', titleColor: C.green, title: 'All in.', body: 'Du glaubst, jemand liegt falsch? Setz einen Token und nenn DEINE Stadt.\n\nRichtig → Bonuspunkte.\nFalsch → tschüss, Token.\n\n→ Auf geht\'s!' },
+    { bg: '#262523', titleColor: C.green, title: 'All in.', body: 'Du glaubst, jemand liegt falsch? Setz einen Token und nenn DEINE Stadt.\n\nRichtig → Bonuspunkte.\nFalsch → tschüss, Token.\n\n→ Auf geht\'s!' },
   ];
 
   // ═══════════════ SCANNERS ═══════════════
@@ -851,13 +851,13 @@ const s = StyleSheet.create({
   scanCloseText: { color: C.onSurface, fontSize: 14, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2 },
 
   // Game
-  gameTopBar: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 44, paddingBottom: 8, backgroundColor: 'rgba(17,18,37,0.85)', zIndex: 20 },
+  gameTopBar: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 44, paddingBottom: 8, backgroundColor: 'rgba(38,37,35,0.9)', zIndex: 20 },
   tableList: { width: '100%', backgroundColor: C.surface, padding: 16, marginBottom: 32 },
   tableRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 12 },
 
-  timer: { position: 'absolute', top: 80, right: 16, width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(17,18,37,0.9)', borderWidth: 3, justifyContent: 'center', alignItems: 'center', zIndex: 20 },
+  timer: { position: 'absolute', top: 80, right: 16, width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(38,37,35,0.95)', borderWidth: 3, justifyContent: 'center', alignItems: 'center', zIndex: 20 },
   timerText: { fontSize: 22, fontWeight: '700', fontFamily: FF.bold },
-  pickBtn: { position: 'absolute', bottom: 40, alignSelf: 'center', backgroundColor: 'rgba(17,18,37,0.9)', paddingHorizontal: 28, paddingVertical: 14, borderWidth: 1.5, borderColor: C.primary, zIndex: 20 },
+  pickBtn: { position: 'absolute', bottom: 40, alignSelf: 'center', backgroundColor: 'rgba(38,37,35,0.95)', paddingHorizontal: 28, paddingVertical: 14, borderWidth: 1.5, borderColor: C.primary, zIndex: 20 },
   pickBtnText: { color: C.primary, fontSize: 16, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2 },
 
   loadingOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg, zIndex: 5 },
@@ -866,7 +866,7 @@ const s = StyleSheet.create({
   pickScreen: { flex: 1, backgroundColor: C.bg, paddingTop: 60, paddingHorizontal: 20 },
   pickOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 16, marginBottom: 4 },
 
-  resultOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(17,18,37,0.95)', zIndex: 40, justifyContent: 'center', paddingHorizontal: 20 },
+  resultOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(38,37,35,0.97)', zIndex: 40, justifyContent: 'center', paddingHorizontal: 20 },
   resultCard: { backgroundColor: C.surface, padding: 24 },
 
   // End screen
