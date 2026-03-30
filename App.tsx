@@ -468,10 +468,9 @@ export default function App() {
       <View style={[s.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#262523' }]}>
         <StatusBar hidden />
         <Animated.View style={{ opacity: loadingFade, alignItems: 'center' }}>
-          <Image source={require('./assets/logo-startscreen.png')} style={{ marginBottom: 24 }} resizeMode="contain" />
-          <Text style={{ color: '#F1E8E1', fontSize: 20, fontFamily: FF.regular, letterSpacing: 6, marginBottom: 4 }}>GEOCHECKR</Text>
-          <Text style={{ color: '#F1E8E1', fontSize: 9, fontFamily: FF.regular, letterSpacing: 3, marginBottom: 10, opacity: 0.6 }}>STREET VIEW EDITION</Text>
-          <View style={{ width: 80, height: 1.5, backgroundColor: '#F1E8E1', opacity: 0.3 }} />
+          <Image source={require('./assets/logo-startscreen.png')} style={{ marginBottom: 28 }} resizeMode="contain" />
+          <Text style={{ color: '#F1E8E1', fontSize: 22, fontFamily: FF.regular, letterSpacing: 6, marginBottom: 6 }}>GEOCHECKR</Text>
+          <Text style={{ color: '#F1E8E1', fontSize: 10, fontFamily: FF.regular, letterSpacing: 3, opacity: 0.7 }}>STREET VIEW EDITION</Text>
         </Animated.View>
       </View>
     );
