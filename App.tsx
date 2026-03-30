@@ -465,11 +465,11 @@ export default function App() {
   // ═══════════════ LOADING ═══════════════
   if (screen === 'loading') {
     return (
-      <View style={[s.container, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40, backgroundColor: '#262523' }]}>
+      <View style={[s.container, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40, backgroundColor: '#F1E8E1' }]}>
         <StatusBar hidden />
         <Animated.View style={{ opacity: loadingFade, alignItems: 'center' }}>
-          <Image source={require('./assets/icon.png')} style={{ width: 160, height: 160, marginBottom: 32 }} resizeMode="contain" />
-          <Text style={{ color: '#F1E8E1', fontSize: 13, fontFamily: FF.regular, textAlign: 'center', fontStyle: 'italic', lineHeight: 24, opacity: 0.7, maxWidth: 300 }}>{loadingQuote}</Text>
+          <Image source={require('./assets/logo-startscreen.png')} style={{ width: 220, height: 220, marginBottom: 40 }} resizeMode="contain" />
+          <Text style={{ color: '#262523', fontSize: 13, fontFamily: FF.regular, textAlign: 'center', fontStyle: 'italic', lineHeight: 24, opacity: 0.6, maxWidth: 300 }}>{loadingQuote}</Text>
         </Animated.View>
       </View>
     );
