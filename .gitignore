@@ -47,3 +47,4 @@ src/data/locations*.json
 *credentials*.json
 *secret*.json
 .env
+GeoCheckr-v1.0-working/

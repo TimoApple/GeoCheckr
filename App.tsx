@@ -184,7 +184,7 @@ export default function App() {
     if (!allPlayersScanned) return;
     playClickSound();
     setTableCities(players.map(p => ({ city: p.city, lat: p.lat, lng: p.lng, ownerPlayerId: p.id, isPlayerCity: true })));
-    setRound(1); setMaxRounds(roundsSetting); setActivePlayerIdx(0); setUsedLocations([]);
+    setRound(1); setMaxRounds(roundsSetting * players.length); setActivePlayerIdx(0); setUsedLocations([]);
     setPhase('scan-qr'); setScreen('game');
   };
 
@@ -289,7 +289,7 @@ export default function App() {
 
   // ═══════════════ SCAN HANDLER — 3 MECHANICS ═══════════════
   const handleScan = useCallback(({ data }: { data: string }) => {
-    if (scanned) return;
+    if (scanned || !data) return;
     console.log('[SCAN]', data, 'cityScanner:', showCityScanner, 'qrScanner:', showQrScanner, 'idx:', scanCityForIdx);
 
     // GAME QR → Street View
