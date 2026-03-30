@@ -8,6 +8,7 @@ import {
 import { WebView } from 'react-native-webview';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import TextRecognition from '@react-native-ml-kit/text-recognition';
+import * as NavigationBar from 'expo-navigation-bar';
 import { useFonts, SpaceGrotesk_400Regular, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
 
 import { calculateDistance, formatDistance } from './src/utils/distance';
@@ -80,7 +81,9 @@ export default function App() {
   const [maxRounds, setMaxRounds] = useState(10);
   const [location, setLocation] = useState<PanoramaLocation>(panoramaLocations[0]);
   const [usedLocations, setUsedLocations] = useState<number[]>([]);
-  const [phase, setPhase] = useState<'scan-qr' | 'view' | 'pick' | 'result'>('scan-qr');
+  const [phase, setPhase] = useState<'scan-qr' | 'view' | 'pick' | 'challenge' | 'result'>('scan-qr');
+  const [challengerId, setChallengerId] = useState<number | null>(null);
+  const [activePickIdx, setActivePickIdx] = useState<number | null>(null);
   const [timer, setTimer] = useState(30);
   const [timerPaused, setTimerPaused] = useState(false);
   const [svLoaded, setSvLoaded] = useState(false);
@@ -102,6 +105,7 @@ export default function App() {
   // LOADING SCREEN
   useEffect(() => {
     Animated.timing(loadingFade, { toValue: 1, duration: 800, useNativeDriver: true }).start();
+    NavigationBar.setBackgroundColorAsync('#111225').catch(() => {});
     const t = setTimeout(() => setScreen('tutorial'), 2500);
     return () => clearTimeout(t);
   }, []);
@@ -187,6 +191,7 @@ export default function App() {
   const startRound = useCallback(() => {
     setPhase('scan-qr'); setSvLoaded(false); setSvError(false);
     setClosestCityIdx(null); setDistances([]); setWinnerId(null);
+    setChallengerId(null); setActivePickIdx(null);
     setTimer(timerSetting); setTimerPaused(false); resultScale.setValue(0);
   }, [timerSetting]);
 
@@ -202,14 +207,45 @@ export default function App() {
     setDistances(dists);
     let minIdx = 0; for (let i = 1; i < dists.length; i++) if (dists[i] < dists[minIdx]) minIdx = i;
     setClosestCityIdx(minIdx);
-    if (idx === minIdx) { playPerfectSound(); Vibration.vibrate([100, 50, 100]); } else { playErrorSound(); Vibration.vibrate(500); }
-    const actualWinner = tableCities[minIdx].ownerPlayerId;
-    if (actualWinner !== null) setPlayers(prev => prev.map(p => p.id === actualWinner ? { ...p, score: p.score + 1 } : p));
-    setWinnerId(actualWinner);
+    setActivePickIdx(idx);
+    // Don't resolve yet — go to challenge phase
+    setPhase('challenge');
+    setChallengerId(null);
+  }, [tableCities, location]);
+
+  // Resolve the round (called after challenge phase or skip)
+  const resolveRound = useCallback(() => {
+    const minIdx = closestCityIdx;
+    const pickedIdx = activePickIdx;
+    if (minIdx === null || pickedIdx === null) return;
+    const originalCorrect = pickedIdx === minIdx;
+
+    if (challengerId !== null) {
+      // There was a challenge
+      if (originalCorrect) {
+        // Original player was right — challenge fails
+        playPerfectSound(); Vibration.vibrate([100, 50, 100]);
+        const actualWinner = tableCities[minIdx].ownerPlayerId;
+        if (actualWinner !== null) setPlayers(prev => prev.map(p => p.id === actualWinner ? { ...p, score: p.score + 1 } : p));
+        setWinnerId(actualWinner);
+      } else {
+        // Original player was wrong — challenger gets the point
+        playPerfectSound(); Vibration.vibrate([100, 50, 100]);
+        setPlayers(prev => prev.map(p => p.id === challengerId ? { ...p, score: p.score + 1 } : p));
+        setWinnerId(challengerId);
+      }
+    } else {
+      // No challenge — normal resolution
+      if (originalCorrect) { playPerfectSound(); Vibration.vibrate([100, 50, 100]); } else { playErrorSound(); Vibration.vibrate(500); }
+      const actualWinner = tableCities[minIdx].ownerPlayerId;
+      if (actualWinner !== null) setPlayers(prev => prev.map(p => p.id === actualWinner ? { ...p, score: p.score + 1 } : p));
+      setWinnerId(actualWinner);
+    }
+
     setTableCities(prev => [...prev, { city: location.city, lat: location.lat, lng: location.lng, ownerPlayerId: null, isPlayerCity: false }]);
     Animated.spring(resultScale, { toValue: 1, friction: 6, useNativeDriver: true }).start();
     setPhase('result');
-  }, [tableCities, location]);
+  }, [closestCityIdx, activePickIdx, challengerId, tableCities, location]);
 
   const nextTurn = () => {
     playClickSound();
@@ -628,11 +664,26 @@ export default function App() {
 
         {phase === 'pick' && (
           <View style={s.pickScreen}>
-            <Text style={{ color: C.onSurface, fontSize: 20, fontWeight: '700', textAlign: 'center', marginBottom: 4 }}>WHICH CITY IS CLOSEST?</Text>
-            <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 13, textAlign: 'center', marginBottom: 24 }}>{activePlayer.name}, choose the city nearest to the shown location</Text>
+            <Text style={{ color: C.onSurface, fontSize: 20, fontWeight: '700', textAlign: 'center', marginBottom: 4 }}>
+              {challengerId !== null ? 'CHALLENGER PICKS' : 'WHICH CITY IS CLOSEST?'}
+            </Text>
+            <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 13, textAlign: 'center', marginBottom: 24 }}>
+              {challengerId !== null ? `${players.find(p => p.id === challengerId)?.name}, choose your city` : `${activePlayer.name}, choose the city nearest to the shown location`}
+            </Text>
             <ScrollView style={{ flex: 1, width: '100%' }}>
               {tableCities.map((tc, i) => (
-                <TouchableOpacity key={i} style={[s.pickOption, i % 2 === 0 ? { backgroundColor: C.surfaceLow } : { backgroundColor: C.surface }]} onPress={() => pickCity(i)}>
+                <TouchableOpacity key={i} style={[s.pickOption, i % 2 === 0 ? { backgroundColor: C.surfaceLow } : { backgroundColor: C.surface }]} onPress={() => {
+                  if (challengerId !== null) {
+                    // Challenger picked — check if correct, then resolve
+                    playClickSound(); setTimerPaused(true);
+                    const dists = tableCities.map(t => calculateDistance(location.lat, location.lng, t.lat, t.lng));
+                    setDistances(dists);
+                    // Resolve with challenge
+                    resolveRound();
+                  } else {
+                    pickCity(i);
+                  }
+                }}>
                   <Text style={{ color: C.primary, fontSize: 18, marginRight: 14 }}>{tc.isPlayerCity ? '◉' : '◈'}</Text>
                   <View style={{ flex: 1 }}>
                     <Text style={{ color: C.onSurface, fontSize: 18, fontWeight: '600' }}>{tc.city}</Text>
@@ -641,6 +692,37 @@ export default function App() {
                 </TouchableOpacity>
               ))}
             </ScrollView>
+          </View>
+        )}
+
+        {phase === 'challenge' && activePickIdx !== null && (
+          <View style={s.pickScreen}>
+            <Text style={{ color: C.accent, fontSize: 20, fontWeight: '700', textAlign: 'center', marginBottom: 4 }}>CHALLENGE?</Text>
+            <Text style={{ color: C.onSurface, fontSize: 16, textAlign: 'center', marginBottom: 6 }}>{activePlayer.name} picked:</Text>
+            <View style={{ backgroundColor: C.surface, paddingVertical: 14, paddingHorizontal: 20, marginBottom: 24, width: '100%', alignItems: 'center' }}>
+              <Text style={{ color: C.primary, fontSize: 22, fontWeight: '700' }}>{tableCities[activePickIdx].city}</Text>
+            </View>
+            <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 13, textAlign: 'center', marginBottom: 16 }}>Does any player want to challenge?</Text>
+            <ScrollView style={{ flex: 1, width: '100%' }}>
+              {players.filter(p => p.id !== activePlayer.id).map(p => (
+                <TouchableOpacity key={p.id} style={[s.pickOption, { backgroundColor: C.surfaceLow }]} onPress={() => { playClickSound(); setChallengerId(p.id); }}>
+                  <Text style={{ color: C.accent, fontSize: 18, marginRight: 14 }}>{challengerId === p.id ? '◉' : '○'}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: C.onSurface, fontSize: 18, fontWeight: '600' }}>{p.name}</Text>
+                  </View>
+                  {challengerId === p.id && <Text style={{ color: C.green, fontSize: 14, fontWeight: '700' }}>CHALLENGING</Text>}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            {challengerId !== null ? (
+              <TouchableOpacity style={[s.primaryBtn, { marginTop: 16, width: '100%' }]} onPress={() => { playClickSound(); setPhase('pick'); }}>
+                <Text style={s.primaryBtnText}>CHALLENGER PICKS CITY</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={[s.primaryBtn, { marginTop: 16, width: '100%', backgroundColor: C.surfaceHigh }]} onPress={() => resolveRound()}>
+                <Text style={[s.primaryBtnText, { color: C.onSurface }]}>NO CHALLENGE</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
@@ -685,11 +767,8 @@ export default function App() {
           </View>
         ))}
         <TouchableOpacity style={[s.primaryBtn, { marginTop: 32, width: '100%' }]} onPress={() => {
-          setPlayers([
-            { id: 1, name: 'Player 1', city: '', cityId: -1, lat: 0, lng: 0, score: 0 },
-            { id: 2, name: 'Player 2', city: '', cityId: -1, lat: 0, lng: 0, score: 0 },
-          ]);
-
+          setPlayers(prev => prev.map(p => ({ ...p, city: '', cityId: -1, lat: 0, lng: 0, score: 0 })));
+          setScreen('setup');
         }}>
           <Text style={s.primaryBtnText}>PLAY AGAIN</Text>
         </TouchableOpacity>
