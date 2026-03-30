@@ -19,17 +19,17 @@ const { width, height } = Dimensions.get('window');
 const API_KEY = 'AIzaSyCl3ogHqguF1QcwhyHdvJmUkbgx3bpKLJI';
 const FF = { regular: 'SpaceGrotesk_400Regular', bold: 'SpaceGrotesk_700Bold' };
 
-// CI COLORS
+// CI COLORS — German Version
 const C = {
-  bg: '#111225', surfaceLow: '#191a2d', surface: '#1d1e31',
-  surfaceHigh: '#27283c', surfaceHighest: '#323348',
-  primary: '#a6d700', primaryBright: '#c1f432',
-  onPrimary: '#273500', onPrimaryContainer: '#445a00',
-  secondary: '#bdc2ff', secondaryContainer: '#2734c0',
-  onSecondaryContainer: '#acb3ff',
-  onSurface: '#e1e0fb', outline: '#444934',
-  error: '#ffb4ab', accent: '#bdc2ff', green: '#a6d700', blue: '#3340ca',
-  text: '#e5e2e1', muted: '#c6c5d7',
+  bg: '#F1E8E1', surfaceLow: '#e8dfd7', surface: '#f5efe9',
+  surfaceHigh: '#262523', surfaceHighest: '#1a1918',
+  primary: '#F2A344', primaryBright: '#f5b866',
+  onPrimary: '#262523', onPrimaryContainer: '#262523',
+  secondary: '#625EF1', secondaryContainer: '#625EF1',
+  onSecondaryContainer: '#ffffff',
+  onSurface: '#262523', outline: '#c4b8ad',
+  error: '#D9593C', accent: '#625EF1', green: '#F2A344', blue: '#625EF1',
+  text: '#262523', muted: '#6b6560',
 };
 
 // TYPES
@@ -120,7 +120,7 @@ export default function App() {
   // LOADING SCREEN
   useEffect(() => {
     Animated.timing(loadingFade, { toValue: 1, duration: 800, useNativeDriver: true }).start();
-    NavigationBar.setBackgroundColorAsync('#111225').catch(() => {});
+    NavigationBar.setBackgroundColorAsync('#262523').catch(() => {});
     const t = setTimeout(() => setScreen('tutorial'), 2500);
     return () => clearTimeout(t);
   }, []);
@@ -426,7 +426,7 @@ export default function App() {
 
             {showCityScanner && (
               <View style={{ width: '100%', paddingHorizontal: 20, marginTop: 16 }}>
-                <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 11, fontWeight: '700', letterSpacing: 2, textAlign: 'center', marginBottom: 10, textTransform: 'uppercase' }}>Oder Code manuell eingeben</Text>
+                <Text style={{ color: 'rgba(38,37,35,0.6)', fontSize: 11, fontWeight: '700', letterSpacing: 2, textAlign: 'center', marginBottom: 10, textTransform: 'uppercase' }}>Oder Code manuell eingeben</Text>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   <View style={{ flex: 1, backgroundColor: 'rgba(25,26,45,0.9)', borderWidth: 1, borderColor: 'rgba(68,73,52,0.4)', borderRadius: 0 }}>
                     <TextInput
@@ -434,7 +434,7 @@ export default function App() {
                       value={manualCode}
                       onChangeText={setManualCode}
                       placeholder="#042 oder Berlin"
-                      placeholderTextColor="rgba(225,224,251,0.3)"
+                      placeholderTextColor="rgba(38,37,35,0.3)"
                       autoCapitalize="none"
                       autoCorrect={false}
                       returnKeyType="go"
@@ -465,18 +465,12 @@ export default function App() {
   // ═══════════════ LOADING ═══════════════
   if (screen === 'loading') {
     return (
-      <View style={[s.container, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40 }]}>
+      <View style={[s.container, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40, backgroundColor: '#262523' }]}>
         <StatusBar hidden />
         <Animated.View style={{ opacity: loadingFade, alignItems: 'center' }}>
-          <Image source={require('./assets/icon.png')} style={{ width: 100, height: 100, marginBottom: 24 }} resizeMode="contain" />
-          <Text style={{ color: C.primary, fontSize: 14, fontWeight: '700', letterSpacing: 3, marginBottom: 20 }}>GEOCHECKR</Text>
-          <Text style={{ color: 'rgba(225,224,251,0.4)', fontSize: 17, textAlign: 'center', fontStyle: 'italic', lineHeight: 26 }}>"{loadingQuote}"</Text>
+          <Image source={require('./assets/icon.png')} style={{ width: 160, height: 160, marginBottom: 32 }} resizeMode="contain" />
+          <Text style={{ color: '#F1E8E1', fontSize: 13, fontFamily: FF.regular, textAlign: 'center', fontStyle: 'italic', lineHeight: 24, opacity: 0.7, maxWidth: 300 }}>{loadingQuote}</Text>
         </Animated.View>
-        <View style={{ position: 'absolute', bottom: 80, flexDirection: 'row', gap: 6 }}>
-          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.primary, opacity: 0.6 }} />
-          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.primary, opacity: 0.3 }} />
-          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.primary, opacity: 0.15 }} />
-        </View>
       </View>
     );
   }
@@ -563,7 +557,7 @@ export default function App() {
                   value={p.name.startsWith('Player ') ? '' : p.name}
                   onChangeText={t => setPlayers(prev => prev.map((pp, idx) => idx === i ? { ...pp, name: t.length > 0 ? t : `Player ${idx + 1}` } : pp))}
                   placeholder={`Player ${i + 1}`}
-                  placeholderTextColor="rgba(225,224,251,0.3)"
+                  placeholderTextColor="rgba(38,37,35,0.3)"
                 />
                 {p.city.length > 0 && <Text style={s.cityBadgeInline}>{p.city}</Text>}
               </View>
@@ -632,7 +626,7 @@ export default function App() {
           </View>
           <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32, paddingTop: 60, paddingBottom: 40 }}>
             <Text style={{ color: C.onSurface, fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 8 }}>{activePlayer.name}, zieh eine QR-Karte!</Text>
-            <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 14, textAlign: 'center', marginBottom: 32 }}>QR-Karte scannen, um den Ort zu enthüllen</Text>
+            <Text style={{ color: 'rgba(38,37,35,0.6)', fontSize: 14, textAlign: 'center', marginBottom: 32 }}>QR-Karte scannen, um den Ort zu enthüllen</Text>
             <View style={[s.tableList, { maxHeight: height * 0.35 }]}>
               <Text style={{ color: C.secondary, fontSize: 10, fontWeight: '700', letterSpacing: 3, marginBottom: 12 }}>STÄDTE AUF DEM TISCH</Text>
               <ScrollView nestedScrollEnabled style={{ maxHeight: height * 0.28 }}>
@@ -640,7 +634,7 @@ export default function App() {
                   <View key={i} style={[s.tableRow, i % 2 === 0 ? { backgroundColor: C.surfaceLow } : { backgroundColor: C.surface }]}>
                     <Text style={{ color: C.primary, fontSize: 14, marginRight: 10 }}>{tc.isPlayerCity ? '◉' : '◈'}</Text>
                     <Text style={{ color: C.onSurface, fontSize: 15, fontWeight: '600' }}>{tc.city}</Text>
-                    {tc.isPlayerCity && <Text style={{ color: 'rgba(225,224,251,0.4)', fontSize: 12, marginLeft: 8 }}>— {players.find(pp => pp.id === tc.ownerPlayerId)?.name}</Text>}
+                    {tc.isPlayerCity && <Text style={{ color: 'rgba(38,37,35,0.5)', fontSize: 12, marginLeft: 8 }}>— {players.find(pp => pp.id === tc.ownerPlayerId)?.name}</Text>}
                   </View>
                 ))}
               </ScrollView>
@@ -668,7 +662,7 @@ export default function App() {
               onError={() => setSvError(true)}
               onMessage={(e) => { const msg = e.nativeEvent.data; if (msg === 'loaded') setSvLoaded(true); if (msg.startsWith('error')) setSvError(true); }}
               userAgent="Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36" />
-            {!svLoaded && !svError && <View style={s.loadingOverlay}><Text style={{ color: 'rgba(225,224,251,0.5)' }}>Loading Street View...</Text></View>}
+            {!svLoaded && !svError && <View style={s.loadingOverlay}><Text style={{ color: 'rgba(38,37,35,0.6)' }}>Loading Street View...</Text></View>}
             {svError && <View style={s.errorOverlay}><Text style={{ color: C.error, fontSize: 16, marginBottom: 20 }}>Kein Street View</Text><TouchableOpacity style={s.primaryBtn} onPress={nextTurn}><Text style={s.primaryBtnText}>ÜBERSPRINGEN</Text></TouchableOpacity></View>}
             {svLoaded && <>
               <Animated.View style={[s.timer, { borderColor: timerColor, transform: [{ scale: timerPulse }] }]}><Text style={[s.timerText, { color: timerColor }]}>{timer}</Text></Animated.View>
@@ -682,7 +676,7 @@ export default function App() {
             <Text style={{ color: C.onSurface, fontSize: 20, fontWeight: '700', textAlign: 'center', marginBottom: 4 }}>
               {challengerId !== null ? 'CHALLENGER WÄHLT' : 'WELCHE STADT IST AM NÄCHSTEN?'}
             </Text>
-            <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 13, textAlign: 'center', marginBottom: 24 }}>
+            <Text style={{ color: 'rgba(38,37,35,0.6)', fontSize: 13, textAlign: 'center', marginBottom: 24 }}>
               {challengerId !== null ? `${players.find(p => p.id === challengerId)?.name}, wähle deine Stadt` : `${activePlayer.name}, wähle die nächste Stadt zum gezeigten Ort`}
             </Text>
             <ScrollView style={{ flex: 1, width: '100%' }}>
@@ -702,7 +696,7 @@ export default function App() {
                   <Text style={{ color: C.primary, fontSize: 18, marginRight: 14 }}>{tc.isPlayerCity ? '◉' : '◈'}</Text>
                   <View style={{ flex: 1 }}>
                     <Text style={{ color: C.onSurface, fontSize: 18, fontWeight: '600' }}>{tc.city}</Text>
-                    {tc.isPlayerCity && tc.ownerPlayerId !== null && <Text style={{ color: 'rgba(225,224,251,0.4)', fontSize: 12 }}>{players.find(pp => pp.id === tc.ownerPlayerId)?.name}</Text>}
+                    {tc.isPlayerCity && tc.ownerPlayerId !== null && <Text style={{ color: 'rgba(38,37,35,0.5)', fontSize: 12 }}>{players.find(pp => pp.id === tc.ownerPlayerId)?.name}</Text>}
                   </View>
                 </TouchableOpacity>
               ))}
@@ -717,7 +711,7 @@ export default function App() {
             <View style={{ backgroundColor: C.surface, paddingVertical: 14, paddingHorizontal: 20, marginBottom: 24, width: '100%', alignItems: 'center' }}>
               <Text style={{ color: C.primary, fontSize: 22, fontWeight: '700' }}>{tableCities[activePickIdx].city}</Text>
             </View>
-            <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 13, textAlign: 'center', marginBottom: 16 }}>Möchte ein Spieler challengen?</Text>
+            <Text style={{ color: 'rgba(38,37,35,0.6)', fontSize: 13, textAlign: 'center', marginBottom: 16 }}>Möchte ein Spieler challengen?</Text>
             <ScrollView style={{ flex: 1, width: '100%' }}>
               {players.filter(p => p.id !== activePlayer.id).map(p => (
                 <TouchableOpacity key={p.id} style={[s.pickOption, { backgroundColor: C.surfaceLow }]} onPress={() => { playClickSound(); setChallengerId(p.id); }}>
@@ -746,11 +740,11 @@ export default function App() {
             <Animated.View style={[s.resultCard, { transform: [{ scale: resultScale }] }]}>
               <Text style={{ fontSize: 48, textAlign: 'center', marginBottom: 12 }}>{winnerId !== null && winnerId === activePlayer.id ? '🎯' : '📍'}</Text>
               <Text style={{ color: C.primary, fontSize: 26, fontWeight: '700', textAlign: 'center', marginBottom: 4 }}>{location.city}</Text>
-              <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 14, textAlign: 'center', marginBottom: 6 }}>({location.country})</Text>
+              <Text style={{ color: 'rgba(38,37,35,0.6)', fontSize: 14, textAlign: 'center', marginBottom: 6 }}>({location.country})</Text>
               <Text style={{ color: C.onSurface, fontSize: 17, fontWeight: '600', textAlign: 'center', marginBottom: 20 }}>liegt am nächsten an {tableCities[closestCityIdx].city}</Text>
               {tableCities.map((tc, i) => (
                 <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 12, backgroundColor: C.surfaceLow, marginBottom: 2 }}>
-                  <Text style={{ color: 'rgba(225,224,251,0.7)', fontSize: 14 }}>{tc.isPlayerCity ? '◉' : '◈'} {tc.city}</Text>
+                  <Text style={{ color: 'rgba(38,37,35,0.7)', fontSize: 14 }}>{tc.isPlayerCity ? '◉' : '◈'} {tc.city}</Text>
                   <Text style={{ color: C.onSurface, fontSize: 14, fontWeight: '600' }}>{formatDistance(distances[i] ?? 0)}</Text>
                 </View>
               ))}
@@ -772,13 +766,13 @@ export default function App() {
       <ScrollView contentContainerStyle={s.endScroll}>
         <Text style={{ fontSize: 64, color: C.primary, marginBottom: 16 }}>✓</Text>
         <Text style={{ color: C.onSurface, fontSize: 28, fontWeight: '700', textAlign: 'center', marginBottom: 4 }}>AUSWERTUNG ABGESCHLOSSEN</Text>
-        <Text style={{ color: 'rgba(225,224,251,0.4)', fontSize: 11, fontWeight: '700', letterSpacing: 3, textTransform: 'uppercase', textAlign: 'center', marginBottom: 40 }}>SESSION-DATEN BEREIT</Text>
+        <Text style={{ color: 'rgba(38,37,35,0.5)', fontSize: 11, fontWeight: '700', letterSpacing: 3, textTransform: 'uppercase', textAlign: 'center', marginBottom: 40 }}>SESSION-DATEN BEREIT</Text>
         {sorted.map((p, i) => (
           <View key={p.id} style={[s.endRow, i % 2 === 0 ? { backgroundColor: C.surfaceLow } : { backgroundColor: C.surface }]}>
             <Text style={{ color: C.primary, fontSize: 14, fontWeight: '700', width: 36 }}>#{i + 1}</Text>
             <View style={{ flex: 1 }}>
               <Text style={{ color: C.onSurface, fontSize: 18, fontWeight: '700' }}>{p.name}</Text>
-              <Text style={{ color: 'rgba(225,224,251,0.4)', fontSize: 12, marginTop: 2 }}>{p.city}</Text>
+              <Text style={{ color: 'rgba(38,37,35,0.5)', fontSize: 12, marginTop: 2 }}>{p.city}</Text>
             </View>
             <Text style={{ color: C.onSurface, fontSize: 28, fontWeight: '700' }}>{p.score}</Text>
           </View>
@@ -813,7 +807,7 @@ const s = StyleSheet.create({
   primaryBtn: { backgroundColor: C.primary, paddingVertical: 16, paddingHorizontal: 24, alignItems: 'center' },
   primaryBtnText: { color: C.onPrimaryContainer, fontSize: 14, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2, textTransform: 'uppercase' },
   tertiaryBtn: { paddingVertical: 14, paddingHorizontal: 20 },
-  tertiaryBtnText: { color: 'rgba(225,224,251,0.35)', fontSize: 13, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2, textTransform: 'uppercase' },
+  tertiaryBtnText: { color: 'rgba(38,37,35,0.35)', fontSize: 13, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2, textTransform: 'uppercase' },
 
   // Setup
   setupScroll: { paddingTop: 48, paddingBottom: 80, paddingHorizontal: 24 },
@@ -842,13 +836,13 @@ const s = StyleSheet.create({
   chipRow: { flexDirection: 'row', gap: 8 },
   chip: { flex: 1, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(68,73,52,0.3)' },
   chipActive: { backgroundColor: C.primary, borderColor: C.primary },
-  chipText: { color: 'rgba(225,224,251,0.5)', fontSize: 12, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2 },
+  chipText: { color: 'rgba(38,37,35,0.6)', fontSize: 12, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2 },
   chipTextActive: { color: C.onPrimaryContainer },
 
   mainBtn: { backgroundColor: C.primary, paddingVertical: 20, alignItems: 'center' },
   mainBtnDisabled: { backgroundColor: C.surfaceHighest },
   mainBtnText: { color: C.onPrimaryContainer, fontSize: 15, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 3, textTransform: 'uppercase' },
-  actionHint: { color: 'rgba(225,224,251,0.3)', fontSize: 10, fontFamily: FF.regular, textAlign: 'center', marginTop: 12, letterSpacing: 2, textTransform: 'uppercase' },
+  actionHint: { color: 'rgba(38,37,35,0.3)', fontSize: 10, fontFamily: FF.regular, textAlign: 'center', marginTop: 12, letterSpacing: 2, textTransform: 'uppercase' },
 
   // Scanner
   scanOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
