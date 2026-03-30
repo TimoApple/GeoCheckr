@@ -465,12 +465,15 @@ export default function App() {
   // ═══════════════ LOADING ═══════════════
   if (screen === 'loading') {
     return (
-      <View style={[s.container, { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40, backgroundColor: '#F1E8E1' }]}>
+      <View style={[s.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#F1E8E1' }]}>
         <StatusBar hidden />
         <Animated.View style={{ opacity: loadingFade, alignItems: 'center' }}>
-          <Image source={require('./assets/logo-startscreen.png')} style={{ width: 220, height: 220, marginBottom: 40 }} resizeMode="contain" />
-          <Text style={{ color: '#262523', fontSize: 13, fontFamily: FF.regular, textAlign: 'center', fontStyle: 'italic', lineHeight: 24, opacity: 0.6, maxWidth: 300 }}>{loadingQuote}</Text>
+          <Image source={require('./assets/logo-startscreen.png')} style={{ width: 280, height: 280, marginBottom: 48 }} resizeMode="contain" />
+          <Text style={{ color: '#262523', fontSize: 32, fontFamily: FF.regular, letterSpacing: 8, marginBottom: 8 }}>GEOCHECKR</Text>
+          <Text style={{ color: '#262523', fontSize: 11, fontFamily: FF.regular, letterSpacing: 4, marginBottom: 12, opacity: 0.6 }}>STREET VIEW EDITION</Text>
+          <View style={{ width: 120, height: 2, backgroundColor: '#262523', opacity: 0.3, marginTop: 8 }} />
         </Animated.View>
+        <Text style={{ color: '#262523', fontSize: 12, fontFamily: FF.regular, fontStyle: 'italic', opacity: 0.4, position: 'absolute', bottom: 60, textAlign: 'center', maxWidth: 300 }}>{loadingQuote}</Text>
       </View>
     );
   }
