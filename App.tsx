@@ -94,8 +94,23 @@ export default function App() {
   const scrollRef = useRef<ScrollView>(null);
   const tutScrollRef = useRef<ScrollView>(null);
   const [tutOpacity] = useState(new Animated.Value(1));
+  const [swipeHint] = useState(new Animated.Value(0));
 
   const allPlayersScanned = players.length >= 2 && players.every(p => p.city.length > 0);
+
+  // Tutorial swipe hint animation
+  useEffect(() => {
+    if (screen === 'tutorial') {
+      const pulse = Animated.loop(
+        Animated.sequence([
+          Animated.timing(swipeHint, { toValue: 1, duration: 800, useNativeDriver: true }),
+          Animated.timing(swipeHint, { toValue: 0, duration: 800, useNativeDriver: true }),
+        ])
+      );
+      pulse.start();
+      return () => pulse.stop();
+    }
+  }, [screen]);
 
   // LOADING SCREEN
   useEffect(() => {
@@ -423,9 +438,10 @@ export default function App() {
         <View style={{ position: 'absolute', bottom: 40, width: '100%', paddingHorizontal: 30, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <TouchableOpacity onPress={() => setScreen('setup')}><Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14, fontFamily: FF.regular }}>Skip Tutorial</Text></TouchableOpacity>
           {tutorialPage < TUT_PAGES.length - 1 ? (
-            <TouchableOpacity onPress={() => goToPage(tutorialPage + 1)}>
-              <Text style={{ color: C.green, fontSize: 15, fontWeight: '600', fontFamily: FF.bold }}>Swipe →</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Animated.Text style={{ color: C.green, fontSize: 18, fontWeight: '600', fontFamily: FF.bold, opacity: swipeHint.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }), transform: [{ translateX: swipeHint.interpolate({ inputRange: [0, 1], outputRange: [0, 12] }) }] }}>→</Animated.Text>
+              <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, fontFamily: FF.regular }}>swipe</Text>
+            </View>
           ) : (
             <TouchableOpacity style={{ backgroundColor: C.green, paddingVertical: 14, paddingHorizontal: 28, borderRadius: 9999 }} onPress={() => setScreen('setup')}>
               <Text style={{ color: C.bg, fontSize: 17, fontWeight: '700', fontFamily: FF.bold }}>Let's play!</Text>
@@ -439,7 +455,8 @@ export default function App() {
   // ═══════════════ SETUP — Timo's HTML Design ═══════════════
   if (screen === 'setup') {
     return (
-      <View style={s.container}><StatusBar hidden />
+      <KeyboardAvoidingView style={s.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <StatusBar hidden />
         <ScrollView contentContainerStyle={s.setupScroll} keyboardShouldPersistTaps="handled">
           <Text style={s.setupHeader}>GEOCHECKR</Text>
           <Text style={s.setupTitle}>SETUP SESSION</Text>
@@ -506,7 +523,7 @@ export default function App() {
             <Text style={s.actionHint}>{allPlayersScanned ? `${players.length} players ready` : 'Scan city cards for all players'}</Text>
           </View>
         </ScrollView>
-      </View>
+      </KeyboardAvoidingView>
     );
   }
 
