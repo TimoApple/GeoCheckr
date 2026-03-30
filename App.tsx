@@ -70,6 +70,7 @@ export default function App() {
   const [showCityScanner, setShowCityScanner] = useState(false);
   const [scanned, setScanned] = useState(false);
   const [scanError, setScanError] = useState('');
+  const [manualCode, setManualCode] = useState('');
 
   // Game
   const [tableCities, setTableCities] = useState<TableCity[]>([]);
@@ -135,8 +136,36 @@ export default function App() {
   };
 
   const openCityScan = (idx: number) => {
-    setScanCityForIdx(idx); setShowCityScanner(true); setScanned(false); setScanError('');
+    setScanCityForIdx(idx); setShowCityScanner(true); setScanned(false); setScanError(''); setManualCode('');
   };
+
+  // Manual code entry for city cards
+  const submitManualCode = useCallback(() => {
+    if (!manualCode.trim() || scanCityForIdx === null) return;
+    const code = manualCode.trim();
+    const assign = (loc: any, id: number) => {
+      playClickSound(); Vibration.vibrate(100);
+      setPlayers(prev => prev.map((p, i) =>
+        i === scanCityForIdx ? { ...p, city: loc.city, cityId: id, lat: loc.lat, lng: loc.lng } : p
+      ));
+      setShowCityScanner(false); setScanned(false); setScanCityForIdx(null); setManualCode('');
+    };
+    // Try number match
+    const numMatch = code.match(/#?(\d+)/);
+    if (numMatch) {
+      const id = parseInt(numMatch[1], 10);
+      if (id >= 0 && id < panoramaLocations.length) {
+        const loc = panoramaLocations.find(l => l.id === id);
+        if (loc) { assign(loc, id); return; }
+      }
+    }
+    // Try text match
+    const normalized = code.toLowerCase().trim().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
+    const textMatch = panoramaLocations.find(l => l.city.toLowerCase() === normalized);
+    if (textMatch) { assign(textMatch, textMatch.id); return; }
+    setScanError('Not recognized — check code or city name');
+    setTimeout(() => setScanError(''), 2000);
+  }, [manualCode, scanCityForIdx]);
 
   const startGame = () => {
     if (!allPlayersScanned) return;
@@ -275,7 +304,7 @@ export default function App() {
           barcodeScannerSettings={{ barcodeTypes: ['qr', 'code128', 'code39', 'ean13', 'ean8'] }}
         >
           <View style={s.scanOverlay}>
-            <View style={{ alignItems: 'center', marginBottom: 40 }}>
+            <View style={{ alignItems: 'center', marginBottom: 20 }}>
               <Text style={{ color: C.primary, fontSize: 13, fontWeight: '700', letterSpacing: 2, marginBottom: 6 }}>
                 {showCityScanner ? 'ASSIGN CARD' : 'SCAN QR CARD'}
               </Text>
@@ -283,15 +312,40 @@ export default function App() {
             </View>
             <View style={s.scanFrame}>
               <Text style={{ color: C.primary, fontSize: 16, fontWeight: '600', textAlign: 'center' }}>
-                {showCityScanner ? 'Hold city card #number or city name in frame' : 'Hold QR card in frame'}
+                {showCityScanner ? 'Hold city card in frame' : 'Hold QR card in frame'}
               </Text>
             </View>
+
+            {showCityScanner && (
+              <View style={{ width: '100%', paddingHorizontal: 20, marginTop: 16 }}>
+                <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 11, fontWeight: '700', letterSpacing: 2, textAlign: 'center', marginBottom: 10, textTransform: 'uppercase' }}>Or enter code manually</Text>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <View style={{ flex: 1, backgroundColor: 'rgba(25,26,45,0.9)', borderWidth: 1, borderColor: 'rgba(68,73,52,0.4)', borderRadius: 0 }}>
+                    <TextInput
+                      style={{ color: '#fff', fontSize: 16, fontFamily: FF.bold, paddingVertical: 12, paddingHorizontal: 16 }}
+                      value={manualCode}
+                      onChangeText={setManualCode}
+                      placeholder="#042 or Berlin"
+                      placeholderTextColor="rgba(225,224,251,0.3)"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      returnKeyType="go"
+                      onSubmitEditing={submitManualCode}
+                    />
+                  </View>
+                  <TouchableOpacity style={{ backgroundColor: C.primary, paddingVertical: 12, paddingHorizontal: 20, justifyContent: 'center' }} onPress={submitManualCode}>
+                    <Text style={{ color: C.onPrimaryContainer, fontSize: 14, fontWeight: '700', fontFamily: FF.bold }}>GO</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
             {scanError ? (
-              <View style={{ backgroundColor: 'rgba(255,100,100,0.9)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 20, marginTop: 30 }}>
+              <View style={{ backgroundColor: 'rgba(255,100,100,0.9)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 20, marginTop: 16 }}>
                 <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>{scanError}</Text>
               </View>
             ) : null}
-            <TouchableOpacity style={s.scanCloseBtn} onPress={() => { setShowCityScanner(false); setShowQrScanner(false); setScanned(false); }}>
+            <TouchableOpacity style={s.scanCloseBtn} onPress={() => { setShowCityScanner(false); setShowQrScanner(false); setScanned(false); setManualCode(''); }}>
               <Text style={s.scanCloseText}>CLOSE</Text>
             </TouchableOpacity>
           </View>
@@ -321,12 +375,27 @@ export default function App() {
 
   // ═══════════════ TUTORIAL ═══════════════
   if (screen === 'tutorial') {
+    const lastPageX = (TUT_PAGES.length - 1) * width;
     const goToPage = (idx: number) => {
       if (idx < 0 || idx >= TUT_PAGES.length || idx === tutorialPage) return;
       tutOpacity.setValue(0);
       tutScrollRef.current?.scrollTo({ x: idx * width, animated: false });
       setTutorialPage(idx);
       Animated.timing(tutOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+    };
+    const handleTutScroll = (e: any) => {
+      const x = e.nativeEvent.contentOffset.x;
+      const newPage = Math.round(x / width);
+      // Swipe past last page → setup
+      if (tutorialPage === TUT_PAGES.length - 1 && x > lastPageX + 40) {
+        setScreen('setup');
+        return;
+      }
+      if (newPage !== tutorialPage && newPage >= 0 && newPage < TUT_PAGES.length) {
+        tutOpacity.setValue(0);
+        setTutorialPage(newPage);
+        Animated.timing(tutOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+      }
     };
     return (
       <View style={{ flex: 1 }}>
@@ -336,22 +405,8 @@ export default function App() {
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          onScrollEndDrag={(e) => {
-            const newPage = Math.round(e.nativeEvent.contentOffset.x / width);
-            if (newPage !== tutorialPage) {
-              tutOpacity.setValue(0);
-              setTutorialPage(newPage);
-              Animated.timing(tutOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
-            }
-          }}
-          onMomentumScrollEnd={(e) => {
-            const newPage = Math.round(e.nativeEvent.contentOffset.x / width);
-            if (newPage !== tutorialPage) {
-              tutOpacity.setValue(0);
-              setTutorialPage(newPage);
-              Animated.timing(tutOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
-            }
-          }}
+          onScrollEndDrag={handleTutScroll}
+          onMomentumScrollEnd={handleTutScroll}
         >
           {TUT_PAGES.map((p, i) => (
             <View key={i} style={{ width, height, backgroundColor: p.bg, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 36 }}>
@@ -394,25 +449,26 @@ export default function App() {
 
           {players.map((p, i) => (
             <View key={p.id} style={s.playerRow}>
-              <TextInput
-                style={s.playerInput}
-                value={p.name.startsWith('Player ') ? '' : p.name}
-                onChangeText={t => setPlayers(prev => prev.map((pp, idx) => idx === i ? { ...pp, name: t.length > 0 ? t : `Player ${idx + 1}` } : pp))}
-                placeholder={`Player ${i + 1}`}
-                placeholderTextColor="rgba(225,224,251,0.3)"
-              />
+              <View style={{ flex: 1 }}>
+                <TextInput
+                  style={s.playerInput}
+                  value={p.name.startsWith('Player ') ? '' : p.name}
+                  onChangeText={t => setPlayers(prev => prev.map((pp, idx) => idx === i ? { ...pp, name: t.length > 0 ? t : `Player ${idx + 1}` } : pp))}
+                  placeholder={`Player ${i + 1}`}
+                  placeholderTextColor="rgba(225,224,251,0.3)"
+                />
+                {p.city.length > 0 && <Text style={s.cityBadgeBelow}>{p.city}</Text>}
+              </View>
               <TouchableOpacity style={[s.hashBtn, p.city.length > 0 && s.hashBtnDone]} onPress={() => openCityScan(i)}>
                 <Text style={[s.hashBtnText, p.city.length > 0 && s.hashBtnTextDone]}>
                   {p.city.length > 0 ? '✓' : '#'}
                 </Text>
               </TouchableOpacity>
-              {players.length > 2 && (
+              {players.length > 2 ? (
                 <TouchableOpacity style={s.removeBtn} onPress={() => setPlayers(prev => prev.filter(pp => pp.id !== p.id))}>
                   <Text style={{ color: C.error, fontSize: 14, fontWeight: '700', fontFamily: FF.bold }}>✕</Text>
                 </TouchableOpacity>
-              )}
-              {players.length <= 2 && <View style={s.removeBtn} />}
-              {p.city.length > 0 && <Text style={s.cityBadge}>{p.city}</Text>}
+              ) : null}
             </View>
           ))}
 
@@ -466,24 +522,26 @@ export default function App() {
             <Text style={{ color: C.primary, fontSize: 14, fontWeight: '700', letterSpacing: 1 }}>{activePlayer.name}</Text>
             <Text style={{ color: C.onSurface, fontSize: 12, backgroundColor: C.surface, paddingHorizontal: 10, paddingVertical: 4 }}>R{round}/{maxRounds}</Text>
           </View>
-          <View style={s.centerScreen}>
+          <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32, paddingTop: 60, paddingBottom: 40 }}>
             <Text style={{ fontSize: 64, marginBottom: 24 }}>📷</Text>
             <Text style={{ color: C.onSurface, fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 8 }}>{activePlayer.name}, draw a QR card!</Text>
             <Text style={{ color: 'rgba(225,224,251,0.5)', fontSize: 14, textAlign: 'center', marginBottom: 32 }}>Scan the QR card to reveal the location</Text>
-            <View style={s.tableList}>
+            <View style={[s.tableList, { maxHeight: height * 0.35 }]}>
               <Text style={{ color: C.secondary, fontSize: 10, fontWeight: '700', letterSpacing: 3, marginBottom: 12 }}>CITIES ON TABLE</Text>
-              {tableCities.map((tc, i) => (
-                <View key={i} style={[s.tableRow, i % 2 === 0 ? { backgroundColor: C.surfaceLow } : { backgroundColor: C.surface }]}>
-                  <Text style={{ color: C.primary, fontSize: 14, marginRight: 10 }}>{tc.isPlayerCity ? '◉' : '◈'}</Text>
-                  <Text style={{ color: C.onSurface, fontSize: 15, fontWeight: '600' }}>{tc.city}</Text>
-                  {tc.isPlayerCity && <Text style={{ color: 'rgba(225,224,251,0.4)', fontSize: 12, marginLeft: 8 }}>— {players.find(pp => pp.id === tc.ownerPlayerId)?.name}</Text>}
-                </View>
-              ))}
+              <ScrollView nestedScrollEnabled style={{ maxHeight: height * 0.28 }}>
+                {tableCities.map((tc, i) => (
+                  <View key={i} style={[s.tableRow, i % 2 === 0 ? { backgroundColor: C.surfaceLow } : { backgroundColor: C.surface }]}>
+                    <Text style={{ color: C.primary, fontSize: 14, marginRight: 10 }}>{tc.isPlayerCity ? '◉' : '◈'}</Text>
+                    <Text style={{ color: C.onSurface, fontSize: 15, fontWeight: '600' }}>{tc.city}</Text>
+                    {tc.isPlayerCity && <Text style={{ color: 'rgba(225,224,251,0.4)', fontSize: 12, marginLeft: 8 }}>— {players.find(pp => pp.id === tc.ownerPlayerId)?.name}</Text>}
+                  </View>
+                ))}
+              </ScrollView>
             </View>
-            <TouchableOpacity style={s.primaryBtn} onPress={() => { setShowQrScanner(true); setScanned(false); }}>
+            <TouchableOpacity style={[s.primaryBtn, { marginTop: 24 }]} onPress={() => { setShowQrScanner(true); setScanned(false); }}>
               <Text style={s.primaryBtnText}>SCAN QR CARD</Text>
             </TouchableOpacity>
-          </View>
+          </ScrollView>
         </View>
       );
     }
@@ -613,14 +671,15 @@ const s = StyleSheet.create({
   sectionLabel: { marginBottom: 12, marginTop: 8 },
   sectionLabelText: { color: C.secondary, fontSize: 10, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 3, textTransform: 'uppercase' },
 
-  playerRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surfaceLow, marginBottom: 8 },
+  playerRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surfaceLow, marginBottom: 8, paddingRight: 0 },
   playerInput: { flex: 1, color: C.onSurface, fontSize: 16, fontWeight: '500', fontFamily: FF.regular, paddingVertical: 16, paddingHorizontal: 16, backgroundColor: C.surfaceLow, borderBottomWidth: 1, borderBottomColor: 'rgba(68,73,52,0.15)' },
-  hashBtn: { backgroundColor: C.secondaryContainer, paddingVertical: 16, paddingHorizontal: 20, alignItems: 'center', justifyContent: 'center' },
+  cityBadgeBelow: { color: C.primary, fontSize: 11, fontWeight: '600', letterSpacing: 1, paddingHorizontal: 16, paddingBottom: 6, paddingTop: 2, backgroundColor: C.surfaceLow },
+  hashBtn: { backgroundColor: C.secondaryContainer, paddingVertical: 16, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center', minWidth: 52 },
   hashBtnDone: { backgroundColor: C.primary },
   hashBtnText: { color: C.onSecondaryContainer, fontSize: 16, fontWeight: '700', fontFamily: FF.bold },
   hashBtnTextDone: { color: C.onPrimaryContainer },
-  cityBadge: { color: C.primary, fontSize: 11, fontWeight: '600', letterSpacing: 1, marginLeft: 8, position: 'absolute', right: 70, top: 18 },
-  removeBtn: { paddingVertical: 16, paddingHorizontal: 12 },
+  cityBadge: { color: C.primary, fontSize: 11, fontWeight: '600', letterSpacing: 1, marginLeft: 8 },
+  removeBtn: { paddingVertical: 16, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center' },
   nameRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surfaceLow, marginBottom: 8 },
   recruitBtn: { alignItems: 'center', paddingVertical: 16, marginBottom: 32 },
   recruitBtnText: { color: C.primary, fontSize: 12, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 3, textTransform: 'uppercase' },
