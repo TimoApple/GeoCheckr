@@ -39,11 +39,26 @@ type Screen = 'loading' | 'tutorial' | 'setup' | 'scan-city' | 'game' | 'result'
 
 // LOADING QUOTES
 const QUOTES = [
-  "The world is a book. Those who don't travel read only one page.",
-  "Not all those who wander are lost.",
-  "To travel is to live.",
-  "The Earth has music for those who listen.",
-  "Adventure is worthwhile in itself.",
+  'Alle Wege führen nach Rom.',
+  'Andere Länder, andere Sitten.',
+  'Reisen bildet.',
+  'Die Welt ist ein Buch — wer nicht reist, liest nur eine Seite.',
+  'Wer rastet, der rostet.',
+  'Die Erde ist rund — das ist ihr größtes Alibi.',
+  'Man reist nicht um anzukommen, sondern um zu reisen.',
+  'Der Horizont ist nur der Anfang.',
+  'Entfernung ist relativ. Unwissenheit weniger.',
+  'Nicht alle, die wandern, sind verloren.',
+  'Die Welt wartet nicht. Der Timer auch nicht.',
+  'Jede Straße führt irgendwohin. Aber wohin?',
+  'Heimat ist, wo du weißt, wo du bist.',
+  'Wer die Welt kennt, braucht keine Karte.',
+  'Ein Street View sagt mehr als tausend Worte.',
+  'Weiter weg als gedacht. Näher als du hoffst.',
+  'Geografiekenntnisse: 10% Schule, 90% Bauchgefühl.',
+  'Die Welt ist groß. Dein Radius auch.',
+  'Wer nicht rät, kann auch nicht gewinnen.',
+  'Irgendwo auf der Erde liegt deine Antwort. Rate schneller.',
 ];
 
 // STREET VIEW HTML
@@ -361,10 +376,10 @@ export default function App() {
 
   // TUTORIAL
   const TUT_PAGES = [
-    { bg: C.bg, titleColor: C.green, title: 'Du hattest EINE Aufgabe.', body: 'Ein Street View irgendwo auf der Erde. Du hast eine Stadtkarte. Finde heraus, welche Stadt auf dem Tisch dem ist, was du siehst.\n\nEinfach? Klar. Leicht? Absolut nicht.' },
-    { bg: C.blue, titleColor: C.accent, title: 'Drehen. Scannen. Zeit läuft.', body: 'Nimm eine Karte vom Stapel. Scanne den QR-Code mit der App. Ein Street View lädt sofort — und der Timer startet, ob du bereit bist oder nicht.' },
-    { bg: C.bg, titleColor: C.accent, title: 'Nenne die Stadt.', body: 'Studiere das Street View. Wähle die nächste Stadt von den Karten auf dem Tisch. Tippe auf das Mikro und sage es laut — die App speichert deine Antwort.\n\nJe näher dran, desto mehr Punkte.' },
-    { bg: '#0a2a0a', titleColor: C.green, title: 'Bist du mutig?', body: 'Du denkst jemand hat falsch geraten? Setze einen Token und nenne DEINE Stadt.\n\nRichtig → Bonuspunkte.\nFalsch → tschüss, Token.\n\n→ Auf geht\'s!' },
+    { bg: C.bg, titleColor: C.green, title: 'Eine Aufgabe. Nur eine.', body: 'Irgendwo auf der Erde öffnet sich ein Street View. Du hältst eine City Card. Finde heraus, welche Stadt auf dem Tisch am nächsten dran ist.\n\nSimpel? Klar. Einfach? Auf keinen Fall.' },
+    { bg: C.blue, titleColor: C.accent, title: 'Karte. Scan. Los.', body: 'Schnapp dir eine Karte. Scan den QR-Code. Ein Street View lädt sofort — und der Timer läuft, ob du bereit bist oder nicht.' },
+    { bg: C.bg, titleColor: C.accent, title: 'Stadt gesucht.', body: 'Schau dir den Street View an. Welche City Card liegt am nächsten dran? Tipp aufs Mikro und sag sie laut — die App speichert deine Antwort.\n\nJe näher du liegst, desto mehr Punkte. Je überzeugter du klingst, desto besser fühlst du dich. Ergebnisse können variieren.' },
+    { bg: '#0a2a0a', titleColor: C.green, title: 'All in.', body: 'Du glaubst, jemand liegt falsch? Setz einen Token und nenn DEINE Stadt.\n\nRichtig → Bonuspunkte.\nFalsch → tschüss, Token.\n\n→ Auf geht\'s!' },
   ];
 
   // ═══════════════ SCANNERS ═══════════════
