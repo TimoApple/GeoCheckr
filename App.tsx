@@ -468,7 +468,7 @@ export default function App() {
       <View style={[s.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#F1E8E1' }]}>
         <StatusBar hidden />
         <Animated.View style={{ opacity: loadingFade, alignItems: 'center' }}>
-          <Image source={require('./assets/logo-startscreen.png')} style={{ width: width * 0.75, height: width * 0.75, marginBottom: 24 }} resizeMode="contain" />
+          <Image source={require('./assets/logo-startscreen.png')} style={{ marginBottom: 24 }} resizeMode="contain" />
           <Text style={{ color: '#262523', fontSize: 20, fontFamily: FF.regular, letterSpacing: 6, marginBottom: 4 }}>GEOCHECKR</Text>
           <Text style={{ color: '#262523', fontSize: 9, fontFamily: FF.regular, letterSpacing: 3, marginBottom: 10, opacity: 0.6 }}>STREET VIEW EDITION</Text>
           <View style={{ width: 80, height: 1.5, backgroundColor: '#262523', opacity: 0.3 }} />
