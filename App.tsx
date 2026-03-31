@@ -376,10 +376,10 @@ export default function App() {
 
   // TUTORIAL
   const TUT_PAGES = [
-    { bg: C.bg, titleColor: C.green, title: 'Eine Aufgabe. Nur eine.', body: 'Irgendwo auf der Erde öffnet sich ein Street View. Du hältst eine City Card. Finde heraus, welche Stadt auf dem Tisch am nächsten dran ist.\n\nSimpel? Klar. Einfach? Auf keinen Fall.' },
-    { bg: C.blue, titleColor: C.accent, title: 'Karte. Scan. Los.', body: 'Schnapp dir eine Karte. Scan den QR-Code. Ein Street View lädt sofort — und der Timer läuft, ob du bereit bist oder nicht.' },
+    { bg: C.bg, titleColor: C.error, title: 'Eine Aufgabe. Nur eine.', body: 'Irgendwo auf der Erde öffnet sich ein Street View. Du hältst eine City Card. Finde heraus, welche Stadt auf dem Tisch am nächsten dran ist.\n\nSimpel? Klar. Einfach? Auf keinen Fall.' },
+    { bg: C.bg, titleColor: C.error, title: 'Karte. Scan. Los.', body: 'Schnapp dir eine Karte. Scan den QR-Code. Ein Street View lädt sofort — und der Timer läuft, ob du bereit bist oder nicht.' },
     { bg: C.bg, titleColor: C.accent, title: 'Stadt gesucht.', body: 'Schau dir den Street View an. Welche City Card liegt am nächsten dran? Tipp aufs Mikro und sag sie laut — die App speichert deine Antwort.\n\nJe näher du liegst, desto mehr Punkte. Je überzeugter du klingst, desto besser fühlst du dich. Ergebnisse können variieren.' },
-    { bg: '#262523', titleColor: C.green, title: 'All in.', body: 'Du glaubst, jemand liegt falsch? Setz einen Token und nenn DEINE Stadt.\n\nRichtig → Bonuspunkte.\nFalsch → tschüss, Token.\n\n→ Auf geht\'s!' },
+    { bg: '#262523', titleColor: C.error, title: 'All in.', body: 'Du glaubst, jemand liegt falsch? Setz einen Token und nenn DEINE Stadt.\n\nRichtig → Bonuspunkte.\nFalsch → tschüss, Token.\n\n→ Auf geht\'s!' },
   ];
 
   // ═══════════════ SCANNERS ═══════════════
@@ -419,7 +419,7 @@ export default function App() {
             </View>
 
             {showCityScanner && (
-              <TouchableOpacity style={{ backgroundColor: C.green, width: 72, height: 72, borderRadius: 36, borderWidth: 4, borderColor: '#fff', justifyContent: 'center', alignItems: 'center', marginTop: 20, alignSelf: 'center' }} onPress={captureAndRecognize}>
+              <TouchableOpacity style={{ backgroundColor: C.error, width: 72, height: 72, borderRadius: 36, borderWidth: 4, borderColor: '#fff', justifyContent: 'center', alignItems: 'center', marginTop: 20, alignSelf: 'center' }} onPress={captureAndRecognize}>
                 <Text style={{ color: C.bg, fontSize: 26, fontWeight: '700', fontFamily: FF.bold }}>◉</Text>
               </TouchableOpacity>
             )}
@@ -470,7 +470,8 @@ export default function App() {
         <Animated.View style={{ opacity: loadingFade, alignItems: 'center' }}>
           <Image source={require('./assets/logo-startscreen.png')} style={{ marginBottom: 28 }} resizeMode="contain" />
           <Text style={{ color: '#F1E8E1', fontSize: 22, fontFamily: FF.regular, letterSpacing: 6, marginBottom: 6 }}>GEOCHECKR</Text>
-          <Text style={{ color: '#F1E8E1', fontSize: 10, fontFamily: FF.regular, letterSpacing: 3, opacity: 0.7 }}>STREET VIEW EDITION</Text>
+          <Text style={{ color: '#F1E8E1', fontSize: 10, fontFamily: FF.regular, letterSpacing: 3, opacity: 0.7, marginBottom: 32 }}>STREET VIEW EDITION</Text>
+          <Text style={{ color: C.primary, fontSize: 14, fontFamily: FF.regular, fontStyle: 'italic', textAlign: 'center', paddingHorizontal: 40, opacity: 0.7, lineHeight: 22 }}>"{loadingQuote}"</Text>
         </Animated.View>
       </View>
     );
@@ -529,8 +530,8 @@ export default function App() {
           {tutorialPage < TUT_PAGES.length - 1 ? (
             <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, fontFamily: FF.regular }}>Swipe →</Text>
           ) : (
-            <TouchableOpacity style={{ backgroundColor: C.green, paddingVertical: 14, paddingHorizontal: 28, borderRadius: 9999 }} onPress={() => setScreen('setup')}>
-              <Text style={{ color: C.bg, fontSize: 17, fontWeight: '700', fontFamily: FF.bold }}>Auf geht's!</Text>
+            <TouchableOpacity style={{ backgroundColor: C.error, paddingVertical: 14, paddingHorizontal: 28, borderRadius: 9999 }} onPress={() => setScreen('setup')}>
+              <Text style={{ color: '#fff', fontSize: 17, fontWeight: '700', fontFamily: FF.bold }}>Auf geht's!</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -814,7 +815,7 @@ const s = StyleSheet.create({
   setupScroll: { paddingTop: 48, paddingBottom: 80, paddingHorizontal: 24 },
   setupHeader: { color: C.primary, fontSize: 24, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 32 },
   setupTitle: { color: C.onSurface, fontSize: 28, fontWeight: '700', fontFamily: FF.bold, marginBottom: 8 },
-  titleBar: { width: 48, height: 4, backgroundColor: C.primary, marginBottom: 32 },
+  titleBar: { width: 48, height: 4, backgroundColor: C.error, marginBottom: 32 },
   sectionLabel: { marginBottom: 12, marginTop: 8 },
   sectionLabelText: { color: C.secondary, fontSize: 10, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 3, textTransform: 'uppercase' },
 
@@ -822,37 +823,37 @@ const s = StyleSheet.create({
   playerInput: { flex: 1, color: C.onSurface, fontSize: 16, fontWeight: '500', fontFamily: FF.regular, paddingVertical: 16, paddingHorizontal: 16, backgroundColor: C.surfaceLow, borderBottomWidth: 1, borderBottomColor: 'rgba(68,73,52,0.15)' },
   cityBadgeInline: { color: C.primary, fontSize: 10, fontWeight: '600', letterSpacing: 1, paddingHorizontal: 16, paddingBottom: 0, paddingTop: 1 },
   cityBadgeBelow: { color: C.primary, fontSize: 11, fontWeight: '600', letterSpacing: 1, paddingHorizontal: 16, paddingBottom: 6, paddingTop: 2, backgroundColor: C.surfaceLow },
-  hashBtn: { backgroundColor: C.secondaryContainer, paddingVertical: 16, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center', minWidth: 52 },
+  hashBtn: { backgroundColor: C.error, paddingVertical: 16, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center', minWidth: 52 },
   hashBtnDone: { backgroundColor: C.primary },
-  hashBtnText: { color: C.onSecondaryContainer, fontSize: 16, fontWeight: '700', fontFamily: FF.bold },
-  hashBtnTextDone: { color: C.onPrimaryContainer },
+  hashBtnText: { color: '#fff', fontSize: 16, fontWeight: '700', fontFamily: FF.bold },
+  hashBtnTextDone: { color: C.bg },
   cityBadge: { color: C.primary, fontSize: 11, fontWeight: '600', letterSpacing: 1, marginLeft: 8 },
   removeBtn: { paddingVertical: 16, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center' },
   nameRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surfaceLow, marginBottom: 8 },
   recruitBtn: { alignItems: 'center', paddingVertical: 16, marginBottom: 32 },
-  recruitBtnText: { color: C.primary, fontSize: 12, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 3, textTransform: 'uppercase' },
+  recruitBtnText: { color: C.error, fontSize: 12, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 3, textTransform: 'uppercase' },
 
   gridRow: { flexDirection: 'row', gap: 24, marginBottom: 48 },
   gridCol: { flex: 1 },
   chipRow: { flexDirection: 'row', gap: 8 },
   chip: { flex: 1, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(68,73,52,0.3)' },
-  chipActive: { backgroundColor: C.primary, borderColor: C.primary },
+  chipActive: { backgroundColor: C.error, borderColor: C.error },
   chipText: { color: 'rgba(241,232,225,0.6)', fontSize: 12, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2 },
-  chipTextActive: { color: C.onPrimaryContainer },
+  chipTextActive: { color: '#fff' },
 
-  mainBtn: { backgroundColor: C.primary, paddingVertical: 20, alignItems: 'center' },
+  mainBtn: { backgroundColor: C.error, paddingVertical: 20, alignItems: 'center' },
   mainBtnDisabled: { backgroundColor: C.surfaceHighest },
-  mainBtnText: { color: C.onPrimaryContainer, fontSize: 15, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 3, textTransform: 'uppercase' },
+  mainBtnText: { color: '#fff', fontSize: 15, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 3, textTransform: 'uppercase' },
   actionHint: { color: 'rgba(241,232,225,0.3)', fontSize: 10, fontFamily: FF.regular, textAlign: 'center', marginTop: 12, letterSpacing: 2, textTransform: 'uppercase' },
 
   // Scanner
   scanOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 },
-  scanFrame: { width: 260, height: 260, borderWidth: 3, borderColor: C.primary, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)', marginBottom: 20 },
+  scanFrame: { width: 260, height: 260, borderWidth: 3, borderColor: C.error, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)', marginBottom: 20 },
   scanCloseBtn: { position: 'absolute', bottom: 60, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.8)', paddingHorizontal: 24, paddingVertical: 12 },
   scanCloseText: { color: C.onSurface, fontSize: 14, fontWeight: '700', fontFamily: FF.bold, letterSpacing: 2 },
 
   // Game
-  gameTopBar: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 44, paddingBottom: 8, backgroundColor: 'rgba(241,232,225,0.9)', zIndex: 20 },
+  gameTopBar: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 44, paddingBottom: 8, backgroundColor: 'rgba(38,37,35,0.92)', zIndex: 20 },
   tableList: { width: '100%', backgroundColor: C.surface, padding: 16, marginBottom: 32 },
   tableRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 12 },
 
